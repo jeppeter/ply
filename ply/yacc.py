@@ -1656,6 +1656,7 @@ class Grammar(object):
             self.Prodnames[prodname].append(p)
         except KeyError:
             self.Prodnames[prodname] = [p]
+        self.log.info('Prodnames[%s] %s',prodname,repr(self.Prodnames[prodname]))
 
     # -----------------------------------------------------------------------------
     # set_start()
