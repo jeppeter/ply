@@ -167,6 +167,49 @@ class Lexer:
                 c.lexstateerrorf[key] = getattr(object, ef.__name__)
             c.lexmodule = object
         return c
+    def format_value(self,v,tabs=0,append=False):
+        s = ''
+        if not append:
+            s += ' ' * 4 * tabs
+        if isinstance(v,list) or isinstance(v,tuple):
+            if isinstance(v,list):
+                s += '[\n'
+            else:
+                s += '(\n'
+            idx = 0
+            for k in v:
+                s += self.format_value(k,(tabs+1),False)
+                if idx < (len(v) - 1):
+                    s += ',\n'
+                else:
+                    s += '\n'
+                idx += 1
+            s += ' ' * tabs * 4
+            if isinstance(v,list):
+                s += ']'
+            else:
+                s += ')'
+        elif isinstance(v,dict):
+            s += '{\n'
+            idx = 0
+            for k in v.keys():
+                s += ' ' * (tabs + 1) * 4
+                s += '%s : '%(repr(k))
+                s += self.format_value(v[k],(tabs+1),True)
+                s += ' ' * (tabs+1) * 4
+                if idx < (len(v.keys())-1):
+                    s += ',\n'
+                else:
+                    s += '\n'
+                idx += 1
+            s += ' ' * (tabs) * 4
+            s += '}'       
+
+        else:
+            s += '%s'%(repr(v))
+        return s
+
+
 
     # ------------------------------------------------------------
     # writetab() - Write lexer information to a table file
@@ -179,10 +222,16 @@ class Lexer:
         with open(filename, 'w') as tf:
             tf.write('# %s.py. This file automatically created by PLY (version %s). Don\'t edit!\n' % (basetabmodule, __version__))
             tf.write('_tabversion   = %s\n' % repr(__tabversion__))
-            tf.write('_lextokens    = set(%s)\n' % repr(tuple(self.lextokens)))
+            tf.write('_lextokens = set(\n')
+            s = self.format_value(tuple(self.lextokens),1,False)
+            tf.write('%s)\n'%(s))
+            #tf.write('_lextokens    = set(%s)\n' % repr(tuple(self.lextokens)))
             tf.write('_lexreflags   = %s\n' % repr(self.lexreflags))
             tf.write('_lexliterals  = %s\n' % repr(self.lexliterals))
-            tf.write('_lexstateinfo = %s\n' % repr(self.lexstateinfo))
+            tf.write('_lexstateinfo = ')
+            s = self.format_value(self.lexstateinfo,1,True)
+            tf.write('%s\n'%(s))
+            #tf.write('_lexstateinfo = %s\n' % repr(self.lexstateinfo))
 
             # Rewrite the lexstatere table, replacing function objects with function names 
             tabre = {}
@@ -192,18 +241,29 @@ class Lexer:
                     titem.append((retext, _funcs_to_names(func, renames)))
                 tabre[statename] = titem
 
-            tf.write('_lexstatere   = %s\n' % repr(tabre))
-            tf.write('_lexstateignore = %s\n' % repr(self.lexstateignore))
+            idx = 0
+
+            tf.write('_lexstatere = ')
+            s = self.format_value(tabre,1,True)
+            tf.write('%s\n'%(s))
+            #tf.write('_lexstatere   = %s\n' % repr(tabre))
+            s = self.format_value(self.lexstateignore,1,True)
+            tf.write('_lexstateignore = %s\n' %(s))
+            #tf.write('_lexstateignore = %s\n' % repr(self.lexstateignore))
 
             taberr = {}
             for statename, ef in self.lexstateerrorf.items():
                 taberr[statename] = ef.__name__ if ef else None
-            tf.write('_lexstateerrorf = %s\n' % repr(taberr))
+            s = self.format_value(taberr,1,True)
+            tf.write('_lexstateerrorf = %s\n' %(s))
+            #tf.write('_lexstateerrorf = %s\n' % repr(taberr))
 
             tabeof = {}
             for statename, ef in self.lexstateeoff.items():
                 tabeof[statename] = ef.__name__ if ef else None
-            tf.write('_lexstateeoff = %s\n' % repr(tabeof))
+            s = self.format_value(tabeof,1,True)
+            tf.write('_lexstateeoff = %s\n' %(s))
+            #tf.write('_lexstateeoff = %s\n' % repr(tabeof))
 
     # ------------------------------------------------------------
     # readtab() - Read lexer information from a tab file
