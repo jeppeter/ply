@@ -110,18 +110,36 @@ class PlyLogger(object):
     def __init__(self, f):
         self.f = f
 
-    def debug(self, msg, *args, **kwargs):
-        self.f.write((msg % args) + '\n')
+    def format_call_msg(self,msg,callstack):
+        inmsg = ''  
+        if callstack is not None:
+            try:
+                frame = sys._getframe(callstack)
+                inmsg += '[%-10s:%-20s:%-5s] '%(frame.f_code.co_filename,frame.f_code.co_name,frame.f_lineno)
+            except:
+                inmsg = ''
+        inmsg += msg
+        return inmsg
 
-    info = debug
+    def critical(self, msg, *args, **kwargs):
+        s = (msg%args)
+        outs = self.format_call_msg(s,2)
+        self.f.write(outs + '\n')
 
     def warning(self, msg, *args, **kwargs):
-        self.f.write('WARNING: ' + (msg % args) + '\n')
+        s = (msg%args)
+        s = 'WARNING: ' + s
+        outs = self.format_call_msg(s,2)
+        self.f.write(outs + '\n')
 
     def error(self, msg, *args, **kwargs):
-        self.f.write('ERROR: ' + (msg % args) + '\n')
+        s = (msg%args)
+        s = 'ERROR: ' + s
+        outs = self.format_call_msg(s,2)
+        self.f.write(outs + '\n')
 
-    critical = debug
+    info = critical
+    debug = critical
 
 # Null logger is used when no output is generated. Does nothing.
 class NullLogger(object):
@@ -321,14 +339,23 @@ class LRParser:
         self.defaulted_states = {}
 
     def parse(self, input=None, lexer=None, debug=False, tracking=False, tokenfunc=None):
-        if debug or yaccdevel:
-            if isinstance(debug, int):
-                debug = PlyLogger(sys.stderr)
-            return self.parsedebug(input, lexer, debug, tracking, tokenfunc)
-        elif tracking:
-            return self.parseopt(input, lexer, debug, tracking, tokenfunc)
-        else:
-            return self.parseopt_notrack(input, lexer, debug, tracking, tokenfunc)
+        flog = None
+        try:
+            if debug or yaccdevel:
+                if isinstance(debug, int):
+                    debug = PlyLogger(sys.stderr)
+                elif isinstance(debug,str):
+                    flog = open(debug,'w')
+                    debug = PlyLogger(flog)
+                return self.parsedebug(input, lexer, debug, tracking, tokenfunc)
+            elif tracking:
+                return self.parseopt(input, lexer, debug, tracking, tokenfunc)
+            else:
+                return self.parseopt_notrack(input, lexer, debug, tracking, tokenfunc)
+        finally:
+            if flog is not None:
+                flog.close()
+            flog = None
 
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1471,7 +1498,7 @@ class GrammarError(YaccError):
     pass
 
 class Grammar(object):
-    def __init__(self, terminals):
+    def __init__(self, terminals,log=None):
         self.Productions  = [None]  # A list of all of the productions.  The first
                                     # entry is always reserved for the purpose of
                                     # building an augmented grammar
@@ -1505,6 +1532,10 @@ class Grammar(object):
                                     # a warning about unused precedence rules.
 
         self.Start = None           # Starting symbol for the grammar
+        if log is not None:
+            self.log = log
+        else:
+            self.log = PlyLogger(sys.stderr)
 
 
     def __len__(self):
@@ -1547,7 +1578,7 @@ class Grammar(object):
     # -----------------------------------------------------------------------------
 
     def add_production(self, prodname, syms, func=None, file='', line=0):
-
+        self.log.info('prodname [%s] sysms %s func %s',prodname,repr(syms),func)
         if prodname in self.Terminals:
             raise GrammarError('%s:%d: Illegal rule name %r. Already defined as a token' % (file, line, prodname))
         if prodname == 'error':
@@ -1565,6 +1596,7 @@ class Grammar(object):
                                            (file, line, s, prodname))
                     if c not in self.Terminals:
                         self.Terminals[c] = []
+                    self.log.info('n[%d] c [%s]',n,c)
                     syms[n] = c
                     continue
                 except SyntaxError:
@@ -1606,10 +1638,12 @@ class Grammar(object):
         # Add the production number to Terminals and Nonterminals
         for t in syms:
             if t in self.Terminals:
+                self.log.info('Terminals[%s] append [%s]',t,pnumber)
                 self.Terminals[t].append(pnumber)
             else:
                 if t not in self.Nonterminals:
                     self.Nonterminals[t] = []
+                self.log.info('Nonterminals[%s] append [%s]',t,pnumber)
                 self.Nonterminals[t].append(pnumber)
 
         # Create a production and add it to the list of productions
@@ -1931,6 +1965,7 @@ class Grammar(object):
 
     def build_lritems(self):
         for p in self.Productions:
+            self.log.info('p %s',repr(p))
             lastlri = p
             i = 0
             lr_items = []
@@ -1939,6 +1974,7 @@ class Grammar(object):
                     lri = None
                 else:
                     lri = LRItem(p, i)
+                    self.log.info('lri.prod %s',repr(lri.prod))
                     # Precompute the list of productions immediately following
                     try:
                         lri.lr_after = self.Prodnames[lri.prod[i+1]]
@@ -1952,6 +1988,7 @@ class Grammar(object):
                 lastlri.lr_next = lri
                 if not lri:
                     break
+                self.log.info('lri.lr_after %s lr_before %s p %s',repr(lri.lr_after),repr(lri.lr_before),repr(p))
                 lr_items.append(lri)
                 lastlri = lri
                 i += 1
@@ -1969,11 +2006,15 @@ class VersionError(YaccError):
     pass
 
 class LRTable(object):
-    def __init__(self):
+    def __init__(self,debuglog=None):
         self.lr_action = None
         self.lr_goto = None
         self.lr_productions = None
         self.lr_method = None
+        if debuglog is not None:
+            self.log = debuglog
+        else:
+            self.log = PlyLogger(sys.stderr)
 
     def read_table(self, module):
         if isinstance(module, types.ModuleType):
@@ -2025,6 +2066,7 @@ class LRTable(object):
     # Bind all production function names to callable objects in pdict
     def bind_callables(self, pdict):
         for p in self.lr_productions:
+            self.log.info('p [%s] ',repr(p))
             p.bind(pdict)
 
 
@@ -2098,6 +2140,7 @@ class LALRError(YaccError):
 
 class LRGeneratedTable(LRTable):
     def __init__(self, grammar, method='LALR', log=None):
+        super(LRGeneratedTable,self).__init__(log)
         if method not in ['SLR', 'LALR']:
             raise LALRError('Unsupported method %s' % method)
 
@@ -2106,7 +2149,7 @@ class LRGeneratedTable(LRTable):
 
         # Set up the logger
         if not log:
-            log = NullLogger()
+            log = PlyLogger(sys.stderr)
         self.log = log
 
         # Internal attributes
@@ -2834,7 +2877,7 @@ del _lr_action_items
 
                 s = self.format_value(items,1,True)
                 f.write('\n_lr_goto_items = %s\n'%(s))
-                
+
                 f.write('''
 _lr_goto = {}
 for _k, _v in _lr_goto_items.items():
@@ -2917,7 +2960,7 @@ def get_caller_module_dict(levels):
 #
 # This takes a raw grammar rule string and parses it into production data
 # -----------------------------------------------------------------------------
-def parse_grammar(doc, file, line):
+def parse_grammar(doc, file, line,debuglog=PlyLogger(sys.stderr)):
     grammar = []
     # Split the doc string into lines
     pstrings = doc.splitlines()
@@ -3031,6 +3074,7 @@ class ParserReflect(object):
 
             counthash = {}
             for linen, line in enumerate(lines):
+                #self.log.info('linen [%s] line [%s]',linen,line.rstrip('\r\n'))
                 linen += 1
                 m = fre.match(line)
                 if m:
@@ -3046,6 +3090,7 @@ class ParserReflect(object):
     # Get the start symbol
     def get_start(self):
         self.start = self.pdict.get('start')
+        self.log.info('start [%s]'%(self.start))
 
     # Validate the start symbol
     def validate_start(self):
@@ -3126,6 +3171,7 @@ class ParserReflect(object):
                 self.error = True
                 return
             for level, p in enumerate(self.prec):
+                self.log.info('level [%s] p [%s]'%(level,p))
                 if not isinstance(p, (list, tuple)):
                     self.log.error('Bad precedence table')
                     self.error = True
@@ -3196,8 +3242,9 @@ class ParserReflect(object):
                                  file, line, func.__name__)
             else:
                 try:
-                    parsed_g = parse_grammar(doc, file, line)
+                    parsed_g = parse_grammar(doc, file, line,self.log)
                     for g in parsed_g:
+                        self.log.info('insert (%s,%s)',name,repr(g))
                         grammar.append((name, g))
                 except SyntaxError as e:
                     self.log.error(str(e))
@@ -3294,7 +3341,7 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
         pdict['start'] = start
 
     # Collect parser information from the dictionary
-    pinfo = ParserReflect(pdict, log=errorlog)
+    pinfo = ParserReflect(pdict, log=debuglog)
     pinfo.get_all()
 
     if pinfo.error:
@@ -3305,7 +3352,7 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
 
     # Read the tables
     try:
-        lr = LRTable()
+        lr = LRTable(debuglog)
         if picklefile:
             read_signature = lr.read_pickle(picklefile)
         else:
@@ -3345,7 +3392,7 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
         errorlog.warning('no p_error() function is defined')
 
     # Create a grammar object
-    grammar = Grammar(pinfo.tokens)
+    grammar = Grammar(pinfo.tokens,debuglog)
 
     # Set precedence level for terminals
     for term, assoc, level in pinfo.preclist:

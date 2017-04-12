@@ -9,6 +9,7 @@
 
 import sys
 sys.path.insert(0, "../..")
+import ply.lex as lex
 
 tokens = (
     'NAME', 'NUMBER',
@@ -27,9 +28,8 @@ t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_NAME = r'[a-zA-Z_][a-zA-Z0-9_]*'
 
-
+@lex.TOKEN(r'\d+')
 def t_NUMBER(t):
-    r'\d+'
     try:
         t.value = int(t.value)
     except ValueError:
@@ -40,8 +40,8 @@ def t_NUMBER(t):
 t_ignore = u" \t"
 
 
+@lex.TOKEN(r'\n+')
 def t_newline(t):
-    r'\n+'
     t.lexer.lineno += t.value.count("\n")
 
 
@@ -50,11 +50,11 @@ def t_error(t):
     t.lexer.skip(1)
 
 # Build the lexer
-import ply.lex as lex
-lex.lex(optimize=True)
+lexfd = open('lexer.log','w')
+lexlog = lex.PlyLogger(lexfd)
+lexerobj = lex.lex(debug=True,optimize=True,debuglog=lexlog)
 
 # Parsing rules
-
 precedence = (
     ('left', 'PLUS', 'MINUS'),
     ('left', 'TIMES', 'DIVIDE'),
@@ -121,7 +121,9 @@ def p_error(p):
         print("Syntax error at EOF")
 
 import ply.yacc as yacc
-yacc.yacc(optimize=True)
+yaccfd = open('yacc.log','w')
+yacclog = yacc.PlyLogger(yaccfd)
+parser = yacc.yacc(debuglog=yacclog,debug=True,optimize=True)
 
 while 1:
     try:
@@ -133,4 +135,11 @@ while 1:
         break
     if not s:
         continue    
-    yacc.parse(s)
+    parser.parse(s,lexer=lexerobj,debug='parse.log')
+
+if lexfd is not None:
+    lexfd.close()
+lexfd = None
+if yaccfd is not None:
+    yaccfd.close()
+yaccfd = None

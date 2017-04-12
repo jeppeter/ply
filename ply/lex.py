@@ -76,14 +76,36 @@ class PlyLogger(object):
     def __init__(self, f):
         self.f = f
 
+    def format_call_msg(self,msg,callstack):
+        inmsg = ''  
+        if callstack is not None:
+            try:
+                frame = sys._getframe(callstack)
+                inmsg += '[%-10s:%-20s:%-5s] '%(frame.f_code.co_filename,frame.f_code.co_name,frame.f_lineno)
+            except:
+                inmsg = ''
+        inmsg += msg
+        return inmsg
+
     def critical(self, msg, *args, **kwargs):
-        self.f.write((msg % args) + '\n')
+        s = (msg%args)
+        outs = self.format_call_msg(s,2)
+        self.f.write(outs + '\n')
+        #self.f.write((msg % args) + '\n')
 
     def warning(self, msg, *args, **kwargs):
-        self.f.write('WARNING: ' + (msg % args) + '\n')
+        s = (msg%args)
+        s = 'WARNING: ' + s
+        outs = self.format_call_msg(s,2)
+        self.f.write(outs + '\n')
+        #self.f.write('WARNING: ' + (msg % args) + '\n')
 
     def error(self, msg, *args, **kwargs):
-        self.f.write('ERROR: ' + (msg % args) + '\n')
+        s = (msg%args)
+        s = 'ERROR: ' + s
+        outs = self.format_call_msg(s,2)
+        self.f.write(outs + '\n')
+        #self.f.write('ERROR: ' + (msg % args) + '\n')
 
     info = critical
     debug = critical
