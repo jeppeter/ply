@@ -80,13 +80,13 @@ def p_expression_binop(p):
                   | expression MINUS expression
                   | expression TIMES expression
                   | expression DIVIDE expression'''
-    if p[2] == u'+':
+    if p[2] == '+':
         p[0] = p[1] + p[3]
-    elif p[2] == u'-':
+    elif p[2] == '-':
         p[0] = p[1] - p[3]
-    elif p[2] == u'*':
+    elif p[2] == '*':
         p[0] = p[1] * p[3]
-    elif p[2] == u'/':
+    elif p[2] == '/':
         p[0] = p[1] / p[3]
 
 
@@ -121,7 +121,7 @@ def p_error(p):
         print("Syntax error at EOF")
 
 import ply.yacc as yacc
-yacc.yacc()
+yacc.yacc(optimize=True)
 
 while 1:
     try:

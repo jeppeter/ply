@@ -167,6 +167,7 @@ class Lexer:
                 c.lexstateerrorf[key] = getattr(object, ef.__name__)
             c.lexmodule = object
         return c
+
     def format_value(self,v,tabs=0,append=False):
         s = ''
         if not append:

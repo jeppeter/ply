@@ -2717,6 +2717,50 @@ class LRGeneratedTable(LRTable):
             goto[st] = st_goto
             st += 1
 
+
+    def format_value(self,v,tabs=0,append=False):
+        s = ''
+        if not append:
+            s += ' ' * 4 * tabs
+        if isinstance(v,list) or isinstance(v,tuple):
+            if isinstance(v,list):
+                s += '[\n'
+            else:
+                s += '(\n'
+            idx = 0
+            for k in v:
+                s += self.format_value(k,(tabs+1),False)
+                if idx < (len(v) - 1):
+                    s += ',\n'
+                else:
+                    s += '\n'
+                idx += 1
+            s += ' ' * tabs * 4
+            if isinstance(v,list):
+                s += ']'
+            else:
+                s += ')'
+        elif isinstance(v,dict):
+            s += '{\n'
+            idx = 0
+            for k in v.keys():
+                s += ' ' * (tabs + 1) * 4
+                s += '%s : '%(repr(k))
+                s += self.format_value(v[k],(tabs+1),True)
+                s += ' ' * (tabs+1) * 4
+                if idx < (len(v.keys())-1):
+                    s += ',\n'
+                else:
+                    s += '\n'
+                idx += 1
+            s += ' ' * (tabs) * 4
+            s += '}'       
+
+        else:
+            s += '%s'%(repr(v))
+        return s
+
+
     # -----------------------------------------------------------------------------
     # write()
     #
@@ -2757,18 +2801,8 @@ _lr_signature = %r
                             items[name] = i
                         i[0].append(s)
                         i[1].append(v)
-
-                f.write('\n_lr_action_items = {')
-                for k, v in items.items():
-                    f.write('%r:([' % k)
-                    for i in v[0]:
-                        f.write('%r,' % i)
-                    f.write('],[')
-                    for i in v[1]:
-                        f.write('%r,' % i)
-
-                    f.write(']),')
-                f.write('}\n')
+                s = self.format_value(items,1,True)
+                f.write('\n_lr_action_items = %s\n'%(s))
 
                 f.write('''
 _lr_action = {}
@@ -2798,18 +2832,9 @@ del _lr_action_items
                         i[0].append(s)
                         i[1].append(v)
 
-                f.write('\n_lr_goto_items = {')
-                for k, v in items.items():
-                    f.write('%r:([' % k)
-                    for i in v[0]:
-                        f.write('%r,' % i)
-                    f.write('],[')
-                    for i in v[1]:
-                        f.write('%r,' % i)
-
-                    f.write(']),')
-                f.write('}\n')
-
+                s = self.format_value(items,1,True)
+                f.write('\n_lr_goto_items = %s\n'%(s))
+                
                 f.write('''
 _lr_goto = {}
 for _k, _v in _lr_goto_items.items():
