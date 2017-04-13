@@ -1578,7 +1578,7 @@ class Grammar(object):
     # -----------------------------------------------------------------------------
 
     def add_production(self, prodname, syms, func=None, file='', line=0):
-        self.log.info('prodname [%s] sysms %s func %s',prodname,repr(syms),func)
+        #self.log.info('prodname [%s] sysms %s func %s',prodname,repr(syms),func)
         if prodname in self.Terminals:
             raise GrammarError('%s:%d: Illegal rule name %r. Already defined as a token' % (file, line, prodname))
         if prodname == 'error':
@@ -1638,12 +1638,12 @@ class Grammar(object):
         # Add the production number to Terminals and Nonterminals
         for t in syms:
             if t in self.Terminals:
-                self.log.info('Terminals[%s] append [%s]',t,pnumber)
+                #self.log.info('Terminals[%s] append [%s]',t,pnumber)
                 self.Terminals[t].append(pnumber)
             else:
                 if t not in self.Nonterminals:
                     self.Nonterminals[t] = []
-                self.log.info('Nonterminals[%s] append [%s]',t,pnumber)
+                #self.log.info('Nonterminals[%s] append [%s]',t,pnumber)
                 self.Nonterminals[t].append(pnumber)
 
         # Create a production and add it to the list of productions
@@ -1656,7 +1656,7 @@ class Grammar(object):
             self.Prodnames[prodname].append(p)
         except KeyError:
             self.Prodnames[prodname] = [p]
-        self.log.info('Prodnames[%s] %s',prodname,repr(self.Prodnames[prodname]))
+        #self.log.info('Prodnames[%s] %s',prodname,repr(self.Prodnames[prodname]))
 
     # -----------------------------------------------------------------------------
     # set_start()
@@ -1860,7 +1860,7 @@ class Grammar(object):
             # so x_produces_empty was true for all x in beta,
             # so beta produces empty as well.
             result.append('<empty>')
-
+        #self.log.info('beta %s result %s',repr(beta),repr(result))
         return result
 
     # -------------------------------------------------------------------------
@@ -1874,6 +1874,7 @@ class Grammar(object):
 
         # Terminals:
         for t in self.Terminals:
+            #self.log.info('t [%s] [%s]',repr(t),repr(t))
             self.First[t] = [t]
 
         self.First['$end'] = ['$end']
@@ -1966,7 +1967,7 @@ class Grammar(object):
 
     def build_lritems(self):
         for p in self.Productions:
-            self.log.info('p %s',repr(p))
+            #self.log.info('p %s',repr(p))
             lastlri = p
             i = 0
             lr_items = []
@@ -1975,7 +1976,7 @@ class Grammar(object):
                     lri = None
                 else:
                     lri = LRItem(p, i)
-                    self.log.info('lri.prod %s',repr(lri.prod))
+                    #self.log.info('lri.prod %s',repr(lri.prod))
                     # Precompute the list of productions immediately following
                     try:
                         lri.lr_after = self.Prodnames[lri.prod[i+1]]
@@ -1987,9 +1988,10 @@ class Grammar(object):
                         lri.lr_before = None
 
                 lastlri.lr_next = lri
+                #self.log.info('lastlri %s lr_next %s',repr(lastlri),repr(lri))
                 if not lri:
                     break
-                self.log.info('lri.lr_after %s lr_before %s p %s',repr(lri.lr_after),repr(lri.lr_before),repr(p))
+                #self.log.info('lri.lr_after %s lr_before %s p %s',repr(lri.lr_after),repr(lri.lr_before),repr(p))
                 lr_items.append(lri)
                 lastlri = lri
                 i += 1
@@ -2067,7 +2069,7 @@ class LRTable(object):
     # Bind all production function names to callable objects in pdict
     def bind_callables(self, pdict):
         for p in self.lr_productions:
-            self.log.info('p [%s] ',repr(p))
+            #self.log.info('p [%s] ',repr(p))
             p.bind(pdict)
 
 
@@ -2191,10 +2193,11 @@ class LRGeneratedTable(LRTable):
                     if getattr(x, 'lr0_added', 0) == self._add_count:
                         continue
                     # Add B --> .G to J
+                    #self.log.info('append %s ',repr(x.lr_next))
                     J.append(x.lr_next)
                     x.lr0_added = self._add_count
                     didadd = True
-
+        #self.log.info('J %s',repr(J))
         return J
 
     # Compute the LR(0) goto function goto(I,X) where I is a set
@@ -2225,6 +2228,7 @@ class LRGeneratedTable(LRTable):
                 s1 = s.get(id(n))
                 if not s1:
                     s1 = {}
+                    #self.log.info('s[%s(%s)] = %s',id(n),repr(n),repr(s1))
                     s[id(n)] = s1
                 gs.append(n)
                 s = s1
@@ -2232,17 +2236,22 @@ class LRGeneratedTable(LRTable):
         if not g:
             if gs:
                 g = self.lr0_closure(gs)
+                #self.log.info('gs %s closure %s',repr(gs),repr(g))
                 s['$end'] = g
             else:
                 s['$end'] = gs
+        #self.log.info('(id(%s) %s,x %s) = g %s',repr(I),id(I),repr(x),repr(g))
         self.lr_goto_cache[(id(I), x)] = g
         return g
 
     # Compute the LR(0) sets of item function
     def lr0_items(self):
+        self.log.info('Productions[0] %s lr_next %s',repr(self.grammar.Productions[0]),repr(self.grammar.Productions[0].lr_next))
         C = [self.lr0_closure([self.grammar.Productions[0].lr_next])]
+        self.log.info('C[0] %s',repr(C[0]))
         i = 0
         for I in C:
+            #self.log.info('id(%s) [%s] = [%s]',repr(I),id(I),i)
             self.lr0_cidhash[id(I)] = i
             i += 1
 
@@ -2255,14 +2264,18 @@ class LRGeneratedTable(LRTable):
             # Collect all of the symbols that could possibly be in the goto(I,X) sets
             asyms = {}
             for ii in I:
+                #self.log.info('ii %s ii.usyms %s',repr(ii),repr(ii.usyms))
                 for s in ii.usyms:
                     asyms[s] = None
 
-            for x in asyms:
+            for x in asyms:                
                 g = self.lr0_goto(I, x)
+                #self.log.info('I %s x %s g %s',repr(I),repr(x),repr(g))
                 if not g or id(g) in self.lr0_cidhash:
                     continue
+                self.log.info('id(%s) [%s] = %d',repr(g),id(g),len(C))
                 self.lr0_cidhash[id(g)] = len(C)
+                self.log.info('C[%d] append %s',len(C),repr(g))
                 C.append(g)
 
         return C
@@ -2447,15 +2460,18 @@ class LRGeneratedTable(LRTable):
                         li = lr_index + 1
                         while li < p.len:
                             if p.prod[li] in self.grammar.Terminals:
+                                #self.log.info('p.name %s prod[%d] %s',p.name,li,p.prod[li])
                                 break      # No forget it
                             if p.prod[li] not in nullable:
                                 break
                             li = li + 1
                         else:
                             # Appears to be a relation between (j,t) and (state,N)
+                            #self.log.info('append j %d t %s',j,repr(t))
                             includes.append((j, t))
 
                     g = self.lr0_goto(C[j], t)               # Go to next set
+                    #self.log.info('C[%d] %s t %s goto %s',j,repr(C[j]),t,g)
                     j = self.lr0_cidhash.get(id(g), -1)      # Go to next state
 
                 # When we get here, j is the final state, now we have to locate the production
@@ -2471,6 +2487,7 @@ class LRGeneratedTable(LRTable):
                             break
                         i = i + 1
                     else:
+                        #self.log.info('lookb append (%d,%s)',j,repr(r))
                         lookb.append((j, r))
             for i in includes:
                 if i not in includedict:
@@ -2496,6 +2513,7 @@ class LRGeneratedTable(LRTable):
         FP = lambda x: self.dr_relation(C, x, nullable)
         R =  lambda x: self.reads_relation(C, x, nullable)
         F = digraph(ntrans, R, FP)
+        #self.log.info('ntrans %s F %s',repr(ntrans),repr(F))
         return F
 
     # -----------------------------------------------------------------------------
@@ -2518,6 +2536,7 @@ class LRGeneratedTable(LRTable):
         FP = lambda x: readsets[x]
         R  = lambda x: inclsets.get(x, [])
         F = digraph(ntrans, R, FP)
+        #self.log.info('follow sets %s',repr(F))
         return F
 
     # -----------------------------------------------------------------------------
@@ -2580,10 +2599,11 @@ class LRGeneratedTable(LRTable):
         goto   = self.lr_goto         # Goto array
         action = self.lr_action       # Action array
         log    = self.log             # Logger for output
+        #self.log.info('goto %s action %s ', repr(goto),repr(action))
 
         actionp = {}                  # Action production array (temporary)
 
-        log.info('Parsing method: %s', self.lr_method)
+        #log.info('Parsing method: %s', self.lr_method)
 
         # Step 1: Construct C = { I0, I1, ... IN}, collection of LR(0) items
         # This determines the number of states
@@ -3172,7 +3192,7 @@ class ParserReflect(object):
                 self.error = True
                 return
             for level, p in enumerate(self.prec):
-                self.log.info('level [%s] p [%s]'%(level,p))
+                #self.log.info('level [%s] p [%s]'%(level,p))
                 if not isinstance(p, (list, tuple)):
                     self.log.error('Bad precedence table')
                     self.error = True
@@ -3245,7 +3265,7 @@ class ParserReflect(object):
                 try:
                     parsed_g = parse_grammar(doc, file, line,self.log)
                     for g in parsed_g:
-                        self.log.info('insert (%s,%s)',name,repr(g))
+                        #self.log.info('insert (%s,%s)',name,repr(g))
                         grammar.append((name, g))
                 except SyntaxError as e:
                     self.log.error(str(e))
