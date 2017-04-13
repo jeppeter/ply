@@ -2189,6 +2189,7 @@ class LRGeneratedTable(LRTable):
         while didadd:
             didadd = False
             for j in J:
+                #self.log.info('j %s j.lr_after %s',repr(j),repr(j.lr_after))
                 for x in j.lr_after:
                     if getattr(x, 'lr0_added', 0) == self._add_count:
                         continue
@@ -2264,18 +2265,18 @@ class LRGeneratedTable(LRTable):
             # Collect all of the symbols that could possibly be in the goto(I,X) sets
             asyms = {}
             for ii in I:
-                #self.log.info('ii %s ii.usyms %s',repr(ii),repr(ii.usyms))
+                self.log.info('ii %s ii.usyms %s',repr(ii),repr(ii.usyms))
                 for s in ii.usyms:
                     asyms[s] = None
 
-            for x in asyms:                
+            for x in asyms:
                 g = self.lr0_goto(I, x)
-                #self.log.info('I %s x %s g %s',repr(I),repr(x),repr(g))
+                self.log.info('I %s x %s g %s',repr(I),repr(x),repr(g))
                 if not g or id(g) in self.lr0_cidhash:
                     continue
-                self.log.info('id(%s) [%s] = %d',repr(g),id(g),len(C))
+                #self.log.info('id(%s) [%s] = %d',repr(g),id(g),len(C))
                 self.lr0_cidhash[id(g)] = len(C)
-                self.log.info('C[%d] append %s',len(C),repr(g))
+                #self.log.info('C[%d] append %s',len(C),repr(g))
                 C.append(g)
 
         return C
