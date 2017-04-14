@@ -123,7 +123,7 @@ def p_error(p):
 import ply.yacc as yacc
 yaccfd = open('yacc.log','w')
 yacclog = yacc.PlyLogger(yaccfd)
-parser = yacc.yacc(method='SLR',debuglog=yacclog,debug=True,optimize=True)
+parser = yacc.yacc(debuglog=yacclog,debug=True,optimize=True)
 
 while 1:
     try:

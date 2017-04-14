@@ -2247,9 +2247,9 @@ class LRGeneratedTable(LRTable):
 
     # Compute the LR(0) sets of item function
     def lr0_items(self):
-        self.log.info('Productions[0] %s lr_next %s',repr(self.grammar.Productions[0]),repr(self.grammar.Productions[0].lr_next))
+        #self.log.info('Productions[0] %s lr_next %s',repr(self.grammar.Productions[0]),repr(self.grammar.Productions[0].lr_next))
         C = [self.lr0_closure([self.grammar.Productions[0].lr_next])]
-        self.log.info('C[0] %s',repr(C[0]))
+        #self.log.info('C[0] %s',repr(C[0]))
         i = 0
         for I in C:
             #self.log.info('id(%s) [%s] = [%s]',repr(I),id(I),i)
@@ -2265,13 +2265,13 @@ class LRGeneratedTable(LRTable):
             # Collect all of the symbols that could possibly be in the goto(I,X) sets
             asyms = {}
             for ii in I:
-                self.log.info('ii %s ii.usyms %s',repr(ii),repr(ii.usyms))
+                #self.log.info('ii %s ii.usyms %s',repr(ii),repr(ii.usyms))
                 for s in ii.usyms:
                     asyms[s] = None
 
             for x in asyms:
                 g = self.lr0_goto(I, x)
-                self.log.info('I %s x %s g %s',repr(I),repr(x),repr(g))
+                #self.log.info('I %s x %s g %s',repr(I),repr(x),repr(g))
                 if not g or id(g) in self.lr0_cidhash:
                     continue
                 #self.log.info('id(%s) [%s] = %d',repr(g),id(g),len(C))
@@ -2347,6 +2347,7 @@ class LRGeneratedTable(LRTable):
                     if t[1] in self.grammar.Nonterminals:
                         if t not in trans:
                             trans.append(t)
+        self.log.info('trans %s',self.format_value(trans))
         return trans
 
     # -----------------------------------------------------------------------------
@@ -2395,7 +2396,6 @@ class LRGeneratedTable(LRTable):
                 a = p.prod[p.lr_index + 1]
                 if a in empty:
                     rel.append((j, a))
-
         return rel
 
     # -----------------------------------------------------------------------------
@@ -2429,6 +2429,7 @@ class LRGeneratedTable(LRTable):
     def compute_lookback_includes(self, C, trans, nullable):
         lookdict = {}          # Dictionary of lookback relations
         includedict = {}       # Dictionary of include relations
+        self.log.info('trans %s nullable %s',self.format_value(trans),self.format_value(nullable))
 
         # Make a dictionary of non-terminal transitions
         dtrans = {}
@@ -2451,6 +2452,7 @@ class LRGeneratedTable(LRTable):
                 while lr_index < p.len - 1:
                     lr_index = lr_index + 1
                     t = p.prod[lr_index]
+                    self.log.info('p %s j %d [%d]t %s',self.format_value(p.prod),j,lr_index,self.format_value(t))
 
                     # Check to see if this symbol and state are a non-terminal transition
                     if (j, t) in dtrans:
@@ -2461,18 +2463,18 @@ class LRGeneratedTable(LRTable):
                         li = lr_index + 1
                         while li < p.len:
                             if p.prod[li] in self.grammar.Terminals:
-                                #self.log.info('p.name %s prod[%d] %s',p.name,li,p.prod[li])
+                                self.log.info('p.name %s prod[%d] %s',p.name,li,p.prod[li])
                                 break      # No forget it
                             if p.prod[li] not in nullable:
                                 break
                             li = li + 1
                         else:
                             # Appears to be a relation between (j,t) and (state,N)
-                            #self.log.info('append j %d t %s',j,repr(t))
+                            self.log.info('append j %d t %s',j,repr(t))
                             includes.append((j, t))
 
                     g = self.lr0_goto(C[j], t)               # Go to next set
-                    #self.log.info('C[%d] %s t %s goto %s',j,repr(C[j]),t,g)
+                    self.log.info('C[%d] %s t %s goto %s',j,self.format_value(C[j]),t,self.format_value(g))
                     j = self.lr0_cidhash.get(id(g), -1)      # Go to next state
 
                 # When we get here, j is the final state, now we have to locate the production
@@ -2496,6 +2498,7 @@ class LRGeneratedTable(LRTable):
                 includedict[i].append((state, N))
             lookdict[(state, N)] = lookb
 
+        self.log.info('lookdict %s includedict %s',self.format_value(lookdict),self.format_value(includedict))
         return lookdict, includedict
 
     # -----------------------------------------------------------------------------
@@ -2514,7 +2517,7 @@ class LRGeneratedTable(LRTable):
         FP = lambda x: self.dr_relation(C, x, nullable)
         R =  lambda x: self.reads_relation(C, x, nullable)
         F = digraph(ntrans, R, FP)
-        #self.log.info('ntrans %s F %s',repr(ntrans),repr(F))
+        self.log.info('ntrans %s F %s',self.format_value(ntrans),self.format_value(F))
         return F
 
     # -----------------------------------------------------------------------------
@@ -2536,8 +2539,9 @@ class LRGeneratedTable(LRTable):
     def compute_follow_sets(self, ntrans, readsets, inclsets):
         FP = lambda x: readsets[x]
         R  = lambda x: inclsets.get(x, [])
+        self.log.info('ntrans %s readsets %s inclsets %s',repr(ntrans),repr(readsets),repr(inclsets))
         F = digraph(ntrans, R, FP)
-        #self.log.info('follow sets %s',repr(F))
+        self.log.info('follow sets %s',repr(F))
         return F
 
     # -----------------------------------------------------------------------------
@@ -2559,8 +2563,10 @@ class LRGeneratedTable(LRTable):
                 if state not in p.lookaheads:
                     p.lookaheads[state] = []
                 f = followset.get(trans, [])
+                self.log.info('trans %s f %s',repr(trans),repr(f))
                 for a in f:
                     if a not in p.lookaheads[state]:
+                        self.log.info('p %s state %s append %s',repr(p),repr(state),repr(a))
                         p.lookaheads[state].append(a)
 
     # -----------------------------------------------------------------------------
