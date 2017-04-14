@@ -41,19 +41,25 @@ def format_eval_str(d):
 
 exec(format_eval_str(lex_dict))
 
+def t_newline(p):
+	r'\n+'
+	p.lineno += p.value.count('\n')
+	return
+
 def t_error(p):
-	raise Exception('error occur')
+	raise Exception('error occur %s'%(repr(p.value)))
 
 t_ignore = ' \t'
 
 def main():
 	lexer = lex.lex()
 	for l in sys.stdin:
-		tok = lexer.input(l)
-		if tok is None:
-			print('no token for [%s]'%(l.rstrip('\r\n')))
-			continue
-		sys.stdout.write('(%s,%r,%d,%d)\n' % (tok.type, tok.value, tok.lineno, tok.lexpos))
+		lexer.input(l)
+		while True:
+			tok = lexer.token()
+			if tok is None:
+				break
+			sys.stdout.write('(%s,%r,%d,%d)\n' % (tok.type, tok.value, tok.lineno, tok.lexpos))
 
 if __name__ == '__main__':
 	main()
