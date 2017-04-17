@@ -2017,7 +2017,7 @@ class LRTable(object):
         if debuglog is not None:
             self.log = debuglog
         else:
-            self.log = PlyLogger(sys.stderr)
+            self.log = NullLogger()
 
     def read_table(self, module):
         if isinstance(module, types.ModuleType):
@@ -3040,7 +3040,7 @@ class ParserReflect(object):
         self.error      = False
 
         if log is None:
-            self.log = PlyLogger(sys.stderr)
+            self.log = NullLogger()
         else:
             self.log = log
 

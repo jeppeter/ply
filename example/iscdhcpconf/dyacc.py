@@ -103,7 +103,7 @@ class YaccBaseObject(object):
 	def format_basic(self,tabs=0):
 		s = ''
 		s += ' ' * tabs * 4
-		s += '[%s:%s-%s:%s]%s [%s]\n'%(self.startline,self.startpos,self.endline,self.endpos,self.typename,self.value_format())
+		s += '[%s:%s-%s:%s]%s [%s] (%s)\n'%(self.startline,self.startpos,self.endline,self.endpos,self.typename,id(self),self.value_format())
 		if self.parent is not None:
 			s += ' ' * tabs * 4
 			s += 'parent : '
@@ -143,6 +143,12 @@ class YaccBaseObject(object):
 	def format_value(self,tabs=0):
 		return self.format_basic(tabs)
 
+	def format_config(self,tabs=0):
+		s = ''
+		for c in self.children:
+			s += c.format_config(tabs)
+		return s
+
 
 class MacAddress(YaccBaseObject):
 	def __init__(self,macaddr='0:0:0:0:0:0',children=None,startline=None,startpos=None,endline=None,endpos=None):
@@ -162,11 +168,28 @@ class HardwareType(YaccBaseObject):
 	def value_format(self):
 		return '%s'%(self.hardwaretype)
 
+	def format_config(self,tabs=0):
+		s = ''
+		s += '%s'%(self.hardwaretype)
+		return s
+
+
 
 class HardwareDeclaration(YaccBaseObject):
 	def __init__(self,children=None,startline=None,startpos=None,endline=None,endpos=None):
 		super(HardwareDeclaration,self).__init__('HardwareDeclaration',children,startline,startpos,endline,endpos)
 		return
+
+	def format_config(self,tabs=0):
+		s = ''
+		if len(self.children) > 1:
+			s += ' ' * tabs * 4
+			s += 'hardware '
+			s += self.children[0].format_config(tabs + 1)
+			s += ' '
+			s += self.children[1].value_format()
+			s += ';'
+		return s
 
 class FixedAddressDeclaration(YaccBaseObject):
 	def __init__(self,fixedaddress='',children=None,startline=None,startpos=None,endline=None,endpos=None):
@@ -177,10 +200,22 @@ class FixedAddressDeclaration(YaccBaseObject):
 	def value_format(self):
 		return self.fixedaddress
 
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += 'fixed-address %s;'%(self.fixedaddress)
+		return s
+
 class Declaration(YaccBaseObject):
 	def __init__(self,children=None,startline=None,startpos=None,endline=None,endpos=None):
 		super(Declaration,self).__init__('Declaration',children,startline,startpos,endline,endpos)
 		return
+
+	def format_config(self,tabs=0):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].format_config(tabs)
+		return s
 
 class Declarations(YaccBaseObject):
 	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
@@ -203,39 +238,143 @@ class Declarations(YaccBaseObject):
 				logging.error('%s not YaccBaseObject'%(repr(child)))
 		return
 
+	def format_config(self,tabs):
+		s = ''
+		if len(self.children) > 0:
+			for c in self.children:
+				s += c.format_config(tabs)
+				s += '\n'
+		return s
+
+class HostName(YaccBaseObject):
+	def __init__(self,name=None,typename=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'HostName'
+		super(HostName,self).__init__(typename,None,startline,startpos,endline,endpos)
+		self.name = ''
+		if name is not None:
+			self.name = name
+		return
+
+
+	def value_format(self):
+		return '%s'%(self.name)
+
 class HostStatement(Declarations):
 	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
 		if typename is None:
 			typename = 'HostStatement'
 		super(HostStatement,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.hostname = None
 		return
+
+	def set_hostname(self,hostnamecls=None):
+		if issubclass(hostnamecls.__class__,HostName):
+			self.hostname = hostnamecls
+		return
+
+	def value_format(self):
+		if self.hostname is None:
+			return ''
+		return '%s'%(self.hostname.value_format())
+
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		if self.hostname is not None:
+			s += 'host %s {\n'%(self.hostname.value_format())
+		else:
+			s += 'host {\n'
+		for c in self.children:
+			s += c.format_config(tabs+1)
+		s += ' ' * tabs * 4
+		s += '}\n'
+		return s
+
+
+
+class Statement(HostStatement):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'Statement'
+		super(Statement,self).__init__(typename,children,startline,startpos,endline,endpos)
+		return
+
+	def format_config(self,tabs=0):
+		s = ''
+		for c in self.children:
+			s += c.format_config(tabs)
+		return s
+
+class Statements(Statement):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'Statements'
+		super(Statements,self).__init__(typename,children,startline,startpos,endline,endpos)
+		return
+
+
 
 
 class DhcpConfYacc(object):
 	tokens = dlex.DhcpConfLex.tokens
 	def __init__(self,lexer=None):
 		self.lexer = lexer
+		self.statements = None
 		return
+
+	def format_config(self):
+		s = ''
+		if self.statements is not None:
+			#logging.info('statements %s'%(repr(self.statements)))
+			s += self.statements.format_config()
+		return s
 
 	def p_statements(self,p):
 		''' statements : empty
 				| statements statement
 		'''
+		if len(p) == 2:
+			statements = Statements(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		else:
+			statements = Statements()
+			statements.extend_children(p[1].children)
+			statements.append_child(p[2])
+			statements.set_pos_by_children()
+			p[1] = None
+		p[0] = statements
+		if self.statements is not None:
+			self.statements = None
+		self.statements = statements
+		#logging.info('%s'%(repr(p[0])))
 		return
 
 	def p_statement(self,p):
 		''' statement : host_statement
 		'''
+		children = []
+		children.append(p[1])
+		p[0] = Statement(None,children,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
 		return
 
 	def p_host_statement(self,p):
-		''' host_statement : HOST TEXT LBRACE declarations RBRACE
+		''' host_statement : HOST host_name LBRACE declarations RBRACE
 		'''
 		children = []
 		# this is for declarations
 		children.append(p[4])
 		p[0] = HostStatement(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos) 
-		logging.info('%s'%(repr(p[0])))
+		p[0].set_hostname(p[2])
+		p[2] = None
+		return
+
+	def p_host_name(self,p):
+		''' host_name : 
+			  | TEXT
+		'''
+		hostname = HostName(p.slice[1].value,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0] = hostname
 		return
 
 	def p_declarations(self,p):
@@ -359,8 +498,9 @@ def main():
 	dhcpyacc = DhcpConfYacc(lexer)
 	parser = dhcpyacc.build()
 	parser.parse(s)
-
-
+	s = dhcpyacc.format_config()
+	sys.stdout.write('%s'%(s))
+	return
 
 if __name__ == '__main__':
 	main()
