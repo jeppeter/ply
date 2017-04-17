@@ -37,19 +37,87 @@ class DhcpConfLex(object):
 	}
 	tokens = [ 'HOST','TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE'] + list(reserved.values())
 	t_ignore = ' \t'
+	t_doublequoted_ignore = ''	
+	states = (
+		('doublequoted','exclusive'),
+	)
 	def __init__(self):
 		self.lineno = 1
 		self.column = 1
 		self.linepos = 0
 		self.braces = 0
+		self.doublequoted = 0
 		return
 
-	@lex.TOKEN('\"')
+
+
+	@lex.TOKEN(r'\"')
 	def t_DOUBLEQUOTE(self,p):
-		p.startline = p.lexer.lineno
-		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
-		p.endpos = p.startpos + len(p.value)
-		p.endline = p.startline
+		self.doublequote = 1
+		p.lexer.push_state('doublequoted')
+		return
+
+	def t_doublequoted_error(self,p):
+		raise Exception('quoted error')
+		return
+
+	@lex.TOKEN('.')
+	def t_doublequoted_TEXT(self,p):
+		s = ''
+		slashed = False
+		if p.value == '"':
+			p.startline = p.lexer.lineno
+			p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+			p.endpos = p.startpos + len(p.value)
+			p.endline = p.startline
+			p.value = s
+			return p
+		elif p.value != '\\':
+			s += p.value
+		else:
+			slashed = True
+		quoted = True
+		startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		startline = p.lexer.lineno
+		curpos = p.lexer.lexpos
+		while curpos < len(p.lexer.lexdata):
+			curch = p.lexer.lexdata[curpos]
+			if slashed :
+				if curch == 'n' :
+					s += '\n'
+				elif curch == 't':
+					s += '\t'
+				elif curch == 'b':
+					if len(s) > 1:
+						s = s[:-2]
+					else:
+						raise Exception('can not accept one length')
+				else:
+					s += curch
+				slashed = False
+			elif curch == '"':
+				quoted = False
+				curpos += 1
+				break
+			elif curch == '\\':
+				slashed = True
+			elif curch == '\n':
+				p.lexer.lineno += 1
+				p.lexer.linepos = curpos
+				s += curch
+			else:
+				s += curch
+			curpos += 1
+		if quoted or slashed:
+			raise Exception('not closed string %s'%(p.lexer.lexdata[startpos:]))
+		p.startline = startline
+		p.startpos = startpos
+		p.endline = p.lexer.lineno
+		p.endpos = ( curpos - p.lexer.linepos)
+		p.lexer.lexpos = curpos
+		p.value = s
+		p.lexer.pop_state()
+		self.doublequote = 0
 		return p
 
 
