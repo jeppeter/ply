@@ -22,9 +22,20 @@ class DhcpConfLex(object):
 	reserved = {
 		'fixed-address' : 'FIXED_ADDRESS',
 		'ethernet' : 'ETHERNET',
-		'hardware' : 'HARDWARE'
+		'hardware' : 'HARDWARE',
+		'shared-network' : 'SHARED_NETWORK',
+		'subnet' : 'SUBNET',
+		'netmask' : 'NETMASK',
+		'option' : 'OPTION',
+		'routers' : 'ROUTERS',
+		'pool' : 'POOL',
+		'allow' : 'ALLOW',
+		'members' : 'MEMBERS',
+		'of' : 'OF',
+		'range' : 'RANGE',
+		'deny' : 'DENY'
 	}
-	tokens = [ 'HOST','TEXT','COLON','SEMI','LBRACE','RBRACE'] + list(reserved.values())
+	tokens = [ 'HOST','TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE'] + list(reserved.values())
 	t_ignore = ' \t'
 	def __init__(self):
 		self.lineno = 1
@@ -32,6 +43,15 @@ class DhcpConfLex(object):
 		self.linepos = 0
 		self.braces = 0
 		return
+
+	@lex.TOKEN('\"')
+	def t_DOUBLEQUOTE(self,p):
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		return p
+
 
 	@lex.TOKEN(r'\:')
 	def t_COLON(self,p):
