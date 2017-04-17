@@ -35,60 +35,84 @@ class DhcpConfLex(object):
 
 	@lex.TOKEN(r'\:')
 	def t_COLON(self,p):
-		p.lineno = self.lineno
-		p.lexpos = (p.lexer.lexpos - self.linepos)
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		#logging.info('COLON lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
 	@lex.TOKEN(r'\;')
 	def t_SEMI(self,p):
-		p.lineno = self.lineno
-		p.lexpos = (p.lexer.lexpos - self.linepos)
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		#logging.info('SEMI lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
 	@lex.TOKEN('host')
 	def t_HOST(self,p):
-		p.lineno = self.lineno
-		p.lexpos = (p.lexer.lexpos - self.linepos)
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		#logging.info('HOST lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
 
 	@lex.TOKEN('fixed-address')
 	def t_FIXED_ADDRESS(self,p):
-		p.lineno = self.lineno
-		p.lexpos = (p.lexer.lexpos - self.linepos - len(p.value))
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		#logging.info('FIXED_ADDRESS lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
 	@lex.TOKEN('hardware')
 	def t_HARDWARE(self,p):
-		p.lineno = self.lineno
-		p.lexpos = (p.lexer.lexpos - self.linepos - len(p.value))
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		#logging.info('HARDWARE lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
 	@lex.TOKEN(r'[a-zA-Z\-_0-9\.]+')
 	def t_TEXT(self,p):
-		p.lineno = self.lineno
-		p.lexpos = (p.lexer.lexpos - self.linepos - len(p.value))
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
 		p.type = self.__class__.reserved.get(p.value,'TEXT')
+		#logging.info('TEXT lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
 	@lex.TOKEN(r'\{')
 	def t_LBRACE(self,p):
 		self.braces += 1
-		p.lineno = self.lineno
-		p.lexpos = (p.lexer.lexpos - self.linepos - len(p.value))
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		#logging.info('LBRACE lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
 	@lex.TOKEN(r'\}')
 	def t_RBRACE(self,p):
 		self.braces -= 1
-		p.lineno = self.lineno
-		p.lexpos = (p.lexer.lexpos - self.linepos - len(p.value))
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		#logging.info('RBRACE lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
 	def t_newline(self,p):
 		r'\n'
-		self.linepos = p.lexer.lexpos
-		self.lineno += 1
+		p.lexer.linepos = p.lexer.lexpos
+		p.lexer.lineno += 1
 		return None
 
 	def t_carriage(self,p):
@@ -96,12 +120,14 @@ class DhcpConfLex(object):
 		return None
 
 	def t_error(self,p):
-		self.column = p.lexer.lexpos - self.linepos
+		self.column = p.lexpos = (p.lexer.lexpos - p.lexer.linepos )
 		raise Exception('at [%s:%s] error [%s]'%(self.lineno,self.column,p.value))
 		return
 
 	def build(self,**kwargs):
-		return lex.lex(module=self,**kwargs)
+		lexer = lex.lex(module=self,**kwargs)
+		lexer.linepos = 0
+		return lexer
 
 
 def read_file(infile=None):
@@ -155,7 +181,7 @@ def main():
 		tok = lexer.token()
 		if tok is None:
 			break
-		sys.stdout.write('(%s,%r,%d,%d)\n' % (tok.type, tok.value, tok.lineno, tok.lexpos))
+		sys.stdout.write('(%s,%r,%d,%d)\n' % (tok.type, tok.value, tok.startline, tok.startpos))
 	return
 
 if __name__ == '__main__':
