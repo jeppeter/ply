@@ -335,7 +335,7 @@ class InterfaceDeclaration(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
 		if typename is None:
 			typename = 'InterfaceDeclaration'
-		super(SharedNetworkDeclarations,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(InterfaceDeclaration,self).__init__(typename,children,startline,startpos,endline,endpos)
 		self.interface = ''
 		return
 
@@ -349,7 +349,7 @@ class InterfaceDeclaration(YaccDhcpObject):
 	def format_config(self,tabs=0):
 		s = ''
 		s += ' ' * tabs * 4
-		s += 'interface %s;\n'%(self.interface)
+		s += 'interface %s ;\n'%(self.interface)
 		return s
 
 

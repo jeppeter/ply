@@ -39,6 +39,7 @@ class DhcpConfLex(object):
 	tokens = [ 'HOST','TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT'] + list(reserved.values())
 	t_ignore = ' \t'
 	t_doublequoted_ignore = ''	
+	t_comment_ignore = ''
 	states = (
 		('doublequoted','exclusive'),
 		('comment','exclusive'),
@@ -64,7 +65,7 @@ class DhcpConfLex(object):
 	def t_COMMENT(self,p):
 		self.commented = 1
 		p.lexer.push_state('comment')
-		return
+		return None
 
 	def t_comment_error(self,p):
 		raise Exception('comment error')
