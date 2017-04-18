@@ -148,6 +148,12 @@ class YaccDhcpObject(object):
 			s += c.format_config(tabs)
 		return s
 
+	def set_endpos(self,endline=None,endpos=None):
+		if endline is not None and endpos is not None:
+			self.endline = endline
+			self.endpos = endpos
+		return
+
 class MacAddress(YaccDhcpObject):
 	def __init__(self,macaddr='0',children=None,startline=None,startpos=None,endline=None,endpos=None):
 		super(MacAddress,self).__init__('MacAddress',children,startline,startpos,endline,endpos)
@@ -159,9 +165,7 @@ class MacAddress(YaccDhcpObject):
 
 	def append_colon_part(self,value,endline=None,endpos=None):
 		self.macaddr += ':%s'%(value)
-		if endline is not None and endpos is not None:
-			self.endline = endline
-			self.endpos = endpos
+		self.set_endpos(endline,endpos)
 		return True
 
 	def check_valid_macaddr(self):
@@ -252,18 +256,41 @@ class Declarations(YaccDhcpObject):
 
 
 class HostName(YaccDhcpObject):
-	def __init__(self,name=None,typename=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,startline=None,startpos=None,endline=None,endpos=None):
 		if typename is None:
 			typename = 'HostName'
 		super(HostName,self).__init__(typename,None,startline,startpos,endline,endpos)
-		self.name = ''
-		if name is not None:
-			self.name = name
+		self.hostname = None
 		return
 
-
 	def value_format(self):
-		return '%s'%(self.name)
+		s = ''
+		if self.hostname is not None:
+			s = self.hostname
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+	def start_hostname(self,value):
+		self.hostname= value
+		return True
+
+	def append_colone_text(self,value,endline=None,endpos=None):
+		if self.hostname is None:
+			return False
+		self.hostname += ':%s'%(value)
+		self.set_endpos(endline,endpos)
+		return True
+
+	def append_dot_text(self,value,endline=None,endpos=None):
+		if self.hostname is None:
+			return False
+		self.hostname += '.%s'%(value)
+		self.set_endpos(endline,endpos)
+		return True
+
+
 
 class HostStatement(Declarations):
 	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
@@ -350,6 +377,59 @@ class SharedNetworkDeclarations(YaccDhcpObject):
 		super(SharedNetworkDeclarations,self).__init__(typename,children,startline,startpos,endline,endpos)
 		return
 
+
+class SubNetwork(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'SubNetwork'
+		super(SharedNetwork,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.ipaddr = None
+		self.ipmask = None
+		return
+
+	def __format_ipaddr(self):
+		s = '127.0.0.1'
+		if self.ipaddr is not None:
+			s = self.ipaddr
+		return s
+
+	def __format_ipmask(self):
+		s = '255.255.255.0'
+		if self.ipmask is not None:
+			s = self.ipmask
+		return s
+
+
+	def value_format(self):
+		return '%s netmask %s'%(self.__format_ipaddr(),self.__format_ipmask())
+
+	def set_ipaddr(self,value):
+		self.ipaddr = value
+		return True
+
+	def set_mask(self,value):
+		self.ipmask = value
+		return True
+
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += 'subnet %s netmask %s {\n'%(self.__format_ipaddr(),self.__format_ipmask())
+		for c in self.children:
+			s += c.format_config((tabs + 1))
+		s += ' ' * tabs * 4
+		s += '}\n'
+		return s
+
+class SubNetworkDeclarations(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'SubDeclarations'
+		super(SubNetworkDeclarations,self).__init__(typename,children,startline,startpos,endline,endpos)
+		return
+
+
 class InterfaceDeclaration(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
 		if typename is None:
@@ -405,9 +485,7 @@ class IpAddress(YaccDhcpObject):
 		if self.ipv6addr is None:
 			return False
 		self.ipv6addr += ':'
-		if endline is not None and endpos is not None:
-			self.endline = endline
-			self.endpos = endpos
+		self.set_endpos(endline,endpos)
 		return True
 
 	def append_ipv6(self,value,endline=None,endpos=None):
@@ -415,9 +493,7 @@ class IpAddress(YaccDhcpObject):
 			return False
 		self.ipv6addr += ':'
 		self.ipv6addr += value
-		if endline is not None and endpos is not None:
-			self.endline = endline
-			self.endpos = endpos
+		self.set_endpos(endline,endpos)
 		return True
 
 	def __format_ipv6(self):
@@ -467,20 +543,18 @@ class DnsName(YaccDhcpObject):
 		self.dnsname = value
 		return
 
-	def append_dot_dns(self,value,endline=None,endpos=None):
+	def append_dot_name(self,value,endline=None,endpos=None):
 		if self.dnsname is None:
 			return False
 		self.dnsname += '.%s'%(value)
-		if endline is not None and endpos is not None:
-			self.endline = endline
-			self.endpos = endpos
+		self.set_endpos(endline,endpos)
 		return
 
 class InterfaceName(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
 		if typename is None:
 			typename = 'InterfaceName'
-		super(IpAddress,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(InterfaceName,self).__init__(typename,children,startline,startpos,endline,endpos)
 		self.interfacename = None
 		return
 
@@ -494,6 +568,6 @@ class InterfaceName(YaccDhcpObject):
 	def format_config(self,tabs=0):		
 		return self.value_format()
 
-	def set_interfacename(self,value):
+	def start_interfacename(self,value):
 		self.interfacename = value
 		return

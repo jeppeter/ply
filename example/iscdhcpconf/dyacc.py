@@ -78,7 +78,7 @@ class DhcpConfYacc(object):
 		return
 
 	def p_statement_subnet_state(self,p):
-		''' statement subnet_statement
+		''' statement : subnet_statement
 		'''
 		children = []
 		children.append_child(p[1])
@@ -122,7 +122,7 @@ class DhcpConfYacc(object):
 	def p_interface_declarations(self,p):
 		''' interface_declaration : INTERFACE interface_name SEMI
 		'''
-		p[0] = dhcpconf.InterfaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
+		p[0] = dhcpconf.InterfaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
 		p[0].set_interface(p[2].value_format())
 		return
 
@@ -146,27 +146,48 @@ class DhcpConfYacc(object):
 		p[4] = None
 		return
 
-	def p_host_name_empty(self,p):
-		''' host_name : empty
-		'''
-		hostname = dhcpconf.HostName('',None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
-		p[0] = hostname
+
+	def p_host_name_colon_text(self,p):
+		''' host_name : host_name COLON TEXT
+			| host_name COLON NUMBER
+		'''		
+		p[0] = p[1]
+		p[0].append_colone_text(p.slice[3].value,p.slice[3].endline,p.slice[3].endpos)
 		p[1] = None
 		return
 
-	def p_host_name_ipaddr(self,p):
-		''' host_name : ipaddr
-			| dns_name
-		'''		
-		hostname = dhcpconf.HostName(p[1].value_format(),None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
-		p[0] = hostname
+	def p_host_name_dot_text(self,p):
+		''' host_name : host_name DOT TEXT
+			| host_name DOT NUMBER
+		'''
+		p[0] = p[1]
+		p[0].append_dot_text(p.slice[3].value,p.slice[3].endline,p.slice[3].endpos)
 		p[1] = None
 		return
+
+	def p_host_name_text(self,p):
+		''' host_name : TEXT
+			| NUMBER
+		'''
+		p[0] = dhcpconf.HostName(None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0].set_hostname(p.slice[1].value)
+		return
+
+
 
 	def p_dns_name(self,p):
 		''' dns_name : dns_name DOT TEXT
 		'''
-		p[0] = dhcpconf.DnsName()
+		p[0] = p[1]
+		p[0].append_dot_name(p.slice[3].value,p.slice[3].endline,p.slice[3].endpos)
+		p[1] = None
+		return
+
+	def p_dns_name_text(self,p):
+		''' dns_name : TEXT 
+		'''
+		p[0] = dhcpconf.DnsName(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0].start_dnsname(p.slice[1].value)
 		return
 
 	def p_declarations_empty(self,p):
@@ -242,18 +263,40 @@ class DhcpConfYacc(object):
 		p[2] = None
 		return
 
-	def p_subnetstate(self,p):
+	def p_subnet_statement(self,p):
 		''' subnet_statement : SUBNET ipaddr NETMASK ipmask LBRACE subnet_declarations RBRACE
 		'''
 		children = []
 		children.append(p[6])
 		p[0] = dhcpconf.SubnetStatement(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[7].endline,p.slice[7].endpos)
-		p[0].set_ipaddr(ipaddr)
-		p[0].set_mask(ipmask)
+		p[0].set_ipaddr(ipaddr.value_format())
+		p[0].set_mask(ipmask.value_format())
 		p[2] = None
 		p[4] = None
 		p[6] = None
 		return
+
+	def p_subnet_delcaration_empty(self,p):
+		''' subnet_declarations : empty
+		'''
+		children = []
+		children.append(p[1])
+		p[0] = dhcpconf.SubnetDeclarations('SubnetDeclarations',children)
+		p[0].set_pos_by_children()
+		p[1] = None
+		return
+
+	def p_subnet_declaration_combine(self,p):
+		''' subnet_declarations : subnet_declarations interface_declaration
+		           | subnet_declarations statements
+		'''
+		p[1].append_child(p[2])
+		p[1].set_pos_by_children()
+		p[0] = p[1]
+		p[1] = None
+		p[2] = None
+		return
+
 
 	def p_ipaddr(self,p):
 		''' ipaddr : ipv4_addr
@@ -280,7 +323,7 @@ class DhcpConfYacc(object):
 		''' ipv6_addr :  ipv6_addr COLON TEXT
 			 | ipv6_addr COLON NUMBER
 		'''
-		if len(p.slice[3].value) < 1 or len(p.slice[3].value) > 2:
+		if len(p.slice[3].value) < 1 or len(p.slice[3].value) > 4:
 			raise Exception('can not parse [%s:%s-%s:%s] %s'%(p.slice[3].startline,
 				p.slice[3].startpos,p.slice[3].endline,p.slice[3].endpos,p.slice[3].value))
 		p[0] = p[1]

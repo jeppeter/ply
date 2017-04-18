@@ -149,6 +149,45 @@ class NullLogger(object):
     def __call__(self, *args, **kwargs):
         return self
 
+class ErrorLogger(object):
+    def __init__(self, f):
+        self.f = f
+
+    def format_call_msg(self,msg,callstack):
+        inmsg = ''  
+        if callstack is not None:
+            try:
+                frame = sys._getframe(callstack)
+                inmsg += '[%-10s:%-20s:%-5s] '%(frame.f_code.co_filename,frame.f_code.co_name,frame.f_lineno)
+            except:
+                inmsg = ''
+        inmsg += msg
+        return inmsg
+
+    def critical(self, msg, *args, **kwargs):
+        s = (msg%args)
+        outs = self.format_call_msg(s,2)
+        self.f.write(outs + '\n')
+
+    def warning(self, msg, *args, **kwargs):
+        s = (msg%args)
+        s = 'WARNING: ' + s
+        outs = self.format_call_msg(s,2)
+        self.f.write(outs + '\n')
+
+    def error(self, msg, *args, **kwargs):
+        s = (msg%args)
+        s = 'ERROR: ' + s
+        outs = self.format_call_msg(s,2)
+        self.f.write(outs + '\n')
+
+    def info(self,msg,*args,**kwargs):
+        return
+
+    def debug(self,msg,*args,**kwargs):
+        return
+
+
 # Exception raised for yacc-related errors
 class YaccError(Exception):
     pass
@@ -2017,7 +2056,7 @@ class LRTable(object):
         if debuglog is not None:
             self.log = debuglog
         else:
-            self.log = NullLogger()
+            self.log = ErrorLogger(sys.stderr)
 
     def read_table(self, module):
         if isinstance(module, types.ModuleType):
@@ -3040,7 +3079,7 @@ class ParserReflect(object):
         self.error      = False
 
         if log is None:
-            self.log = NullLogger()
+            self.log = ErrorLogger(sys.stderr)
         else:
             self.log = log
 
@@ -3275,7 +3314,10 @@ class ParserReflect(object):
                         #self.log.info('insert (%s,%s)',name,repr(g))
                         grammar.append((name, g))
                 except SyntaxError as e:
-                    self.log.error(str(e))
+                    errs = ''
+                    errs += 'parse [%s]'%(doc)
+                    errs += str(e)
+                    self.log.error(errs)
                     self.error = True
 
                 # Looks like a valid grammar rule
@@ -3404,9 +3446,9 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
                 debuglog = PlyLogger(open(os.path.join(outputdir, debugfile), 'w'))
             except IOError as e:
                 errorlog.warning("Couldn't open %r. %s" % (debugfile, e))
-                debuglog = NullLogger()
+                debuglog = ErrorLogger(sys.stderr)
         else:
-            debuglog = NullLogger()
+            debuglog = ErrorLogger(sys.stderr)
 
     debuglog.info('Created by PLY version %s (http://www.dabeaz.com/ply)', __version__)
 
