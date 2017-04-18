@@ -63,6 +63,9 @@ class DhcpConfYacc(object):
 			 | subnet_statement
 			 | option_statement
 			 | pool_statement
+			 | range_declaration
+			 | prefix6_statement
+			 | fixed_prefix6_statement
 		'''
 		children = []
 		children.append(p[1])
@@ -193,13 +196,33 @@ class DhcpConfYacc(object):
 	def p_declarations_declaration(self,p):
 		''' declarations : declarations declaration
 		'''
-		declarations = dhcpconf.Declarations(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		declarations = dhcpconf.Declarations(None,None,p[1].startline,p[1].startpos,p[2].endline,p[2].endpos)
 		declarations.extend_children(p[1].children)
 		declarations.append_child(p[2])
 		declarations.set_pos_by_children()
 		p[0] = declarations
 		p[1] = None
 		return
+
+	def p_prefix6_statement(self,p):
+		''' prefix6_statement : PREFIX6 ipv6_addr ipv6_addr SLASH NUMBER SEMI
+		'''
+		p[0] = dhcpconf.Prefix6Statement(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[6].endline,p.slice[6].endpos)
+		p[0].set_ipv6_pair(p[2].value_format(),p[3].value_format())
+		p[0].set_mask(p.slice[5].value)
+		p[2] = None
+		p[3] = None
+		return
+
+	def p_fixed_prefix6_statement(self,p):
+		''' fixed_prefix6_statement : FIXED_PREFIX6 ipv6_addr SLASH NUMBER SEMI
+		'''
+		p[0] = dhcpconf.FixedPrefix6Statement(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0].set_ipv6(p[2].value_format())
+		p[0].set_mask(p.slice[4].value)
+		p[2] = None
+		return
+
 
 	def p_declaration(self,p):
 		''' declaration : hardware_declaration

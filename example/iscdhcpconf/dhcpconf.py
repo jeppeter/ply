@@ -143,10 +143,20 @@ class YaccDhcpObject(object):
 	def format_value(self,tabs=0):
 		return self.format_basic(tabs)
 
+	def format_children_config(self,tabs=0,splitline=True):
+		s = ''
+		idx = 0
+		for c in self.children:
+			if idx > 0 and splitline:
+				s += ' '* tabs * 4
+				s += '\n'
+			s += c.format_config(tabs)
+			idx += 1
+		return s
+
 	def format_config(self,tabs=0):
 		s = ''
-		for c in self.children:
-			s += c.format_config(tabs)
+		s += self.format_children_config(tabs)
 		return s
 
 	def set_endpos(self,endline=None,endpos=None):
@@ -249,10 +259,7 @@ class Declarations(YaccDhcpObject):
 
 	def format_config(self,tabs):
 		s = ''
-		if len(self.children) > 0:
-			for c in self.children:
-				s += c.format_config(tabs)
-				s += '\n'
+		s += self.format_children_config(tabs)
 		return s
 
 
@@ -319,8 +326,7 @@ class HostStatement(Declarations):
 			s += 'host %s {\n'%(self.hostname.value_format())
 		else:
 			s += 'host {\n'
-		for c in self.children:
-			s += c.format_config(tabs+1)
+		s += self.format_children_config((tabs+1))
 		s += ' ' * tabs * 4
 		s += '}\n'
 		return s
@@ -334,8 +340,7 @@ class Statement(HostStatement):
 
 	def format_config(self,tabs=0):
 		s = ''
-		for c in self.children:
-			s += c.format_config(tabs)
+		s += self.format_children_config(tabs)
 		return s
 
 class Statements(Statement):
@@ -365,8 +370,7 @@ class SharedNetwork(YaccDhcpObject):
 		s = ''
 		s += ' ' * tabs * 4
 		s += 'shared-network %s {\n'%(self.sharedhost)
-		for c in self.children:
-			s += c.format_config((tabs + 1))
+		s += self.format_children_config((tabs+1))
 		s += ' ' * tabs * 4
 		s += '}\n'
 		return s
@@ -417,8 +421,7 @@ class SubnetStatement(YaccDhcpObject):
 		s = ''
 		s += ' ' * tabs * 4
 		s += 'subnet %s netmask %s {\n'%(self.__format_ipaddr(),self.__format_ipmask())
-		for c in self.children:
-			s += c.format_config((tabs + 1))
+		s += self.format_children_config((tabs+1))
 		s += ' ' * tabs * 4
 		s += '}\n'
 		return s
@@ -432,9 +435,7 @@ class SubNetworkDeclarations(YaccDhcpObject):
 
 	def format_config(self,tabs=0):
 		s = ''
-		logging.info('children %s'%(repr(self.children)))
-		for c in self.children:
-			s += c.format_config(tabs)
+		s += self.format_children_config(tabs)
 		return s
 
 
@@ -619,8 +620,7 @@ class SubnetDeclarations(YaccDhcpObject):
 
 	def format_config(self,tabs=0):		
 		s = ''
-		for c in self.children:
-			s += c.format_config(tabs)
+		s += self.format_children_config(tabs)
 		return s
 
 class Failover(YaccDhcpObject):
@@ -716,8 +716,7 @@ class PoolStatement(YaccDhcpObject):
 		s = ''
 		s += ' ' * tabs * 4
 		s += 'pool {\n'
-		for c in self.children:
-			s += c.format_config((tabs+1))
+		s += self.format_children_config((tabs+1))
 		s += ' ' * tabs * 4
 		s += '}\n'
 		return s
@@ -857,3 +856,69 @@ class PermitDeclaration(YaccDhcpObject):
 		s += '%s %s;\n'%(self.mode,self.permit_format)
 		return s
 
+class Prefix6Statement(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.prefix_pair = []
+		self.prefix_mask = ''
+		self.mode = 'prefix6'
+		return
+
+	def set_ipv6_pair(self,ip1,ip2):
+		self.prefix_pair = [ip1,ip2] 
+		return True
+
+	def set_mask(self,mask):
+		self.prefix_mask = mask
+		return True
+
+	def value_format(self):
+		s = ''
+		s += '%s'%(self.mode)
+		for c in self.prefix_pair:
+			s += ' %s'%(c)
+		s += ' /%s'%(self.prefix_mask)
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += self.value_format()
+		s += ';\n'
+		return s
+
+class FixedPrefix6Statement(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.prefix_pair = []
+		self.prefix_mask = ''
+		self.mode = 'fixed-prefix6'
+		return
+
+
+	def set_ipv6(self,ip1):
+		self.prefix_pair = [ip1] 
+		return True
+
+	def set_mask(self,mask):
+		self.prefix_mask = mask
+		return True
+
+	def value_format(self):
+		s = ''
+		s += '%s'%(self.mode)
+		for c in self.prefix_pair:
+			s += ' %s'%(c)
+		s += ' /%s'%(self.prefix_mask)
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += self.value_format()
+		s += ';\n'
+		return s
