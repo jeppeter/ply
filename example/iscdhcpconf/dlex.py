@@ -5,6 +5,7 @@ import os
 import importlib
 import extargsparse
 import logging
+import re
 
 def _insert_path(path,*args):
 	_curdir = os.path.join(path,*args)
@@ -36,7 +37,7 @@ class DhcpConfLex(object):
 		'range' : 'RANGE',
 		'deny' : 'DENY'
 	}
-	tokens = [ 'HOST','TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT'] + list(reserved.values())
+	tokens = ['HOST','TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER'] + list(reserved.values())
 	t_ignore = ' \t'
 	t_doublequoted_ignore = ''	
 	t_comment_ignore = ''
@@ -53,6 +54,13 @@ class DhcpConfLex(object):
 		self.commented = 0
 		return
 
+	@lex.TOKEN(r'\.')
+	def t_DOT(self,p):
+		p.startline = p.lexer.lineno
+		p.startpos = p.lexer.lexpos - len(p.value) - p.lexer.linepos
+		p.endline = p.lexer.lineno
+		p.endpos = p.lexer.lexpos - p.lexer.linepos
+		return p
 
 
 	@lex.TOKEN(r'\"')
@@ -197,13 +205,27 @@ class DhcpConfLex(object):
 		#logging.info('HARDWARE lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
-	@lex.TOKEN(r'[a-zA-Z\-_0-9\.]+')
+
+	@lex.TOKEN(r'[a-zA-Z_0-9][a-zA-Z\-_0-9]*')
 	def t_TEXT(self,p):
 		p.startline = p.lexer.lineno
 		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
 		p.endpos = p.startpos + len(p.value)
 		p.endline = p.startline
 		p.type = self.__class__.reserved.get(p.value,'TEXT')
+		decre = re.compile('^[0-9]+$',re.I)
+		hexre = re.compile('^[a-f0-9]+$',re.I)
+		if p.type == 'TEXT':
+			if decre.match(p.value):
+				p.type = 'NUMBER'
+			elif len(p.value) > 1:
+				matchvalue = None
+				if p.value.startswith('0x') or p.value.startswith('0X'):
+					matchvalue = p.value[2:]
+				if matchvalue is not None:
+					if hexre.match(matchvalue):
+						p.type = 'NUMBER'
+
 		#logging.info('TEXT lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 

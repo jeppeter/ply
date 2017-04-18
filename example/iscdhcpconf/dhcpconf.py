@@ -2,6 +2,7 @@
 
 import sys
 import logging
+import re
 
 class YaccDhcpObject(object):
 	def __init__(self,typename='',children=None,startline=None,startpos=None,endline=None,endpos=None):
@@ -148,13 +149,31 @@ class YaccDhcpObject(object):
 		return s
 
 class MacAddress(YaccDhcpObject):
-	def __init__(self,macaddr='0:0:0:0:0:0',children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,macaddr='0',children=None,startline=None,startpos=None,endline=None,endpos=None):
 		super(MacAddress,self).__init__('MacAddress',children,startline,startpos,endline,endpos)
 		self.macaddr = macaddr
 		return
 
 	def value_format(self):
 		return '%s'%(self.macaddr)
+
+	def append_colon_part(self,value,endline=None,endpos=None):
+		self.macaddr += ':%s'%(value)
+		if endline is not None and endpos is not None:
+			self.endline = endline
+			self.endpos = endpos
+		return True
+
+	def check_valid_macaddr(self):
+		sarr = re.split(':',self.macaddr)
+		if len(sarr) != 6:
+			return False
+		hval = re.compile('^[0-9a-f]{1,2}$',re.I)
+		for c in sarr:
+			if not hval.match(c):
+				return False
+		return True
+
 
 class HardwareType(YaccDhcpObject):
 	def __init__(self,hardwaretype='',children=None,startline=None,startpos=None,endline=None,endpos=None):
@@ -353,4 +372,128 @@ class InterfaceDeclaration(YaccDhcpObject):
 		return s
 
 
+class IpAddress(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'IpAddress'
+		super(IpAddress,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.ipv4addr = None
+		self.ipv6addr = None
+		return
 
+	def __format_ipv4(self):
+		s = ''
+		if self.ipv4addr is not None:
+			s += self.ipv4addr
+		return s
+
+	def set_ipv4_address(self,value):
+		self.ipv4addr = value
+		return True
+
+	def start_ipv6_address(self,value,startline=None,startpos=None,endline=None,endpos=None):
+		self.ipv6addr = value
+		if startline is not None and startpos is not None \
+			and endline is not None and endpos is not None:
+			self.startline = startline
+			self.startpos = startpos
+			self.endline = endline
+			self.endpos = endpos
+		return True
+
+	def append_ipv6_colon(self,endline=None,endpos=None):
+		if self.ipv6addr is None:
+			return False
+		self.ipv6addr += ':'
+		if endline is not None and endpos is not None:
+			self.endline = endline
+			self.endpos = endpos
+		return True
+
+	def append_ipv6(self,value,endline=None,endpos=None):
+		if self.ipv6addr is None:
+			return False
+		self.ipv6addr += ':'
+		self.ipv6addr += value
+		if endline is not None and endpos is not None:
+			self.endline = endline
+			self.endpos = endpos
+		return True
+
+	def __format_ipv6(self):
+		s = ''
+		if self.ipv6addr is not None:
+			s += self.ipv6addr
+		return s
+
+	def value_format(self,tabs=0):
+		s = self.__format_ipv4()
+		if len(s) > 0:
+			return s
+		return self.__format_ipv6()
+
+
+	def format_config(self,tabs=0):		
+		return self.value_format()
+
+	def check_valid_address(self):		
+		return True
+
+	def check_valid_mask(self):
+		return True
+
+
+class DnsName(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'DnsName'
+		super(IpAddress,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.dnsname = None
+		return
+
+
+
+	def value_format(self,tabs=0):
+		s = ''
+		if self.dnsname is not None:
+			s += self.dnsname
+		return s
+
+
+	def format_config(self,tabs=0):		
+		return self.value_format()
+
+	def start_dnsname(self,value):
+		self.dnsname = value
+		return
+
+	def append_dot_dns(self,value,endline=None,endpos=None):
+		if self.dnsname is None:
+			return False
+		self.dnsname += '.%s'%(value)
+		if endline is not None and endpos is not None:
+			self.endline = endline
+			self.endpos = endpos
+		return
+
+class InterfaceName(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'InterfaceName'
+		super(IpAddress,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.interfacename = None
+		return
+
+	def value_format(self,tabs=0):
+		s = ''
+		if self.interfacename is not None:
+			s += self.interfacename
+		return s
+
+
+	def format_config(self,tabs=0):		
+		return self.value_format()
+
+	def set_interfacename(self,value):
+		self.interfacename = value
+		return

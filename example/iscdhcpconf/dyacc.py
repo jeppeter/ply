@@ -77,8 +77,19 @@ class DhcpConfYacc(object):
 		p[1] = None
 		return
 
+	def p_statement_subnet_state(self,p):
+		''' statement subnet_statement
+		'''
+		children = []
+		children.append_child(p[1])
+		p[0] = dhcpconf.Statement(None,children)
+		p[0].set_pos_by_children()
+		p[1] = None
+		return
+
 	def p_shared_network_statement(self,p):
 		''' shared_network_statement : SHARED_NETWORK TEXT LBRACE shared_network_declarations RBRACE
+				 | SHARED_NETWORK NUMBER LBRACE shared_network_declarations RBRACE
 		'''
 		children = []
 		children.append(p[4])
@@ -109,10 +120,17 @@ class DhcpConfYacc(object):
 		return
 
 	def p_interface_declarations(self,p):
-		''' interface_declaration : INTERFACE TEXT SEMI
+		''' interface_declaration : INTERFACE interface_name SEMI
 		'''
 		p[0] = dhcpconf.InterfaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
-		p[0].set_interface(p.slice[2].value)
+		p[0].set_interface(p[2].value_format())
+		return
+
+	def p_interface_name(self,p):
+		''' interface_name : TEXT
+		'''
+		p[0] = dhcpconf.InterfaceName(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0].start_interfacename(p.slice[1].value)		
 		return
 
 
@@ -136,11 +154,19 @@ class DhcpConfYacc(object):
 		p[1] = None
 		return
 
-	def p_host_name_text(self,p):
-		''' host_name : TEXT
-		'''
-		hostname = dhcpconf.HostName(p.slice[1].value,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+	def p_host_name_ipaddr(self,p):
+		''' host_name : ipaddr
+			| dns_name
+		'''		
+		hostname = dhcpconf.HostName(p[1].value_format(),None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
 		p[0] = hostname
+		p[1] = None
+		return
+
+	def p_dns_name(self,p):
+		''' dns_name : dns_name DOT TEXT
+		'''
+		p[0] = dhcpconf.DnsName()
 		return
 
 	def p_declarations_empty(self,p):
@@ -181,6 +207,7 @@ class DhcpConfYacc(object):
 	def p_hardware_type(self,p):
 		''' hardware_type : ETHERNET macaddr
 		'''
+		p[2].check_valid_macaddr()
 		hardwaretype = dhcpconf.HardwareType('ethernet',None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
 		children = []
 		children.append(hardwaretype)
@@ -191,12 +218,17 @@ class DhcpConfYacc(object):
 		return
 
 	def p_macaddr(self,p):
-		''' macaddr : TEXT COLON TEXT COLON TEXT COLON TEXT COLON TEXT COLON TEXT
+		''' macaddr : macaddr COLON TEXT
+				| macaddr COLON NUMBER
+				| TEXT
+				| NUMBER
 		'''
-		macaddr = ''
-		for i in p.slice[1:]:
-			macaddr += i.value
-		macobj = dhcpconf.MacAddress(macaddr,None,p.slice[1].startline,p.slice[1].startpos,p.slice[6].endline,p.slice[6].endpos)
+		if len(p) == 2:
+			macobj = dhcpconf.MacAddress(p.slice[1].value,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		else:
+			macobj = p[1]
+			macobj.append_colon_part(p.slice[3].value,p.slice[3].endline,p.slice[3].endpos)
+			p[1] = None
 		p[0] = macobj
 		return
 
@@ -204,10 +236,83 @@ class DhcpConfYacc(object):
 		raise Exception('find error %s'%(repr(p)))
 
 	def p_fixed_address(self,p):
-		''' fixed_address_declaration : FIXED_ADDRESS TEXT SEMI
+		''' fixed_address_declaration : FIXED_ADDRESS host_name SEMI
 		'''
-		p[0] = dhcpconf.FixedAddressDeclaration(p.slice[2].value,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
+		p[0] = dhcpconf.FixedAddressDeclaration(p[2].value_format(),None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[2] = None
 		return
+
+	def p_subnetstate(self,p):
+		''' subnet_statement : SUBNET ipaddr NETMASK ipmask LBRACE subnet_declarations RBRACE
+		'''
+		children = []
+		children.append(p[6])
+		p[0] = dhcpconf.SubnetStatement(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[7].endline,p.slice[7].endpos)
+		p[0].set_ipaddr(ipaddr)
+		p[0].set_mask(ipmask)
+		p[2] = None
+		p[4] = None
+		p[6] = None
+		return
+
+	def p_ipaddr(self,p):
+		''' ipaddr : ipv4_addr
+			| ipv6_addr
+		'''
+		p[1].check_valid_address()
+		p[0] = p[1]
+		p[1] = None
+		return
+
+	def p_ipv4_addr(self,p):
+		''' ipv4_addr : NUMBER DOT NUMBER DOT NUMBER DOT NUMBER
+		'''
+		p[0] = dhcpconf.IpAddress(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[7].endline,p.slice[7].endpos)
+		value = ''
+		for i in range(4):
+			if len(value) > 0:
+				value += '.'
+			value += '%s'%(p.slice[2*i+1].value)
+		p[0].set_ipv4_address(value)
+		return
+
+	def p_ipv6_addr_colon_text(self,p):
+		''' ipv6_addr :  ipv6_addr COLON TEXT
+			 | ipv6_addr COLON NUMBER
+		'''
+		if len(p.slice[3].value) < 1 or len(p.slice[3].value) > 2:
+			raise Exception('can not parse [%s:%s-%s:%s] %s'%(p.slice[3].startline,
+				p.slice[3].startpos,p.slice[3].endline,p.slice[3].endpos,p.slice[3].value))
+		p[0] = p[1]
+		p[1] = None
+		p[0].append_ipv6(p.slice[3].value,p.slice[3].endline,p.slice[3].endpos)
+		return
+
+	def p_ipv6_addr_colon(self,p):
+		''' ipv6_addr : ipv6_addr COLON
+		'''
+		p[0] = p[1]
+		p[0].append_ipv6_colon(p.slice[2].endline,p.slice[2].endpos)
+		p[1] = None
+		return
+
+	def p_ipv6_addr_text(self,p):
+		''' ipv6_addr : TEXT 
+				| NUMBER
+		'''
+		p[0] = dhcpconf.IpAddress()
+		p[0].start_ipv6_address(p.slice[1].value,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		return
+
+	def p_ipmask(self,p):
+		''' ipmask : ipv4_addr
+			| ipv6_addr
+		'''
+		p[1].check_valid_mask()
+		p[0] = p[1]
+		p[1] = None
+		return
+
 
 	def p_empty(self,p):
 		''' empty :		
