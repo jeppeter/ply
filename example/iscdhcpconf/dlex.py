@@ -21,6 +21,7 @@ import ply.lex as lex
 
 class DhcpConfLex(object):
 	reserved = {
+		'host' : 'HOST',
 		'fixed-address' : 'FIXED_ADDRESS',
 		'ethernet' : 'ETHERNET',
 		'hardware' : 'HARDWARE',
@@ -48,9 +49,12 @@ class DhcpConfLex(object):
 		'unauthenticated' : 'UNAUTHENTICATED',
 		'all' : 'ALL',
 		'dynamic' : 'DYNAMIC',
-		'bootp' : 'BOOTP'
+		'bootp' : 'BOOTP',
+		'never' : 'NEVER',
+		'epoch' : 'EPOCH',
+		'after' : 'AFTER'
 	}
-	tokens = ['HOST','TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER'] + list(reserved.values())
+	tokens = ['TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER','SLASH','PLUS'] + list(reserved.values())
 	t_ignore = ' \t'
 	t_doublequoted_ignore = ''	
 	t_comment_ignore = ''
@@ -87,6 +91,22 @@ class DhcpConfLex(object):
 		self.commented = 1
 		p.lexer.push_state('comment')
 		return None
+
+	@lex.TOKEN(r'\/')
+	def t_SLASH(self,p):
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		return p
+
+	@lex.TOKEN(r'\+')
+	def t_PLUS(self,p):
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		return p
 
 	def t_comment_error(self,p):
 		raise Exception('comment error')

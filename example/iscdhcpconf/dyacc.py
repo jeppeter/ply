@@ -465,6 +465,14 @@ class DhcpConfYacc(object):
 		p[0].set_after_date(p[3].value_format())
 		return
 
+	def p_allow_declaration_members_of(self,p):
+		''' allow_declaration : ALLOW MEMBERS OF TEXT SEMI
+		'''
+		p[0] = dhcpconf.AllowDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0].set_members_of(p.slice[4].value)
+		return
+
+
 	def p_date_format_never(self,p):
 		''' date_format : NEVER
 		'''
@@ -481,8 +489,8 @@ class DhcpConfYacc(object):
 
 	def p_date_format_yeardate(self,p):
 		''' date_format : day_format time_format
-			| date_format : day_format time_format PLUS NUMBER
-			| date_format : day_format time_format TEXT
+			|  day_format time_format PLUS NUMBER
+			|  day_format time_format TEXT
 		'''
 		if len(p) == 3:
 			p[0] = dhcpconf.DateFormat(None,None,p[1].startline,p[1].startpos,p[2].endline,p[2].endpos)
@@ -497,7 +505,7 @@ class DhcpConfYacc(object):
 		if len(p) == 3:
 			p[0].set_tzoff('0')
 		elif len(p) == 5:
-			p[0].set_tzoff(p.slice[4].value)
+			p[0].set_tzoff('+' + p.slice[4].value)
 		elif len(p) == 4:
 			matchexpr = re.compile('^\-[0-9]+$')
 			if not matchexpr.match(p.slice[3].value):
@@ -510,7 +518,7 @@ class DhcpConfYacc(object):
 	def p_day_format(self,p):
 		''' day_format : NUMBER SLASH NUMBER SLASH NUMBER
 		'''
-		p[0] = dhcpconf.DayFormat(None,None,p[1].startline,p[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0] = dhcpconf.DayFormat(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
 		p[0].set_year(p.slice[1].value)
 		p[0].set_month(p.slice[3].value)
 		p[0].set_day(p.slice[5].value)
@@ -519,7 +527,7 @@ class DhcpConfYacc(object):
 	def p_time_format(self,p):
 		''' time_format : NUMBER COLON NUMBER COLON NUMBER
 		'''
-		p[0] = dhcpconf.TimeFormat(None,None,p[1].startline,p[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0] = dhcpconf.TimeFormat(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
 		p[0].set_hour(p.slice[1].value)
 		p[0].set_minute(p.slice[3].value)
 		p[0].set_second(p.slice[5].value)

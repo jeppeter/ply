@@ -717,15 +717,133 @@ class PoolStatement(YaccDhcpObject):
 		s += '}\n'
 		return s
 
+class DayFormat(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		curtime = time.gmtime()
+		self.time_year = curtime.tm_year
+		self.time_month = curtime.tm_mon
+		self.time_day = curtime.tm_mday
+		return
+
+	def value_format(self):
+		return '%s/%s/%s'%(self.time_year,self.time_month,self.time_day)
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+	def set_year(self,year):
+		self.time_year = int(year)
+		return True
+
+	def set_month(self,month):
+		self.time_month = int(month)
+		return True
+
+	def set_day(self,day):
+		self.time_day = int(day)
+		return True
+
 class TimeFormat(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
 		if typename is None:
 			typename = self.__class__.__name__
 		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
-		self.time_year = None
-		self.time_month = None
-		self.time_day = None
+		curtime = time.gmtime()
+		self.time_hour = curtime.tm_hour
+		self.time_minute = curtime.tm_min
+		self.time_second = curtime.tm_sec
 		return
 
 	def value_format(self):
-		s = '%s/%s/%s'
+		return '%s:%s:%s'%(self.time_hour,self.time_minute,self.time_second)
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+	def set_hour(self,hour):
+		self.time_hour = int(hour)
+		return True
+
+	def set_minute(self,minute):
+		self.time_minute = int(minute)
+		return True
+
+	def set_second(self,second):
+		self.time_second = int(second)
+		return True
+
+class DateFormat(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.special_format = None
+		curtime = time.gmtime()
+		self.day_format = '%s/%s/%s'%(curtime.tm_year,curtime.tm_mon,curtime.tm_mday)
+		self.time_format = '%s:%s:%s'%(curtime.tm_hour,curtime.tm_min,curtime.tm_sec)
+		self.tz_format = '0'
+		return
+
+	def set_date(self,date):
+		self.day_format = date
+		return True
+
+	def set_time(self,timed):
+		self.time_format = timed
+		return True
+
+	def set_tzoff(self,tz):
+		self.tz_format = tz
+		return True
+
+	def value_format(self):
+		s = ''
+		if self.special_format is not None:
+			s += self.special_format
+		else:
+			s += '%s %s %s'%(self.day_format,self.time_format,self.tz_format)
+		return s
+
+	def set_never(self):
+		self.special_format = 'never'
+		return True
+
+	def set_epoch(self,epoch):
+		self.special_format = 'epoch %s'%(epoch)
+		return True
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class AllowDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.allow_format = 'ALL'
+		return
+
+	def set_after_date(self,datetime):
+		self.allow_format = 'after %s'%(datetime)
+		return True
+
+	def set_members_of(self,member):
+		self.allow_format = 'members of %s'%(member)
+		return True
+		
+	def set_allow_mode(self,mode):
+		self.allow_format = mode
+		return True
+
+	def value_format(self):
+		return self.allow_format
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += 'allow %s;\n'%(self.allow_format)
+		return s
+
