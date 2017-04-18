@@ -401,8 +401,10 @@ class DhcpConfYacc(object):
 
 	def p_range_declaration_two(self,p):
 		'''range_declaration : RANGE ipaddr ipaddr SEMI
+		         | RANGE6 ipaddr ipaddr SEMI
 		'''
 		p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].set_mode(p.slice[1].value)
 		p[0].set_range_ips(p[2].value_format(),p[3].value_format())
 		p[2] = None
 		p[3] = None
@@ -410,8 +412,10 @@ class DhcpConfYacc(object):
 
 	def p_range_declaration_one(self,p):
 		'''range_declaration : RANGE ipaddr SEMI
+		       | RANGE6 ipaddr SEMI
 		'''
 		p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0].set_mode(p.slice[1].value)
 		p[0].set_range_ips(p[2].value_format(),p[2].value_format())
 		p[2] = None
 		return
@@ -420,6 +424,8 @@ class DhcpConfYacc(object):
 	def p_range_declaration_part(self,p):
 		'''range_declaration : RANGE DYNAMIC_BOOTP ipaddr ipaddr SEMI
 			| RANGE DYNAMIC_BOOTP ipaddr SEMI
+			| RANGE6 DYNAMIC_BOOTP ipaddr ipaddr SEMI
+			| RANGE6 DYNAMIC_BOOTP ipaddr SEMI
 		'''
 		if len(p) == 5:
 			p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
@@ -428,6 +434,7 @@ class DhcpConfYacc(object):
 			p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
 			p[3] = None
 			p[4] = None
+		p[0].set_mode(p.slice[1].value)
 		p[0].set_dynamic()
 		return
 

@@ -36,6 +36,7 @@ class DhcpConfLex(object):
 		'members' : 'MEMBERS',
 		'of' : 'OF',
 		'range' : 'RANGE',
+		'range6' : 'RANGE6',
 		'deny' : 'DENY',
 		'no' : 'NO',
 		'failover' : 'FAILOVER',

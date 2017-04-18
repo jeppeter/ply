@@ -664,7 +664,12 @@ class IpRange(YaccDhcpObject):
 		self.dynamicbootp = False
 		self.rangestart = '0.0.0.0'
 		self.rangeend = '0.0.0.0'
+		self.mode = 'range'
 		return
+
+	def set_mode(self,mode):
+		self.mode = mode
+		return True
 
 	def set_dynamic(self,val=True):
 		self.dynamicbootp = val
@@ -673,18 +678,18 @@ class IpRange(YaccDhcpObject):
 	def value_format(self):
 		s = ''
 		if self.dynamicbootp:
-			s += 'dynamic-bootp'
+			s += '%s dynamic-bootp'%(self.mode)
 		else:
-			s += '%s %s'%(self,rangestart,self.rangeend)
+			s += '%s %s %s'%(self.mode,self,rangestart,self.rangeend)
 		return s
 
 	def format_config(self,tabs=0):
 		s = ''
 		s += ' ' * tabs * 4
 		if self.dynamicbootp :
-			s += 'range dynamic-bootp;\n'
+			s += '%s dynamic-bootp;\n'%(self.mode)
 		else:
-			s += 'range %s %s;\n'%(self.rangestart,self.rangeend)
+			s += '%s %s %s;\n'%(self.mode,self.rangestart,self.rangeend)
 		return s
 
 	def set_range_ips(self,startip,endip):
