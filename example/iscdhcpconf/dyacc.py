@@ -66,6 +66,7 @@ class DhcpConfYacc(object):
 			 | range_declaration
 			 | prefix6_statement
 			 | fixed_prefix6_statement
+			 | authoritative_statement
 		'''
 		children = []
 		children.append(p[1])
@@ -120,13 +121,23 @@ class DhcpConfYacc(object):
 		p[0].start_interfacename(p.slice[1].value)		
 		return
 
-	def p_option_state(self,p):
+	def p_option_routers(self,p):
 		''' option_statement : OPTION ROUTERS host_name SEMI
 		'''
 		p[0] = dhcpconf.OptionStatement(None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
 		p[0].set_routername(p[3].value_format())
 		p[3] = None
 		return
+
+	def p_option_space(self,p):
+		''' option_statement : OPTION SPACE SEMI
+		'''
+		p[0] = dhcpconf.OptionStatement(None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].set_routername(p[3].value_format())
+		p[3] = None
+		return
+
+
 
 
 	def p_host_statement(self,p):
@@ -311,6 +322,18 @@ class DhcpConfYacc(object):
 		p[1] = None
 		p[2] = None
 		return
+
+	def p_authoritative_statement(self,p):
+		'''authoritative_statement : NOT AUTHORITATIVE SEMI
+		         | AUTHORITATIVE SEMI
+		'''
+		if len(p) == 4:
+			p[0] = dhcpconf.AuthoritativeStatement(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+			p[0].set_mode('not')
+		else:
+			p[0] = dhcpconf.AuthoritativeStatement(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
+		return
+
 
 
 	def p_ipaddr(self,p):

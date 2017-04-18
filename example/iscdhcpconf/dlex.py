@@ -55,7 +55,9 @@ class DhcpConfLex(object):
 		'epoch' : 'EPOCH',
 		'after' : 'AFTER',
 		'prefix6' : 'PREFIX6',
-		'fixed-prefix6' : 'FIXED_PREFIX6'
+		'fixed-prefix6' : 'FIXED_PREFIX6',
+		'authoritative' : 'AUTHORITATIVE',
+		'not' : 'NOT'
 	}
 	tokens = ['TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER','SLASH','PLUS'] + list(reserved.values())
 	t_ignore = ' \t'

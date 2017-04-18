@@ -586,25 +586,24 @@ class OptionStatement(YaccDhcpObject):
 		if typename is None:
 			typename = 'OptionStatement'
 		super(OptionStatement,self).__init__(typename,None,startline,startpos,endline,endpos)
-		self.routername  = None
+		self.option_format  = None
 		return
 
 	def value_format(self,tabs=0):
 		s = ''
-		if self.routername is not None:
-			s += self.routername
+		if self.option_format is not None:
+			s += self.option_format
 		return s
 
 
 	def format_config(self,tabs=0):		
 		s = ''
-		if self.routername is not None:
-			s += ' ' * tabs * 4
-			s += 'option routers %s;\n'%(self.routername)
+		s += ' ' * tabs * 4
+		s += '%s;\n'%(self.value_format())
 		return s
 
 	def set_routername(self,value):
-		self.routername = value
+		self.option_format = 'option routers %s'%(value)
 		return True
 
 class SubnetDeclarations(YaccDhcpObject):
@@ -922,3 +921,25 @@ class FixedPrefix6Statement(YaccDhcpObject):
 		s += self.value_format()
 		s += ';\n'
 		return s
+
+class AuthoritativeStatement(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.mode = ''
+		return
+
+	def value_format(self):
+		return '%s authoritative'%(self.mode)
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += self.value_format()
+		s += ';\n'
+		return s
+
+	def set_mode(self,mode):
+		self.mode = mode
+		return True
