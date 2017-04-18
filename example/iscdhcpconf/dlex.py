@@ -24,6 +24,7 @@ class DhcpConfLex(object):
 		'ethernet' : 'ETHERNET',
 		'hardware' : 'HARDWARE',
 		'shared-network' : 'SHARED_NETWORK',
+		'interface' : 'INTERFACE',
 		'subnet' : 'SUBNET',
 		'netmask' : 'NETMASK',
 		'option' : 'OPTION',
@@ -35,11 +36,12 @@ class DhcpConfLex(object):
 		'range' : 'RANGE',
 		'deny' : 'DENY'
 	}
-	tokens = [ 'HOST','TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE'] + list(reserved.values())
+	tokens = [ 'HOST','TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT'] + list(reserved.values())
 	t_ignore = ' \t'
 	t_doublequoted_ignore = ''	
 	states = (
 		('doublequoted','exclusive'),
+		('comment','exclusive'),
 	)
 	def __init__(self):
 		self.lineno = 1
@@ -47,6 +49,7 @@ class DhcpConfLex(object):
 		self.linepos = 0
 		self.braces = 0
 		self.doublequoted = 0
+		self.commented = 0
 		return
 
 
@@ -56,6 +59,32 @@ class DhcpConfLex(object):
 		self.doublequote = 1
 		p.lexer.push_state('doublequoted')
 		return
+
+	@lex.TOKEN(r'\#')
+	def t_COMMENT(self,p):
+		self.commented = 1
+		p.lexer.push_state('comment')
+		return
+
+	def t_comment_error(self,p):
+		raise Exception('comment error')
+		return
+
+	@lex.TOKEN('.')
+	def t_comment_TEXT(self,p):
+		curpos = p.lexer.lexpos
+		maxpos = len(p.lexer.lexdata)
+		while curpos < maxpos:
+			curch = p.lexer.lexdata[curpos]
+			if curch == '\n':
+				curpos += 1
+				p.lexer.linepos = curpos
+				break
+			curpos += 1
+		self.comment = 0
+		p.lexer.pop_state()
+		p.lexer.lexpos = curpos
+		return None
 
 	def t_doublequoted_error(self,p):
 		raise Exception('quoted error')

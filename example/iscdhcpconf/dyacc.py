@@ -59,7 +59,7 @@ class DhcpConfYacc(object):
 		self.statements = statements
 		return
 
-	def p_statement_hoststate(self,p):
+	def p_statement_host_state(self,p):
 		''' statement : host_statement
 		'''
 		children = []
@@ -67,6 +67,54 @@ class DhcpConfYacc(object):
 		p[0] = dhcpconf.Statement(None,children,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
 		p[1] = None
 		return
+
+	def p_statement_shared_network_state(self,p):
+		''' statement : shared_network_statement
+		'''
+		children = []
+		children.append(p[1])
+		p[0] = dhcpconf.Statement(None,children,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[1] = None
+		return
+
+	def p_shared_network_statement(self,p):
+		''' shared_network_statement : SHARED_NETWORK TEXT LBRACE shared_network_declarations RBRACE
+		'''
+		children = []
+		children.append(p[4])
+		p[0] = dhcpconf.SharedNetwork(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[5].startpos,p.slice[5].endpos)
+		p[0].set_shared_host(p.slice[2].value)
+		p[4] = None
+		return
+
+	def p_shared_network_delcaration_empty(self,p):
+		''' shared_network_declarations : empty
+		'''
+		children = []
+		children.append(p[1])
+		p[0] = dhcpconf.SharedNetworkDeclarations(None,children)
+		p[0].set_pos_by_children()
+		p[1] = None
+		return
+
+	def p_shared_network_declaration_combine(self,p):
+		''' shared_network_declarations : shared_network_declarations interface_declaration
+		           | shared_network_declarations statements
+		'''
+		p[1].append_child(p[2])
+		p[1].set_pos_by_children()
+		p[0] = p[1]
+		p[1] = None
+		p[2] = None
+		return
+
+	def p_interface_declarations(self,p):
+		''' interface_declaration : INTERFACE TEXT SEMI
+		'''
+		p[0] = dhcpconf.InterfaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
+		p[0].set_interface(p.slice[2].value)
+		return
+
 
 	def p_host_statement(self,p):
 		''' host_statement : HOST host_name LBRACE declarations RBRACE

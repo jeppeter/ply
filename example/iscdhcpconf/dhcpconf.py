@@ -74,6 +74,20 @@ class YaccDhcpObject(object):
 			self.endpos = endpos
 		return
 
+	def extend_children(self,children=[]):
+		for c in children:
+			self.append_child(c)
+		return
+
+	def append_child(self,child):
+		if child is not None:
+			if isinstance(child,object) and issubclass(child.__class__,YaccDhcpObject):
+				child.parent = self
+				self.children.append(child)
+			else:
+				logging.error('%s not YaccDhcpObject'%(repr(child)))
+		return
+
 
 	def value_format(self):
 		return ''
@@ -208,19 +222,6 @@ class Declarations(YaccDhcpObject):
 		super(Declarations,self).__init__(typename,children,startline,startpos,endline,endpos)
 		return
 
-	def extend_children(self,children=[]):
-		for c in children:
-			self.append_child(c)
-		return
-
-	def append_child(self,child):
-		if child is not None:
-			if isinstance(child,object) and issubclass(child.__class__,YaccDhcpObject):
-				child.parent = self
-				self.children.append(child)
-			else:
-				logging.error('%s not YaccDhcpObject'%(repr(child)))
-		return
 
 	def format_config(self,tabs):
 		s = ''
@@ -296,3 +297,60 @@ class Statements(Statement):
 			typename = 'Statements'
 		super(Statements,self).__init__(typename,children,startline,startpos,endline,endpos)
 		return
+
+
+class SharedNetwork(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'SharedNetwork'
+		super(SharedNetwork,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.sharedhost = ''
+		return
+
+	def value_format(self):
+		return '%s'%(self.sharedhost)
+
+	def set_shared_host(self,value):
+		self.sharedhost = value
+		return
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += 'shared-network %s {\n'%(self.sharedhost)
+		for c in self.children:
+			s += c.format_config((tabs + 1))
+		s += ' ' * tabs * 4
+		s += '}\n'
+		return s
+
+class SharedNetworkDeclarations(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'SharedDeclarations'
+		super(SharedNetworkDeclarations,self).__init__(typename,children,startline,startpos,endline,endpos)
+		return
+
+class InterfaceDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'InterfaceDeclaration'
+		super(SharedNetworkDeclarations,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.interface = ''
+		return
+
+	def value_format(self):
+		return '%s'%(self.interface)
+
+	def set_interface(self,value):
+		self.interface = value
+		return
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += 'interface %s;\n'%(self.interface)
+		return s
+
+
+
