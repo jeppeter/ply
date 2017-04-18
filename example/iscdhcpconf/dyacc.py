@@ -38,52 +38,35 @@ class DhcpConfYacc(object):
 	def p_statements_empty(self,p):
 		''' statements : empty
 		'''
-		statements = dhcpconf.Statements(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
-		p[0] = statements
+		p[0] = dhcpconf.Statements(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[1] = None
 		if self.statements is not None:
 			self.statements = None
-		self.statements = statements
-		p[1] = None
+		self.statements = p[0]
 		return
 
 	def p_statements_statement(self,p):
 		'''statements : statements statement
 		'''
-		statements = dhcpconf.Statements()
-		statements.extend_children(p[1].children)
-		statements.append_child(p[2])
-		statements.set_pos_by_children()
+		p[1].append_child(p[2])
+		p[1].set_pos_by_children()
+		p[0] = p[1]
 		p[1] = None
 		if self.statements is not None:
 			self.statements = None
-		self.statements = statements
+		self.statements = p[0]
 		return
 
-	def p_statement_host_state(self,p):
+	def p_statement_multi(self,p):
 		''' statement : host_statement
+			 | shared_network_statement
+			 | subnet_statement
+			 | option_statement
+			 | pool_statement
 		'''
 		children = []
 		children.append(p[1])
 		p[0] = dhcpconf.Statement(None,children,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
-		p[1] = None
-		return
-
-	def p_statement_shared_network_state(self,p):
-		''' statement : shared_network_statement
-		'''
-		children = []
-		children.append(p[1])
-		p[0] = dhcpconf.Statement(None,children,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
-		p[1] = None
-		return
-
-	def p_statement_subnet_state(self,p):
-		''' statement : subnet_statement
-		'''
-		children = []
-		children.append_child(p[1])
-		p[0] = dhcpconf.Statement(None,children)
-		p[0].set_pos_by_children()
 		p[1] = None
 		return
 
@@ -119,11 +102,12 @@ class DhcpConfYacc(object):
 		p[2] = None
 		return
 
-	def p_interface_declarations(self,p):
+	def p_interface_declaration(self,p):
 		''' interface_declaration : INTERFACE interface_name SEMI
 		'''
 		p[0] = dhcpconf.InterfaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
 		p[0].set_interface(p[2].value_format())
+		logging.info('%s'%(p[0].format_config()))
 		return
 
 	def p_interface_name(self,p):
@@ -131,6 +115,14 @@ class DhcpConfYacc(object):
 		'''
 		p[0] = dhcpconf.InterfaceName(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
 		p[0].start_interfacename(p.slice[1].value)		
+		return
+
+	def p_option_state(self,p):
+		''' option_statement : OPTION ROUTERS host_name SEMI
+		'''
+		p[0] = dhcpconf.OptionStatement(None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].set_routername(p[3].value_format())
+		p[3] = None
 		return
 
 
@@ -170,7 +162,7 @@ class DhcpConfYacc(object):
 			| NUMBER
 		'''
 		p[0] = dhcpconf.HostName(None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
-		p[0].set_hostname(p.slice[1].value)
+		p[0].start_hostname(p.slice[1].value)
 		return
 
 
@@ -269,8 +261,8 @@ class DhcpConfYacc(object):
 		children = []
 		children.append(p[6])
 		p[0] = dhcpconf.SubnetStatement(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[7].endline,p.slice[7].endpos)
-		p[0].set_ipaddr(ipaddr.value_format())
-		p[0].set_mask(ipmask.value_format())
+		p[0].set_ipaddr(p[2].value_format())
+		p[0].set_mask(p[4].value_format())
 		p[2] = None
 		p[4] = None
 		p[6] = None
@@ -354,6 +346,183 @@ class DhcpConfYacc(object):
 		p[1].check_valid_mask()
 		p[0] = p[1]
 		p[1] = None
+		return
+
+	def p_pool_statement(self,p):
+		''' pool_statement : POOL LBRACE pool_declarations RBRACE
+		'''
+		children = []
+		children.append(p[3])
+		p[0] = dhcpconf.PoolStatement(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[3] = None
+		return
+
+	def p_pool_declarations_empty(self,p):
+		''' pool_declarations : empty
+		'''
+		p[0] = dhcpconf.PoolDeclarations(None,None)
+		p[0].append_child(p[1])
+		p[0].set_pos_by_children()
+		p[1] = None
+		return
+
+	def p_pool_declarations_recursive(self,p):
+		'''pool_declarations : pool_declarations pool_declaration
+		'''
+		p[0] = p[1]
+		p[1] = None
+		p[0].append_child(p[2])
+		p[0].set_pos_by_children()
+		p[2] = None
+		return
+
+
+	def p_pool_declaration_no_failover(self,p):
+		''' pool_declaration : NO FAILOVER PEER SEMI
+		'''
+		p[0] = dhcpconf.Failover(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].set_no_failover()
+		return
+
+	def p_pool_declaration_failover_peer(self,p):
+		''' pool_declaration : FAILOVER PEER dns_name SEMI
+		'''
+		p[0] = dhcpconf.Failover(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].set_failover(p[3].value_format())
+		p[3] = None
+		return
+
+	def p_pool_declaration_range_declaration(self,p):
+		'''pool_declaration : range_declaration
+		'''
+		p[0] = p[1]
+		p[1] = None
+		return
+
+	def p_range_declaration_two(self,p):
+		'''range_declaration : RANGE ipaddr ipaddr SEMI
+		'''
+		p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].set_range_ips(p[2].value_format(),p[3].value_format())
+		p[2] = None
+		p[3] = None
+		return
+
+	def p_range_declaration_one(self,p):
+		'''range_declaration : RANGE ipaddr SEMI
+		'''
+		p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0].set_range_ips(p[2].value_format(),p[2].value_format())
+		p[2] = None
+		return
+
+
+	def p_range_declaration_part(self,p):
+		'''range_declaration : RANGE DYNAMIC_BOOTP ipaddr ipaddr SEMI
+			| RANGE DYNAMIC_BOOTP ipaddr SEMI
+		'''
+		if len(p) == 5:
+			p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+			p[3] = None
+		else:
+			p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+			p[3] = None
+			p[4] = None
+		p[0].set_dynamic()
+		return
+
+	def p_pool_declaration_allow(self,p):
+		'''pool_declaration : allow_declaration
+		'''
+		p[0] = p[1]
+		p[1] = None
+		return
+
+	def p_allow_declaration_one_word(self,p):
+		'''allow_declaration : ALLOW UNKNOWN SEMI
+			 | ALLOW KNOWN_CLIENTS SEMI
+			 | ALLOW UNKNOWN_CLIENTS SEMI
+			 | ALLOW KNOWN SEMI
+			 | ALLOW AUTHENTICATED SEMI
+			 | ALLOW UNAUTHENTICATED SEMI
+			 | ALLOW ALL SEMI
+		'''
+		p[0] = dhcpconf.AllowDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0].set_allow_mode(p.slice[2].value)
+		return
+
+	def p_allow_declaration_dynamic(self,p):
+		''' allow_declaration : ALLOW DYNAMIC BOOTP SEMI
+		'''
+		p[0] = dhcpconf.AllowDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].set_allow_mode('dynamic bootp')
+		return
+
+	def p_allow_declaration_date_after(self,p):
+		'''allow_declaration : ALLOW AFTER date_format SEMI
+		'''
+		p[0] = dhcpconf.AllowDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].set_after_date(p[3].value_format())
+		return
+
+	def p_date_format_never(self,p):
+		''' date_format : NEVER
+		'''
+		p[0] = dhcpconf.DateFormat(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0].set_never()
+		return
+
+	def p_date_format_epoch(self,p):
+		''' date_format : EPOCH NUMBER
+		'''
+		p[0] = dhcpconf.DateFormat(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0].set_epoch(p.slice[2].value)
+		return
+
+	def p_date_format_yeardate(self,p):
+		''' date_format : day_format time_format
+			| date_format : day_format time_format PLUS NUMBER
+			| date_format : day_format time_format TEXT
+		'''
+		if len(p) == 3:
+			p[0] = dhcpconf.DateFormat(None,None,p[1].startline,p[1].startpos,p[2].endline,p[2].endpos)
+		elif len(p) == 5:
+			p[0] = dhcpconf.DateFormat(None,None,p[1].startline,p[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		elif len(p) == 4:
+			p[0] = dhcpconf.DateFormat(None,None,p[1].startline,p[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		else:
+			raise Exception('unknown date_format')
+		p[0].set_date(p[1].value_format())
+		p[0].set_time(p[2].value_format())
+		if len(p) == 3:
+			p[0].set_tzoff('0')
+		elif len(p) == 5:
+			p[0].set_tzoff(p.slice[4].value)
+		elif len(p) == 4:
+			matchexpr = re.compile('^\-[0-9]+$')
+			if not matchexpr.match(p.slice[3].value):
+				raise Exception('with format')
+			p[0].set_tzoff(p.slice[3].value)
+		p[1] = None
+		p[2] = None
+		return 
+
+	def p_day_format(self,p):
+		''' day_format : NUMBER SLASH NUMBER SLASH NUMBER
+		'''
+		p[0] = dhcpconf.DayFormat(None,None,p[1].startline,p[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0].set_year(p.slice[1].value)
+		p[0].set_month(p.slice[3].value)
+		p[0].set_day(p.slice[5].value)
+		return
+
+	def p_time_format(self,p):
+		''' time_format : NUMBER COLON NUMBER COLON NUMBER
+		'''
+		p[0] = dhcpconf.TimeFormat(None,None,p[1].startline,p[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0].set_hour(p.slice[1].value)
+		p[0].set_minute(p.slice[3].value)
+		p[0].set_second(p.slice[5].value)
 		return
 
 

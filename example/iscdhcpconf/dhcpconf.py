@@ -3,6 +3,7 @@
 import sys
 import logging
 import re
+import time
 
 class YaccDhcpObject(object):
 	def __init__(self,typename='',children=None,startline=None,startpos=None,endline=None,endpos=None):
@@ -378,11 +379,11 @@ class SharedNetworkDeclarations(YaccDhcpObject):
 		return
 
 
-class SubNetwork(YaccDhcpObject):
+class SubnetStatement(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
 		if typename is None:
-			typename = 'SubNetwork'
-		super(SharedNetwork,self).__init__(typename,children,startline,startpos,endline,endpos)
+			typename = 'SubnetStatement'
+		super(SubnetStatement,self).__init__(typename,children,startline,startpos,endline,endpos)
 		self.ipaddr = None
 		self.ipmask = None
 		return
@@ -428,6 +429,13 @@ class SubNetworkDeclarations(YaccDhcpObject):
 			typename = 'SubDeclarations'
 		super(SubNetworkDeclarations,self).__init__(typename,children,startline,startpos,endline,endpos)
 		return
+
+	def format_config(self,tabs=0):
+		s = ''
+		logging.info('children %s'%(repr(self.children)))
+		for c in self.children:
+			s += c.format_config(tabs)
+		return s
 
 
 class InterfaceDeclaration(YaccDhcpObject):
@@ -571,3 +579,153 @@ class InterfaceName(YaccDhcpObject):
 	def start_interfacename(self,value):
 		self.interfacename = value
 		return
+
+class OptionStatement(YaccDhcpObject):
+	def __init__(self,typename=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'OptionStatement'
+		super(OptionStatement,self).__init__(typename,None,startline,startpos,endline,endpos)
+		self.routername  = None
+		return
+
+	def value_format(self,tabs=0):
+		s = ''
+		if self.routername is not None:
+			s += self.routername
+		return s
+
+
+	def format_config(self,tabs=0):		
+		s = ''
+		if self.routername is not None:
+			s += ' ' * tabs * 4
+			s += 'option routers %s;\n'%(self.routername)
+		return s
+
+	def set_routername(self,value):
+		self.routername = value
+		return True
+
+class SubnetDeclarations(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = 'SubnetDeclarations'
+		super(SubnetDeclarations,self).__init__(typename,children,startline,startpos,endline,endpos)
+		return
+
+	def value_format(self,tabs=0):
+		return ''
+
+
+	def format_config(self,tabs=0):		
+		s = ''
+		for c in self.children:
+			s += c.format_config(tabs)
+		return s
+
+class Failover(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.failover = None
+		return
+
+	def set_no_failover(self):
+		self.failover=  None
+		return
+
+	def set_failover(self,value):
+		self.failover = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.failover is None:
+			s = 'no failover peer'
+		else:
+			s = 'failover peer %s'%(self.failover)
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		if self.failover is None:
+			s += 'no failover peer;\n'
+		else:
+			s += 'failover peer %s;\n'%(self.failover)
+		return s
+
+class IpRange(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.dynamicbootp = False
+		self.rangestart = '0.0.0.0'
+		self.rangeend = '0.0.0.0'
+		return
+
+	def set_dynamic(self,val=True):
+		self.dynamicbootp = val
+		return
+
+	def value_format(self):
+		s = ''
+		if self.dynamicbootp:
+			s += 'dynamic-bootp'
+		else:
+			s += '%s %s'%(self,rangestart,self.rangeend)
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		if self.dynamicbootp :
+			s += 'range dynamic-bootp;\n'
+		else:
+			s += 'range %s %s;\n'%(self.rangestart,self.rangeend)
+		return s
+
+	def set_range_ips(self,startip,endip):
+		self.rangestart = startip
+		self.rangeend = endip
+		return True
+
+
+class PoolDeclarations(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		return
+
+class PoolStatement(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		return
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += 'pool {\n'
+		for c in self.children:
+			s += c.format_config((tabs+1))
+		s += ' ' * tabs * 4
+		s += '}\n'
+		return s
+
+class TimeFormat(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		self.time_year = None
+		self.time_month = None
+		self.time_day = None
+		return
+
+	def value_format(self):
+		s = '%s/%s/%s'

@@ -35,7 +35,20 @@ class DhcpConfLex(object):
 		'members' : 'MEMBERS',
 		'of' : 'OF',
 		'range' : 'RANGE',
-		'deny' : 'DENY'
+		'deny' : 'DENY',
+		'no' : 'NO',
+		'failover' : 'FAILOVER',
+		'peer' : 'PEER',
+		'dynamic-bootp' : 'DYNAMIC_BOOTP',
+		'unknown' : 'UNKNOWN',
+		'known-clients' : 'KNOWN_CLIENTS',
+		'unknown-clients' : 'UNKNOWN_CLIENTS',
+		'known' : 'KNOWN',
+		'authenticated' : 'AUTHENTICATED',
+		'unauthenticated' : 'UNAUTHENTICATED',
+		'all' : 'ALL',
+		'dynamic' : 'DYNAMIC',
+		'bootp' : 'BOOTP'
 	}
 	tokens = ['HOST','TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER'] + list(reserved.values())
 	t_ignore = ' \t'
@@ -177,36 +190,10 @@ class DhcpConfLex(object):
 		#logging.info('SEMI lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
-	@lex.TOKEN('host')
-	def t_HOST(self,p):
-		p.startline = p.lexer.lineno
-		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
-		p.endpos = p.startpos + len(p.value)
-		p.endline = p.startline
-		#logging.info('HOST lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
-		return p
 
 
-	@lex.TOKEN('fixed-address')
-	def t_FIXED_ADDRESS(self,p):
-		p.startline = p.lexer.lineno
-		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
-		p.endpos = p.startpos + len(p.value)
-		p.endline = p.startline
-		#logging.info('FIXED_ADDRESS lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
-		return p
 
-	@lex.TOKEN('hardware')
-	def t_HARDWARE(self,p):
-		p.startline = p.lexer.lineno
-		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
-		p.endpos = p.startpos + len(p.value)
-		p.endline = p.startline
-		#logging.info('HARDWARE lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
-		return p
-
-
-	@lex.TOKEN(r'[a-zA-Z_0-9][a-zA-Z\-_0-9]*')
+	@lex.TOKEN(r'[a-zA-Z_0-9_\-][a-zA-Z\-_0-9]*')
 	def t_TEXT(self,p):
 		p.startline = p.lexer.lineno
 		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
