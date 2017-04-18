@@ -818,32 +818,37 @@ class DateFormat(YaccDhcpObject):
 	def format_config(self,tabs=0):
 		return self.value_format()
 
-class AllowDeclaration(YaccDhcpObject):
+class PermitDeclaration(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
 		if typename is None:
 			typename = self.__class__.__name__
 		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
-		self.allow_format = 'ALL'
+		self.permit_format = 'ALL'
+		self.mode = 'allow'
 		return
 
 	def set_after_date(self,datetime):
-		self.allow_format = 'after %s'%(datetime)
+		self.permit_format = 'after %s'%(datetime)
 		return True
 
 	def set_members_of(self,member):
-		self.allow_format = 'members of %s'%(member)
+		self.permit_format = 'members of %s'%(member)
 		return True
-		
+
 	def set_allow_mode(self,mode):
-		self.allow_format = mode
+		self.permit_format = mode
+		return True
+
+	def set_mode(self,mode):
+		self.mode=  mode
 		return True
 
 	def value_format(self):
-		return self.allow_format
+		return self.permit_format
 
 	def format_config(self,tabs=0):
 		s = ''
 		s += ' ' * tabs * 4
-		s += 'allow %s;\n'%(self.allow_format)
+		s += '%s %s;\n'%(self.mode,self.permit_format)
 		return s
 

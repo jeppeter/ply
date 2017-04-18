@@ -432,43 +432,69 @@ class DhcpConfYacc(object):
 		return
 
 	def p_pool_declaration_allow(self,p):
-		'''pool_declaration : allow_declaration
+		'''pool_declaration : permit_declaration
 		'''
 		p[0] = p[1]
 		p[1] = None
 		return
 
-	def p_allow_declaration_one_word(self,p):
-		'''allow_declaration : ALLOW UNKNOWN SEMI
+	def p_permit_declaration_one_word(self,p):
+		'''permit_declaration : ALLOW UNKNOWN SEMI
 			 | ALLOW KNOWN_CLIENTS SEMI
 			 | ALLOW UNKNOWN_CLIENTS SEMI
 			 | ALLOW KNOWN SEMI
 			 | ALLOW AUTHENTICATED SEMI
 			 | ALLOW UNAUTHENTICATED SEMI
 			 | ALLOW ALL SEMI
+			 | DENY UNKNOWN SEMI
+			 | DENY KNOWN_CLIENTS SEMI
+			 | DENY UNKNOWN_CLIENTS SEMI
+			 | DENY KNOWN SEMI
+			 | DENY AUTHENTICATED SEMI
+			 | DENY UNAUTHENTICATED SEMI
+			 | DENY ALL SEMI
 		'''
-		p[0] = dhcpconf.AllowDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
-		p[0].set_allow_mode(p.slice[2].value)
+		typename = 'Allow'
+		if p.slice[1].value == 'deny':
+			typename = 'Deny'
+		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0].set_mode(p.slice[1].value)
+		p[0].set_permit_mode(p.slice[2].value)
 		return
 
-	def p_allow_declaration_dynamic(self,p):
-		''' allow_declaration : ALLOW DYNAMIC BOOTP SEMI
+	def p_permit_declaration_dynamic(self,p):
+		''' permit_declaration : ALLOW DYNAMIC BOOTP SEMI
+		          | DENY DYNAMIC BOOTP SEMI
 		'''
-		p[0] = dhcpconf.AllowDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
-		p[0].set_allow_mode('dynamic bootp')
+		typename = 'Allow'
+		if p.slice[1].value == 'deny':
+			typename = 'Deny'
+		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].set_mode(p.slice[1].value)
+		p[0].set_permit_mode('dynamic bootp')
 		return
 
-	def p_allow_declaration_date_after(self,p):
-		'''allow_declaration : ALLOW AFTER date_format SEMI
+	def p_permit_declaration_date_after(self,p):
+		'''permit_declaration : ALLOW AFTER date_format SEMI
+		         | DENY AFTER date_format SEMI
 		'''
-		p[0] = dhcpconf.AllowDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		typename = 'Allow'
+		if p.slice[1].value == 'deny':
+			typename = 'Deny'
+		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].set_mode(p.slice[1].value)
 		p[0].set_after_date(p[3].value_format())
 		return
 
-	def p_allow_declaration_members_of(self,p):
-		''' allow_declaration : ALLOW MEMBERS OF TEXT SEMI
+	def p_permit_declaration_members_of(self,p):
+		''' permit_declaration : ALLOW MEMBERS OF TEXT SEMI
+		        | DENY MEMBERS OF TEXT SEMI
 		'''
-		p[0] = dhcpconf.AllowDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		typename = 'Allow'
+		if p.slice[1].value == 'deny':
+			typename = 'Deny'
+		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0].set_mode(p.slice[1].value)
 		p[0].set_members_of(p.slice[4].value)
 		return
 
