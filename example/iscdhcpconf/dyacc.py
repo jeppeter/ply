@@ -873,13 +873,156 @@ class DhcpConfYacc(object):
 		p[0].set_second(p.slice[5].value)
 		return
 
-	def p_expression_op(self,p):
-		''' expr_op : non_binary_expr_op binary_expr_op
+	def p_expr_op_basic(self,p):
+		''' expr_op : basic_expr_op
 		'''
+		p[0] = p[1]
+		p[1] = None
 		return
 
-	def p_non_binary_expr_op(self,p):
-		''' non_binary_expr_op : check_expr_op
+	def p_expr_op_not_equal(self,p):
+		''' expr_op : expr_op BANG EQUAL expr_op
+		'''
+		p[0] = dhcpconf.BangEqualExprOp(None,None,p[1],p[4])
+		p[0].append_child(p[1])
+		p[0].append_child(p[4])
+		p[1] = None
+		p[4] = None
+		return
+
+	def p_expr_op_equal(self,p):
+		''' expr_op : expr_op EQUAL expr_op
+		'''
+		p[0] = dhcpconf.EqualExprOp(None,None,p[1],p[3])
+		p[0].append_child(p[1])
+		p[0].append_child(p[3])
+		p[1] = None
+		p[3] = None
+		return
+
+	def p_expr_op_tidle_tidle(self,p):
+		''' expr_op : expr_op TIDLE TIDLE expr_op
+		'''
+		p[0] = dhcpconf.IRegExpExprOp(None,None,p[1],p[4])
+		p[0].append_child(p[1])
+		p[0].append_child(p[4])
+		p[1] = None
+		p[4] = None
+		return
+
+	def p_expr_op_tidle_equal(self,p):
+		''' expr_op : expr_op TIDLE EQUAL expr_op
+		'''
+		p[0] = dhcpconf.RegExpExprOp(None,None,p[1],p[4])
+		p[0].append_child(p[1])
+		p[0].append_child(p[4])
+		p[1] = None
+		p[4] = None
+		return
+
+	def p_expr_op_and(self,p):
+		''' expr_op : expr_op AND expr_op
+		'''
+		p[0] = dhcpconf.AndExprOp(None,None,p[1],p[3])
+		p[0].append_child(p[1])
+		p[0].append_child(p[3])
+		p[1] = None
+		p[3] = None
+		return
+
+	def p_expr_op_or(self,p):
+		''' expr_op : expr_op AND expr_op
+		'''
+		p[0] = dhcpconf.OrExprOp(None,None,p[1],p[3])
+		p[0].append_child(p[1])
+		p[0].append_child(p[3])
+		p[1] = None
+		p[3] = None
+		return
+
+	def p_expr_op_plus(self,p):
+		''' expr_op : expr_op PLUS expr_op
+		'''
+		p[0] = dhcpconf.PlusExprOp(None,None,p[1],p[3])
+		p[0].append_child(p[1])
+		p[0].append_child(p[3])
+		p[1] = None
+		p[3] = None
+		return
+
+	def p_expr_op_minus(self,p):
+		''' expr_op : expr_op MINUS expr_op
+		'''
+		p[0] = dhcpconf.MinusExprOp(None,None,p[1],p[3])
+		p[0].append_child(p[1])
+		p[0].append_child(p[3])
+		p[1] = None
+		p[3] = None
+		return
+
+	def p_expr_op_divide(self,p):
+		''' expr_op : expr_op SLASH expr_op
+		'''
+		p[0] = dhcpconf.DivideExprOp(None,None,p[1],p[3])
+		p[0].append_child(p[1])
+		p[0].append_child(p[3])
+		p[1] = None
+		p[3] = None
+		return
+
+	def p_expr_op_multiply(self,p):
+		''' expr_op : expr_op ASTERISK expr_op
+		'''
+		p[0] = dhcpconf.MultiplyExprOp(None,None,p[1],p[3])
+		p[0].append_child(p[1])
+		p[0].append_child(p[3])
+		p[1] = None
+		p[3] = None
+		return
+
+	def p_expr_op_mod(self,p):
+		''' expr_op : expr_op PERCENT expr_op
+		'''
+		p[0] = dhcpconf.ModExprOp(None,None,p[1],p[3])
+		p[0].append_child(p[1])
+		p[0].append_child(p[3])
+		p[1] = None
+		p[3] = None
+		return
+
+	def p_expr_op_bitand(self,p):
+		''' expr_op : expr_op AMPERSAND expr_op
+		'''
+		p[0] = dhcpconf.BitAndExprOp(None,None,p[1],p[3])
+		p[0].append_child(p[1])
+		p[0].append_child(p[3])
+		p[1] = None
+		p[3] = None
+		return
+
+	def p_expr_op_bitor(self,p):
+		''' expr_op : expr_op PIPE expr_op
+		'''
+		p[0] = dhcpconf.BitOrExprOp(None,None,p[1],p[3])
+		p[0].append_child(p[1])
+		p[0].append_child(p[3])
+		p[1] = None
+		p[3] = None
+		return
+
+	def p_expr_op_bitxor(self,p):
+		''' expr_op : expr_op CARET expr_op
+		'''
+		p[0] = dhcpconf.BitXorExprOp(None,None,p[1],p[3])
+		p[0].append_child(p[1])
+		p[0].append_child(p[3])
+		p[1] = None
+		p[3] = None
+		return
+
+
+	def p_basic_expr_op(self,p):
+		''' basic_expr_op : check_expr_op
 		        | not_expr_op
 		        | paren_expr_op
 		        | exists_expr_op
