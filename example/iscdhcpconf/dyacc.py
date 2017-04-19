@@ -38,7 +38,7 @@ class DhcpConfYacc(object):
 	def p_statements_empty(self,p):
 		''' statements : empty
 		'''
-		p[0] = dhcpconf.Statements(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[0] = dhcpconf.Statements(None,None,p[1],p[1])
 		p[1] = None
 		if self.statements is not None:
 			self.statements = None
@@ -70,7 +70,7 @@ class DhcpConfYacc(object):
 		'''
 		children = []
 		children.append(p[1])
-		p[0] = dhcpconf.Statement(None,children,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[0] = dhcpconf.Statement(None,children,p[1],p[1])
 		p[1] = None
 		return
 
@@ -80,7 +80,7 @@ class DhcpConfYacc(object):
 		'''
 		children = []
 		children.append(p[4])
-		p[0] = dhcpconf.SharedNetwork(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[5].startpos,p.slice[5].endpos)
+		p[0] = dhcpconf.SharedNetwork(None,children,p.slice[1],p.slice[5])
 		p[0].set_shared_host(p.slice[2].value)
 		p[4] = None
 		return
@@ -109,7 +109,7 @@ class DhcpConfYacc(object):
 	def p_interface_declaration(self,p):
 		''' interface_declaration : INTERFACE interface_name SEMI
 		'''
-		p[0] = dhcpconf.InterfaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0] = dhcpconf.InterfaceDeclaration(None,None,p.slice[1],p.slice[3])
 		p[0].set_interface(p[2].value_format())
 		logging.info('%s'%(p[0].format_config()))
 		return
@@ -117,14 +117,14 @@ class DhcpConfYacc(object):
 	def p_interface_name(self,p):
 		''' interface_name : TEXT
 		'''
-		p[0] = dhcpconf.InterfaceName(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0] = dhcpconf.InterfaceName(None,None,p.slice[1],p.slice[1])
 		p[0].start_interfacename(p.slice[1].value)		
 		return
 
 	def p_option_routers(self,p):
 		''' option_statement : OPTION ROUTERS host_name SEMI
 		'''
-		p[0] = dhcpconf.OptionStatement(None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0] = dhcpconf.OptionStatement(None,p.slice[1],p.slice[4])
 		p[0].set_routername(p[3].value_format())
 		p[3] = None
 		return
@@ -145,7 +145,7 @@ class DhcpConfYacc(object):
 		'''
 		children = []
 		children.append(p[4])
-		p[0] = dhcpconf.OptionSpace(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0] = dhcpconf.OptionSpace(None,children,p.slice[1],p.slice[5])
 		p[0].set_identify(p.slice[3].value)
 		p[4] = None
 		return
@@ -153,7 +153,7 @@ class DhcpConfYacc(object):
 	def p_option_space_decl_empty(self,p):
 		''' option_space_declarations : empty
 		'''
-		p[0] = dhcpconf.OptionSpaceDeclarations(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[0] = dhcpconf.OptionSpaceDeclarations(None,None,p[1],p[1])
 		p[1] = None
 		return
 
@@ -170,21 +170,21 @@ class DhcpConfYacc(object):
 	def p_option_space_declaration_code(self,p):
 		''' option_space_declaration : CODE WIDTH NUMBER
 		'''
-		p[0] = dhcpconf.OptionSpaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0] = dhcpconf.OptionSpaceDeclaration(None,None,p.slice[1],p.slice[3])
 		p[0].set_code(p.slice[3].value)
 		return
 
 	def p_option_space_declaration_length(self,p):
 		''' option_space_declaration : LENGTH WIDTH NUMBER
 		'''
-		p[0] = dhcpconf.OptionSpaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0] = dhcpconf.OptionSpaceDeclaration(None,None,p.slice[1],p.slice[3])
 		p[0].set_length(p.slice[3].value)
 		return
 
 	def p_option_space_declaration_hash(self,p):
 		''' option_space_declaration : HASH SIZE NUMBER
 		'''
-		p[0] = dhcpconf.OptionSpaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0] = dhcpconf.OptionSpaceDeclaration(None,None,p.slice[1],p.slice[3])
 		p[0].set_hash(p.slice[3].value)
 		return
 
@@ -200,7 +200,7 @@ class DhcpConfYacc(object):
 	def p_option_name_value_detail(self,p):
 		''' option_name_value : OPTION option_name option_values SEMI
 		'''
-		p[0] = dhcpconf.OptionNameValue(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0] = dhcpconf.OptionNameValue(None,None,p.slice[1],p.slice[4])
 		p[0].set_name(p[2])
 		p[0].set_value(p[3])
 		p[2] = None
@@ -212,10 +212,10 @@ class DhcpConfYacc(object):
 			   | TEXT DOT TEXT
 		'''
 		if len(p) == 2:
-			p[0] = dhcpconf.OptionName(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+			p[0] = dhcpconf.OptionName(None,None,p.slice[1],p.slice[1])
 			p[0].set_name(p.slice[1].value)
 		else:
-			p[0] = dhcpconf.OptionName(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+			p[0] = dhcpconf.OptionName(None,None,p.slice[1],p.slice[3])
 			value = '%s.%s'%(p.slice[1].value,p.slice[3].value)
 			p[0].set_name(value)
 		return
@@ -240,7 +240,7 @@ class DhcpConfYacc(object):
 	def p_option_value_code(self,p):
 		''' option_value : CODE NUMBER EQUAL option_code_clauses
 		'''
-		p[0] = dhcpconf.OptionValue(None,None,p.slice[1].startline,p.slice[1].startpos,p[4].endline,p[4].endpos)
+		p[0] = dhcpconf.OptionValue(None,None,p.slice[1],p[4])
 		p[0].set_code_child(p.slice[2].value,p[4])
 		p[4] = None
 		return
@@ -248,7 +248,7 @@ class DhcpConfYacc(object):
 	def p_option_value_equal(self,p):
 		''' option_value : EQUAL data_expression_op
 		'''
-		p[0] = dhcpconf.OptionValue(None,None,p.slice[1].startline,p.slice[1].startpos,p[2].endline,p[2].endpos)
+		p[0] = dhcpconf.OptionValue(None,None,p.slice[1],p[2])
 		p[0].set_equal_child(p[2])
 		p[2] = None
 		return
@@ -256,7 +256,7 @@ class DhcpConfYacc(object):
 	def p_option_value_data(self,p):
 		''' option_value : option_data
 		'''
-		p[0] = dhcpconf.OptionValue(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[0] = dhcpconf.OptionValue(None,None,p[1],p[1])
 		p[0].set_data_child(p[1])
 		p[1] = None
 		return
@@ -264,14 +264,14 @@ class DhcpConfYacc(object):
 	def p_option_value_empty(self,p):
 		''' option_value : empty
 		'''
-		p[0] = dhcpconf.OptionValue(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0] = dhcpconf.OptionValue(None,None,p[1],p[1])
 		p[1] = None
 		return
 
 	def p_option_code_clauses_empty(self,p):
 		''' option_code_clauses : empty
 		'''
-		p[0] = dhcpconf.OptionCodeClauses(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[0] = dhcpconf.OptionCodeClauses(None,None,p[1],p[1])
 		p[1] = None
 		return
 
@@ -288,7 +288,7 @@ class DhcpConfYacc(object):
 	def p_option_code_clause_ocsd_type(self,p):
 		''' option_code_clause : ocsd_type
 		'''
-		p[0] = dhcpconf.OptionCodeClause(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[0] = dhcpconf.OptionCodeClause(None,None,p[1],p[1])
 		p[0].append_child(p[1])
 		p[1] = None
 		return
@@ -296,7 +296,7 @@ class DhcpConfYacc(object):
 	def p_option_code_clause_ocsd_type_sequence(self,p):
 		'''option_code_clause  : ocsd_type_sequence
 		'''
-		p[0] = dhcpconf.OptionCodeClause(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[0] = dhcpconf.OptionCodeClause(None,None,p[1],p[1])
 		p[0].append_child(p[1])
 		p[1] = None
 		return
@@ -304,7 +304,7 @@ class DhcpConfYacc(object):
 	def p_option_code_clause_ocsd_simple_type_sequence(self,p):
 		'''option_code_clause : ARRAY OF ocsd_simple_type_sequence
 		'''
-		p[0] = dhcpconf.OptionCodeClause(None,None,p.slice[1].startline,p.slice[1].startpos,p[3].endline,p[3].endpos)
+		p[0] = dhcpconf.OptionCodeClause(None,None,p.slice[1],p[3])
 		p[0].append_array_child(p[3])
 		p[1] = None
 		return
@@ -312,7 +312,8 @@ class DhcpConfYacc(object):
 	def p_ocsd_type_sequence(self,p):
 		''' ocsd_type_sequence : LBRACE ocsd_types RBRACE
 		'''
-		p[0] = p[2]
+		p[0] = dhcpconf.OptionCodeSequence(None,None,p.slice[1],p.slice[3])
+		p[0].append_child(p[2])
 		p[1] = None
 		return
 
@@ -338,11 +339,11 @@ class DhcpConfYacc(object):
 		        | ARRAY OF ocsd_simple_type
 		'''
 		if len(p) == 2:
-			p[0] = dhcpconf.OptionCodeSimpleType(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+			p[0] = dhcpconf.OptionCodeSimpleType(None,None,p[1],p[1])
 			p[0].append_child(p[1])
 			p[1] = None
 		else:
-			p[0] = dhcpconf.OptionCodeSimpleType(None,None,p.slice[1].startline,p.slice[1].startpos,p[3].endline,p[3].endpos)
+			p[0] = dhcpconf.OptionCodeSimpleType(None,None,p.slice[1],p[3])
 			p[0].append_array_child(p[3])
 			p[3] = None
 		return
@@ -369,7 +370,7 @@ class DhcpConfYacc(object):
 		         | IP_ADDRESS
 		         | ZEROLEN
 		'''
-		p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1],p.slice[1])
 		p[0].set_type_name(p.slice[1].value)
 		return
 
@@ -379,11 +380,11 @@ class DhcpConfYacc(object):
 		         | UNSIGNED INTEGER NUMBER
 		'''
 		if len(p) == 3:
-			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
+			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1],p.slice[2])
 			p[0].set_type_name('integer')
 			p[0].set_number(p.slice[2].value)
 		elif len(p) == 4:
-			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1],p.slice[3])
 			typename = '%s %s'%(p.slice[1].value,p.slice[2].value)
 			p[0].set_type_name(typename)
 			p[0].set_number(p.slice[3].value)
@@ -394,26 +395,13 @@ class DhcpConfYacc(object):
 		          | ENCAPSULATE TEXT
 		'''
 		if len(p) == 2:
-			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1],p.slice[1])
 			p[0].set_text(p.slice[1].value)
 		else:
-			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
+			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1],p.slice[2])
 			p[0].set_type_name('encapsulate')
 			p[0].set_text(p.slice[2].value)
 		return
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 	def p_host_statement(self,p):
@@ -422,7 +410,7 @@ class DhcpConfYacc(object):
 		children = []
 		# this is for declarations
 		children.append(p[4])
-		p[0] = dhcpconf.HostStatement(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos) 
+		p[0] = dhcpconf.HostStatement(None,children,p.slice[1],p.slice[5])
 		p[0].set_hostname(p[2])
 		p[2] = None
 		p[4] = None
@@ -434,7 +422,7 @@ class DhcpConfYacc(object):
 			| host_name COLON NUMBER
 		'''		
 		p[0] = p[1]
-		p[0].append_colone_text(p.slice[3].value,p.slice[3].endline,p.slice[3].endpos)
+		p[0].append_colone_text(p.slice[3].value,p.slice[3])
 		p[1] = None
 		return
 
@@ -443,7 +431,7 @@ class DhcpConfYacc(object):
 			| host_name DOT NUMBER
 		'''
 		p[0] = p[1]
-		p[0].append_dot_text(p.slice[3].value,p.slice[3].endline,p.slice[3].endpos)
+		p[0].append_dot_text(p.slice[3].value,p.slice[3])
 		p[1] = None
 		return
 
@@ -451,7 +439,7 @@ class DhcpConfYacc(object):
 		''' host_name : TEXT
 			| NUMBER
 		'''
-		p[0] = dhcpconf.HostName(None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0] = dhcpconf.HostName(None,p.slice[1],p.slice[1])
 		p[0].start_hostname(p.slice[1].value)
 		return
 
@@ -461,21 +449,21 @@ class DhcpConfYacc(object):
 		''' dns_name : dns_name DOT TEXT
 		'''
 		p[0] = p[1]
-		p[0].append_dot_name(p.slice[3].value,p.slice[3].endline,p.slice[3].endpos)
+		p[0].append_dot_name(p.slice[3].value,p.slice[3])
 		p[1] = None
 		return
 
 	def p_dns_name_text(self,p):
 		''' dns_name : TEXT 
 		'''
-		p[0] = dhcpconf.DnsName(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0] = dhcpconf.DnsName(None,None,p.slice[1],p.slice[1])
 		p[0].start_dnsname(p.slice[1].value)
 		return
 
 	def p_declarations_empty(self,p):
 		'''declarations : empty
 		'''
-		declarations = dhcpconf.Declarations(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		declarations = dhcpconf.Declarations(None,None,p[1],p[1])
 		p[0] = declarations
 		p[1] = None
 		return
@@ -483,7 +471,7 @@ class DhcpConfYacc(object):
 	def p_declarations_declaration(self,p):
 		''' declarations : declarations declaration
 		'''
-		declarations = dhcpconf.Declarations(None,None,p[1].startline,p[1].startpos,p[2].endline,p[2].endpos)
+		declarations = dhcpconf.Declarations()
 		declarations.extend_children(p[1].children)
 		declarations.append_child(p[2])
 		declarations.set_pos_by_children()
@@ -494,7 +482,7 @@ class DhcpConfYacc(object):
 	def p_prefix6_statement(self,p):
 		''' prefix6_statement : PREFIX6 ipv6_addr ipv6_addr SLASH NUMBER SEMI
 		'''
-		p[0] = dhcpconf.Prefix6Statement(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[6].endline,p.slice[6].endpos)
+		p[0] = dhcpconf.Prefix6Statement(None,None,p.slice[1],p.slice[6])
 		p[0].set_ipv6_pair(p[2].value_format(),p[3].value_format())
 		p[0].set_mask(p.slice[5].value)
 		p[2] = None
@@ -504,7 +492,7 @@ class DhcpConfYacc(object):
 	def p_fixed_prefix6_statement(self,p):
 		''' fixed_prefix6_statement : FIXED_PREFIX6 ipv6_addr SLASH NUMBER SEMI
 		'''
-		p[0] = dhcpconf.FixedPrefix6Statement(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0] = dhcpconf.FixedPrefix6Statement(None,None,p.slice[1],p.slice[5])
 		p[0].set_ipv6(p[2].value_format())
 		p[0].set_mask(p.slice[4].value)
 		p[2] = None
@@ -519,6 +507,7 @@ class DhcpConfYacc(object):
 		children.append(p[1])
 		p[0] = dhcpconf.Declaration(children)
 		p[0].set_pos_by_children()
+		p[1] = None
 		return
 
 	def p_hardware_declaration(self,p):
@@ -531,7 +520,7 @@ class DhcpConfYacc(object):
 		''' hardware_type : ETHERNET macaddr
 		'''
 		p[2].check_valid_macaddr()
-		hardwaretype = dhcpconf.HardwareType('ethernet',None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		hardwaretype = dhcpconf.HardwareType('ethernet',None,p.slice[1],p.slice[1])
 		children = []
 		children.append(hardwaretype)
 		children.append(p[2])
@@ -547,10 +536,10 @@ class DhcpConfYacc(object):
 				| NUMBER
 		'''
 		if len(p) == 2:
-			macobj = dhcpconf.MacAddress(p.slice[1].value,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+			macobj = dhcpconf.MacAddress(p.slice[1].value,None,p.slice[1],p.slice[1])
 		else:
 			macobj = p[1]
-			macobj.append_colon_part(p.slice[3].value,p.slice[3].endline,p.slice[3].endpos)
+			macobj.append_colon_part(p.slice[3].value,p.slice[3])
 			p[1] = None
 		p[0] = macobj
 		return
@@ -561,7 +550,7 @@ class DhcpConfYacc(object):
 	def p_fixed_address(self,p):
 		''' fixed_address_declaration : FIXED_ADDRESS host_name SEMI
 		'''
-		p[0] = dhcpconf.FixedAddressDeclaration(p[2].value_format(),None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0] = dhcpconf.FixedAddressDeclaration(p[2].value_format(),None,p.slice[1],p.slice[3])
 		p[2] = None
 		return
 
@@ -570,7 +559,7 @@ class DhcpConfYacc(object):
 		'''
 		children = []
 		children.append(p[6])
-		p[0] = dhcpconf.SubnetStatement(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[7].endline,p.slice[7].endpos)
+		p[0] = dhcpconf.SubnetStatement(None,children,p.slice[1],p.slice[7])
 		p[0].set_ipaddr(p[2].value_format())
 		p[0].set_mask(p[4].value_format())
 		p[2] = None
@@ -604,10 +593,10 @@ class DhcpConfYacc(object):
 		         | AUTHORITATIVE SEMI
 		'''
 		if len(p) == 4:
-			p[0] = dhcpconf.AuthoritativeStatement(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+			p[0] = dhcpconf.AuthoritativeStatement(None,None,p.slice[1],p.slice[3])
 			p[0].set_mode('not')
 		else:
-			p[0] = dhcpconf.AuthoritativeStatement(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
+			p[0] = dhcpconf.AuthoritativeStatement(None,None,p.slice[1],p.slice[2])
 		return
 
 
@@ -624,7 +613,7 @@ class DhcpConfYacc(object):
 	def p_ipv4_addr(self,p):
 		''' ipv4_addr : NUMBER DOT NUMBER DOT NUMBER DOT NUMBER
 		'''
-		p[0] = dhcpconf.IpAddress(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[7].endline,p.slice[7].endpos)
+		p[0] = dhcpconf.IpAddress(None,None,p.slice[1],p.slice[7])
 		value = ''
 		for i in range(4):
 			if len(value) > 0:
@@ -642,14 +631,14 @@ class DhcpConfYacc(object):
 				p.slice[3].startpos,p.slice[3].endline,p.slice[3].endpos,p.slice[3].value))
 		p[0] = p[1]
 		p[1] = None
-		p[0].append_ipv6(p.slice[3].value,p.slice[3].endline,p.slice[3].endpos)
+		p[0].append_ipv6(p.slice[3].value,p.slice[3])
 		return
 
 	def p_ipv6_addr_colon(self,p):
 		''' ipv6_addr : ipv6_addr COLON
 		'''
 		p[0] = p[1]
-		p[0].append_ipv6_colon(p.slice[2].endline,p.slice[2].endpos)
+		p[0].append_ipv6_colon(p.slice[2])
 		p[1] = None
 		return
 
@@ -658,7 +647,7 @@ class DhcpConfYacc(object):
 				| NUMBER
 		'''
 		p[0] = dhcpconf.IpAddress()
-		p[0].start_ipv6_address(p.slice[1].value,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0].start_ipv6_address(p.slice[1].value,p.slice[1],p.slice[1])
 		return
 
 	def p_ipmask(self,p):
@@ -675,7 +664,7 @@ class DhcpConfYacc(object):
 		'''
 		children = []
 		children.append(p[3])
-		p[0] = dhcpconf.PoolStatement(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0] = dhcpconf.PoolStatement(None,children,p.slice[1],p.slice[4])
 		p[3] = None
 		return
 
@@ -702,14 +691,14 @@ class DhcpConfYacc(object):
 	def p_pool_declaration_no_failover(self,p):
 		''' pool_declaration : NO FAILOVER PEER SEMI
 		'''
-		p[0] = dhcpconf.Failover(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0] = dhcpconf.Failover(None,None,p.slice[1],p.slice[4])
 		p[0].set_no_failover()
 		return
 
 	def p_pool_declaration_failover_peer(self,p):
 		''' pool_declaration : FAILOVER PEER dns_name SEMI
 		'''
-		p[0] = dhcpconf.Failover(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0] = dhcpconf.Failover(None,None,p.slice[1],p.slice[4])
 		p[0].set_failover(p[3].value_format())
 		p[3] = None
 		return
@@ -725,7 +714,7 @@ class DhcpConfYacc(object):
 		'''range_declaration : RANGE ipaddr ipaddr SEMI
 		         | RANGE6 ipaddr ipaddr SEMI
 		'''
-		p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0] = dhcpconf.IpRange(None,None,p.slice[1],p.slice[4])
 		p[0].set_mode(p.slice[1].value)
 		p[0].set_range_ips(p[2].value_format(),p[3].value_format())
 		p[2] = None
@@ -736,7 +725,7 @@ class DhcpConfYacc(object):
 		'''range_declaration : RANGE ipaddr SEMI
 		       | RANGE6 ipaddr SEMI
 		'''
-		p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0] = dhcpconf.IpRange(None,None,p.slice[1],p.slice[3])
 		p[0].set_mode(p.slice[1].value)
 		p[0].set_range_ips(p[2].value_format(),p[2].value_format())
 		p[2] = None
@@ -750,10 +739,10 @@ class DhcpConfYacc(object):
 			| RANGE6 DYNAMIC_BOOTP ipaddr SEMI
 		'''
 		if len(p) == 5:
-			p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+			p[0] = dhcpconf.IpRange(None,None,p.slice[1],p.slice[4])
 			p[3] = None
 		else:
-			p[0] = dhcpconf.IpRange(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+			p[0] = dhcpconf.IpRange(None,None,p.slice[1],p.slice[5])
 			p[3] = None
 			p[4] = None
 		p[0].set_mode(p.slice[1].value)
@@ -786,7 +775,7 @@ class DhcpConfYacc(object):
 		typename = 'Allow'
 		if p.slice[1].value == 'deny':
 			typename = 'Deny'
-		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1],p.slice[3])
 		p[0].set_mode(p.slice[1].value)
 		p[0].set_permit_mode(p.slice[2].value)
 		return
@@ -798,7 +787,7 @@ class DhcpConfYacc(object):
 		typename = 'Allow'
 		if p.slice[1].value == 'deny':
 			typename = 'Deny'
-		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1],p.slice[4])
 		p[0].set_mode(p.slice[1].value)
 		p[0].set_permit_mode('dynamic bootp')
 		return
@@ -810,7 +799,7 @@ class DhcpConfYacc(object):
 		typename = 'Allow'
 		if p.slice[1].value == 'deny':
 			typename = 'Deny'
-		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1],p.slice[4])
 		p[0].set_mode(p.slice[1].value)
 		p[0].set_after_date(p[3].value_format())
 		return
@@ -822,7 +811,7 @@ class DhcpConfYacc(object):
 		typename = 'Allow'
 		if p.slice[1].value == 'deny':
 			typename = 'Deny'
-		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0] = dhcpconf.PermitDeclaration(typename,None,p.slice[1],p.slice[5])
 		p[0].set_mode(p.slice[1].value)
 		p[0].set_members_of(p.slice[4].value)
 		return
@@ -831,14 +820,14 @@ class DhcpConfYacc(object):
 	def p_date_format_never(self,p):
 		''' date_format : NEVER
 		'''
-		p[0] = dhcpconf.DateFormat(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0] = dhcpconf.DateFormat(None,None,p.slice[1],p.slice[1])
 		p[0].set_never()
 		return
 
 	def p_date_format_epoch(self,p):
 		''' date_format : EPOCH NUMBER
 		'''
-		p[0] = dhcpconf.DateFormat(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0] = dhcpconf.DateFormat(None,None,p.slice[1],p.slice[1])
 		p[0].set_epoch(p.slice[2].value)
 		return
 
@@ -848,9 +837,9 @@ class DhcpConfYacc(object):
 			|  day_format time_format MINUS NUMBER
 		'''
 		if len(p) == 3:
-			p[0] = dhcpconf.DateFormat(None,None,p[1].startline,p[1].startpos,p[2].endline,p[2].endpos)
+			p[0] = dhcpconf.DateFormat(None,None,p[1],p[2])
 		elif len(p) == 5:
-			p[0] = dhcpconf.DateFormat(None,None,p[1].startline,p[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+			p[0] = dhcpconf.DateFormat(None,None,p[1],p.slice[4])
 		else:
 			raise Exception('unknown date_format')
 		p[0].set_date(p[1].value_format())
@@ -869,7 +858,7 @@ class DhcpConfYacc(object):
 	def p_day_format(self,p):
 		''' day_format : NUMBER SLASH NUMBER SLASH NUMBER
 		'''
-		p[0] = dhcpconf.DayFormat(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0] = dhcpconf.DayFormat(None,None,p.slice[1],p.slice[5])
 		p[0].set_year(p.slice[1].value)
 		p[0].set_month(p.slice[3].value)
 		p[0].set_day(p.slice[5].value)
@@ -878,7 +867,7 @@ class DhcpConfYacc(object):
 	def p_time_format(self,p):
 		''' time_format : NUMBER COLON NUMBER COLON NUMBER
 		'''
-		p[0] = dhcpconf.TimeFormat(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0] = dhcpconf.TimeFormat(None,None,p.slice[1],p.slice[5])
 		p[0].set_hour(p.slice[1].value)
 		p[0].set_minute(p.slice[3].value)
 		p[0].set_second(p.slice[5].value)
@@ -917,14 +906,14 @@ class DhcpConfYacc(object):
 	def p_check_expr_op(self,p):
 		''' check_expr_op : CHECK TEXT
 		'''
-		p[0] = dhcpconf.CheckExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
+		p[0] = dhcpconf.CheckExprOp(None,None,p.slice[1],p.slice[2])
 		p[0].set_check_text(p.slice[2].value)
 		return
 
 	def p_not_expr_op(self,p):
 		''' not_expr_op : NOT boolean_expr_op
 		'''
-		p[0] = dhcpconf.NotExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p[2].endline,p[2].endpos)
+		p[0] = dhcpconf.NotExprOp(None,None,p.slice[1],p[2])
 		p[0].append_child(p[2])
 		p[2] = None
 		return
@@ -932,7 +921,7 @@ class DhcpConfYacc(object):
 	def p_exists_expr_op(self,p):
 		''' exists_expr_op : EXISTS option_name
 		'''
-		p[0] = dhcpconf.ExistsExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p[2].endline,p[2].endpos)
+		p[0] = dhcpconf.ExistsExprOp(None,None,p.slice[1],p[2])
 		p[0].append_child(p[1])
 		p[1] = None
 		return
@@ -940,7 +929,7 @@ class DhcpConfYacc(object):
 	def p_paren_expr_op(self,p):
 		''' paren_expr_op : LPAREN expr_op RPAREN
 		'''
-		p[0] = dhcpconf.ParenExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0] = dhcpconf.ParenExprOp(None,None,p.slice[1],p.slice[3])
 		p[0].append_child(p[2])
 		p[2] = None
 		return
@@ -948,13 +937,13 @@ class DhcpConfYacc(object):
 	def p_static_expr_op(self,p):
 		''' static_expr_op : STATIC
 		'''
-		p[0] = dhcpconf.StaticExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0] = dhcpconf.StaticExprOp(None,None,p.slice[1],p.slice[1])
 		return
 
 	def p_known_expr_op(self,p):
 		''' known_expr_op : KNOWN
 		'''
-		p[0] = dhcpconf.KnownExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0] = dhcpconf.KnownExprOp(None,None,p.slice[1],p.slice[1])
 		return
 
 	def p_substring_expr_op(self,p):
@@ -1012,6 +1001,28 @@ class DhcpConfYacc(object):
 			p[0].set_pos_by_children()
 			p[3] = None
 			p[1] = None
+		return
+
+	def p_binary_to_ascii_expr_op(self,p):		
+		''' binary_to_ascii_expr_op : BINARY_TO_ASCII LPAREN NUMBER COMMA NUMBER COMMA data_expr_op COMMA data_expr_op RPAREN
+		'''
+		## to base width seperator buffer
+		p[0] = dhcpconf.BinaryToAsciiExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[10].endline,p.slice[10].endpos)
+		p[0].set_base(p.slice[3].value)
+		p[0].set_width(p.slice[5].value)
+		p[0].set_seperator(p[7])
+		p[0].set_buffer(p[9])
+		p[7] = None
+		p[9] = None
+		return
+
+	def p_reverse_expr_op(self,p):
+		''' reverse_expr_op : REVERSE LPAREN NUMBER COMMA data_expr_op RPAREN
+		'''
+		p[0] = dhcpconf.ReverseExprOp(None,None,p.slice[1],p.slice[6])
+		p[0].set_width(p.slice[3].value)
+		p[0].set_buffer(p[5])
+		p[5] = None
 		return
 
 

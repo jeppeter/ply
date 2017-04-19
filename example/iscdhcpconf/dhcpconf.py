@@ -6,7 +6,7 @@ import re
 import time
 
 class YaccDhcpObject(object):
-	def __init__(self,typename='',children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename='',children=None,startelm=None,endelm=None):
 		self.children = []
 		self.parent = None
 		self.typename = typename
@@ -14,6 +14,10 @@ class YaccDhcpObject(object):
 		self.startpos = 1
 		self.endline = 1
 		self.endpos = 1
+		startline = getattr(startelm,'startline',None)
+		startpos = getattr(startelm,'startpos',None)
+		endline = getattr(endelm,'endline',None)
+		endpos = getattr(endelm,'endpos',None)
 		if startline is not None:
 			self.startline = startline
 		if startpos is not None:
@@ -159,24 +163,41 @@ class YaccDhcpObject(object):
 		s += self.format_children_config(tabs)
 		return s
 
-	def set_endpos(self,endline=None,endpos=None):
+	def set_startpos(self,startelm=None):
+		startline = None
+		startpos = None
+		if startelm is not None:
+			startline = getattr(startelm,'startline',None)
+			startpos = getattr(startelm,'startpos',None)
+		if startline is not None and startpos is not None:
+			self.startline = startline
+			self.startpos = startpos
+		return
+
+
+	def set_endpos(self,endelm=None):
+		endline = None
+		endpos = None
+		if endelm is not None:
+			endline = getattr(endelm,'endline',None)
+			endpos = getattr(endelm,'endpos',None)
 		if endline is not None and endpos is not None:
 			self.endline = endline
 			self.endpos = endpos
 		return
 
 class MacAddress(YaccDhcpObject):
-	def __init__(self,macaddr='0',children=None,startline=None,startpos=None,endline=None,endpos=None):
-		super(MacAddress,self).__init__('MacAddress',children,startline,startpos,endline,endpos)
+	def __init__(self,macaddr='0',children=None,startelm=None,endelm=None):
+		super(MacAddress,self).__init__('MacAddress',children,startelm,endelm)
 		self.macaddr = macaddr
 		return
 
 	def value_format(self):
 		return '%s'%(self.macaddr)
 
-	def append_colon_part(self,value,endline=None,endpos=None):
+	def append_colon_part(self,value,endelm=None):
 		self.macaddr += ':%s'%(value)
-		self.set_endpos(endline,endpos)
+		self.set_endpos(endelm)
 		return True
 
 	def check_valid_macaddr(self):
@@ -191,8 +212,8 @@ class MacAddress(YaccDhcpObject):
 
 
 class HardwareType(YaccDhcpObject):
-	def __init__(self,hardwaretype='',children=None,startline=None,startpos=None,endline=None,endpos=None):
-		super(HardwareType,self).__init__('HardwareType',children,startline,startpos,endline,endpos)
+	def __init__(self,hardwaretype='',children=None,startelm=None,endelm=None):
+		super(HardwareType,self).__init__('HardwareType',children,startelm,endelm)
 		self.hardwaretype = hardwaretype
 		return
 
@@ -208,8 +229,8 @@ class HardwareType(YaccDhcpObject):
 
 
 class HardwareDeclaration(YaccDhcpObject):
-	def __init__(self,children=None,startline=None,startpos=None,endline=None,endpos=None):
-		super(HardwareDeclaration,self).__init__('HardwareDeclaration',children,startline,startpos,endline,endpos)
+	def __init__(self,children=None,startelm=None,endelm=None):
+		super(HardwareDeclaration,self).__init__('HardwareDeclaration',children,startelm,endelm)
 		return
 
 	def format_config(self,tabs=0):
@@ -224,8 +245,8 @@ class HardwareDeclaration(YaccDhcpObject):
 		return s
 
 class FixedAddressDeclaration(YaccDhcpObject):
-	def __init__(self,fixedaddress='',children=None,startline=None,startpos=None,endline=None,endpos=None):
-		super(FixedAddressDeclaration,self).__init__('FixedAddressDeclaration',children,startline,startpos,endline,endpos)
+	def __init__(self,fixedaddress='',children=None,startelm=None,endelm=None):
+		super(FixedAddressDeclaration,self).__init__('FixedAddressDeclaration',children,startelm,endelm)
 		self.fixedaddress = fixedaddress
 		return
 
@@ -239,8 +260,8 @@ class FixedAddressDeclaration(YaccDhcpObject):
 		return s
 
 class Declaration(YaccDhcpObject):
-	def __init__(self,children=None,startline=None,startpos=None,endline=None,endpos=None):
-		super(Declaration,self).__init__('Declaration',children,startline,startpos,endline,endpos)
+	def __init__(self,children=None,startelm=None,endelm=None):
+		super(Declaration,self).__init__('Declaration',children,startelm,endelm)
 		return
 
 	def format_config(self,tabs=0):
@@ -250,10 +271,10 @@ class Declaration(YaccDhcpObject):
 		return s
 
 class Declarations(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'Declarations'
-		super(Declarations,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(Declarations,self).__init__(typename,children,startelm,endelm)
 		return
 
 
@@ -264,10 +285,10 @@ class Declarations(YaccDhcpObject):
 
 
 class HostName(YaccDhcpObject):
-	def __init__(self,typename=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'HostName'
-		super(HostName,self).__init__(typename,None,startline,startpos,endline,endpos)
+		super(HostName,self).__init__(typename,None,startelm,endelm)
 		self.hostname = None
 		return
 
@@ -284,27 +305,27 @@ class HostName(YaccDhcpObject):
 		self.hostname= value
 		return True
 
-	def append_colone_text(self,value,endline=None,endpos=None):
+	def append_colone_text(self,value,endelm=None):
 		if self.hostname is None:
 			return False
 		self.hostname += ':%s'%(value)
-		self.set_endpos(endline,endpos)
+		self.set_endpos(endelm)
 		return True
 
-	def append_dot_text(self,value,endline=None,endpos=None):
+	def append_dot_text(self,value,endelm=None):
 		if self.hostname is None:
 			return False
 		self.hostname += '.%s'%(value)
-		self.set_endpos(endline,endpos)
+		self.set_endpos(endelm)
 		return True
 
 
 
 class HostStatement(Declarations):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'HostStatement'
-		super(HostStatement,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(HostStatement,self).__init__(typename,children,startelm,endelm)
 		self.hostname = None
 		return
 
@@ -332,10 +353,10 @@ class HostStatement(Declarations):
 		return s
 
 class Statement(HostStatement):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'Statement'
-		super(Statement,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(Statement,self).__init__(typename,children,startelm,endelm)
 		return
 
 	def format_config(self,tabs=0):
@@ -344,18 +365,18 @@ class Statement(HostStatement):
 		return s
 
 class Statements(Statement):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'Statements'
-		super(Statements,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(Statements,self).__init__(typename,children,startelm,endelm)
 		return
 
 
 class SharedNetwork(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'SharedNetwork'
-		super(SharedNetwork,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(SharedNetwork,self).__init__(typename,children,startelm,endelm)
 		self.sharedhost = ''
 		return
 
@@ -376,18 +397,18 @@ class SharedNetwork(YaccDhcpObject):
 		return s
 
 class SharedNetworkDeclarations(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'SharedDeclarations'
-		super(SharedNetworkDeclarations,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(SharedNetworkDeclarations,self).__init__(typename,children,startelm,endelm)
 		return
 
 
 class SubnetStatement(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'SubnetStatement'
-		super(SubnetStatement,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(SubnetStatement,self).__init__(typename,children,startelm,endelm)
 		self.ipaddr = None
 		self.ipmask = None
 		return
@@ -427,10 +448,10 @@ class SubnetStatement(YaccDhcpObject):
 		return s
 
 class SubNetworkDeclarations(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'SubDeclarations'
-		super(SubNetworkDeclarations,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(SubNetworkDeclarations,self).__init__(typename,children,startelm,endelm)
 		return
 
 	def format_config(self,tabs=0):
@@ -440,10 +461,10 @@ class SubNetworkDeclarations(YaccDhcpObject):
 
 
 class InterfaceDeclaration(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'InterfaceDeclaration'
-		super(InterfaceDeclaration,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(InterfaceDeclaration,self).__init__(typename,children,startelm,endelm)
 		self.interface = ''
 		return
 
@@ -462,10 +483,10 @@ class InterfaceDeclaration(YaccDhcpObject):
 
 
 class IpAddress(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'IpAddress'
-		super(IpAddress,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(IpAddress,self).__init__(typename,children,startelm,endelm)
 		self.ipv4addr = None
 		self.ipv6addr = None
 		return
@@ -480,7 +501,7 @@ class IpAddress(YaccDhcpObject):
 		self.ipv4addr = value
 		return True
 
-	def start_ipv6_address(self,value,startline=None,startpos=None,endline=None,endpos=None):
+	def start_ipv6_address(self,value,startelm=None,endelm=None):
 		self.ipv6addr = value
 		if startline is not None and startpos is not None \
 			and endline is not None and endpos is not None:
@@ -490,19 +511,19 @@ class IpAddress(YaccDhcpObject):
 			self.endpos = endpos
 		return True
 
-	def append_ipv6_colon(self,endline=None,endpos=None):
+	def append_ipv6_colon(self,endelm=None):
 		if self.ipv6addr is None:
 			return False
 		self.ipv6addr += ':'
-		self.set_endpos(endline,endpos)
+		self.set_endpos(endelm)
 		return True
 
-	def append_ipv6(self,value,endline=None,endpos=None):
+	def append_ipv6(self,value,endelm=None):
 		if self.ipv6addr is None:
 			return False
 		self.ipv6addr += ':'
 		self.ipv6addr += value
-		self.set_endpos(endline,endpos)
+		self.set_endpos(endelm)
 		return True
 
 	def __format_ipv6(self):
@@ -529,10 +550,10 @@ class IpAddress(YaccDhcpObject):
 
 
 class DnsName(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'DnsName'
-		super(IpAddress,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(IpAddress,self).__init__(typename,children,startelm,endelm)
 		self.dnsname = None
 		return
 
@@ -552,18 +573,18 @@ class DnsName(YaccDhcpObject):
 		self.dnsname = value
 		return
 
-	def append_dot_name(self,value,endline=None,endpos=None):
+	def append_dot_name(self,value,endelm=None):
 		if self.dnsname is None:
 			return False
 		self.dnsname += '.%s'%(value)
-		self.set_endpos(endline,endpos)
+		self.set_endpos(endelm)
 		return
 
 class InterfaceName(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'InterfaceName'
-		super(InterfaceName,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(InterfaceName,self).__init__(typename,children,startelm,endelm)
 		self.interfacename = None
 		return
 
@@ -582,10 +603,10 @@ class InterfaceName(YaccDhcpObject):
 		return
 
 class OptionStatement(YaccDhcpObject):
-	def __init__(self,typename=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'OptionStatement'
-		super(OptionStatement,self).__init__(typename,None,startline,startpos,endline,endpos)
+		super(OptionStatement,self).__init__(typename,None,startelm,endelm)
 		self.option_format  = None
 		return
 
@@ -607,10 +628,10 @@ class OptionStatement(YaccDhcpObject):
 		return True
 
 class SubnetDeclarations(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'SubnetDeclarations'
-		super(SubnetDeclarations,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(SubnetDeclarations,self).__init__(typename,children,startelm,endelm)
 		return
 
 	def value_format(self,tabs=0):
@@ -623,10 +644,10 @@ class SubnetDeclarations(YaccDhcpObject):
 		return s
 
 class Failover(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
 		self.failover = None
 		return
 
@@ -656,10 +677,10 @@ class Failover(YaccDhcpObject):
 		return s
 
 class IpRange(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
 		self.dynamicbootp = False
 		self.rangestart = '0.0.0.0'
 		self.rangeend = '0.0.0.0'
@@ -698,17 +719,17 @@ class IpRange(YaccDhcpObject):
 
 
 class PoolDeclarations(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
 		return
 
 class PoolStatement(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
 		return
 
 	def format_config(self,tabs=0):
@@ -721,10 +742,10 @@ class PoolStatement(YaccDhcpObject):
 		return s
 
 class DayFormat(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
 		curtime = time.gmtime()
 		self.time_year = curtime.tm_year
 		self.time_month = curtime.tm_mon
@@ -750,10 +771,10 @@ class DayFormat(YaccDhcpObject):
 		return True
 
 class TimeFormat(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
 		curtime = time.gmtime()
 		self.time_hour = curtime.tm_hour
 		self.time_minute = curtime.tm_min
@@ -779,10 +800,10 @@ class TimeFormat(YaccDhcpObject):
 		return True
 
 class DateFormat(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
 		self.special_format = None
 		curtime = time.gmtime()
 		self.day_format = '%s/%s/%s'%(curtime.tm_year,curtime.tm_mon,curtime.tm_mday)
@@ -822,10 +843,10 @@ class DateFormat(YaccDhcpObject):
 		return self.value_format()
 
 class PermitDeclaration(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
 		self.permit_format = 'ALL'
 		self.mode = 'allow'
 		return
@@ -856,10 +877,10 @@ class PermitDeclaration(YaccDhcpObject):
 		return s
 
 class Prefix6Statement(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
 		self.prefix_pair = []
 		self.prefix_mask = ''
 		self.mode = 'prefix6'
@@ -889,10 +910,10 @@ class Prefix6Statement(YaccDhcpObject):
 		return s
 
 class FixedPrefix6Statement(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
 		self.prefix_pair = []
 		self.prefix_mask = ''
 		self.mode = 'fixed-prefix6'
@@ -923,10 +944,10 @@ class FixedPrefix6Statement(YaccDhcpObject):
 		return s
 
 class AuthoritativeStatement(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startline=None,startpos=None,endline=None,endpos=None):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startline,startpos,endline,endpos)
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
 		self.mode = ''
 		return
 

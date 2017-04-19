@@ -58,7 +58,8 @@ class DhcpConfLex(object):
 		'fixed-prefix6' : 'FIXED_PREFIX6',
 		'authoritative' : 'AUTHORITATIVE',
 		'not' : 'NOT',
-		'text' : 'TOKEN_TEXT'
+		'text' : 'TOKEN_TEXT',
+		'binary-to-ascii' : 'BINARY_TO_ASCII'
 	}
 	tokens = ['TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER','SLASH','PLUS','MINUS'] + list(reserved.values())
 	t_ignore = ' \t'
@@ -231,17 +232,28 @@ class DhcpConfLex(object):
 	def t_TEXT(self,p):
 		# now to check whether it is the value of next is -
 		if p.lexer.lexpos < len(p.lexer.lexdata):
-			curch = p.lexer.lexdata[p.lexer.lexpos]
-			if curch == '-':
-				leftdata = p.lexer.lexdata[(p.lexer.lexpos+1):]
-				findre = re.compile('^([a-zA-Z_0-9]+)')
-				m = findre.findall(leftdata)
-				if m is not None and len(m) > 0:
-					totaldata = p.value + '-'+m[0]
-					newtype = self.__class__.reserved.get(totaldata,'TEXT')
-					if newtype != 'TEXT':
-						p.value = totaldata
-						p.lexer.lexpos += ( 1 + len(m[0]))
+			curpos = p.lexer.lexpos
+			curval = p.value
+			while curpos < len(p.lexer.lexdata):
+				curch = p.lexer.lexdata[curpos]
+				#logging.info('curpos %d curch %s curval %s'%(curpos,curch,curval))
+				breakone = True
+				if curch == '-':
+					leftdata = p.lexer.lexdata[(curpos+1):]
+					findre = re.compile('^([a-zA-Z_0-9]+)')
+					m = findre.findall(leftdata)
+					if m is not None and len(m) > 0:
+						totaldata = curval + '-'+ m[0]
+						newtype = self.__class__.reserved.get(totaldata,'TEXT')
+						if newtype != 'TEXT':
+							p.value = totaldata
+							p.lexer.lexpos = ( curpos + 1 +  len(m[0]))
+						else:
+							curpos += (1 + len(m[0]))
+							curval += '-' + m[0]
+							breakone = False
+				if breakone:
+					break
 		p.startline = p.lexer.lineno
 		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
 		p.endpos = p.startpos + len(p.value)
