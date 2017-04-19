@@ -129,13 +129,271 @@ class DhcpConfYacc(object):
 		p[3] = None
 		return
 
-	def p_option_space(self,p):
-		''' option_statement : OPTION SPACE SEMI
+	def p_option_statement_space(self,p):
+		''' option_statement : option_space_decl
 		'''
-		p[0] = dhcpconf.OptionStatement(None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
-		p[0].set_routername(p[3].value_format())
+		children = []
+		children.append(p[1])
+		p[0] = dhcpconf.OptionStatement()
+		p[0].append_child(p[1])
+		p[0].set_pos_by_children()
+		p[1] = None
+		return
+
+	def p_option_space_decl(self,p):
+		''' option_space_decl : OPTION SPACE TEXT option_space_declarations SEMI
+		'''
+		children = []
+		children.append(p[4])
+		p[0] = dhcpconf.OptionSpace(None,children,p.slice[1].startline,p.slice[1].startpos,p.slice[5].endline,p.slice[5].endpos)
+		p[0].set_identify(p.slice[3].value)
+		p[4] = None
+		return
+
+	def p_option_space_decl_empty(self,p):
+		''' option_space_declarations : empty
+		'''
+		p[0] = dhcpconf.OptionSpaceDeclarations(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[1] = None
+		return
+
+	def p_option_space_decl_recur(self,p):
+		''' option_space_declarations : option_space_declarations option_space_declaration
+		'''
+		p[1].append_child(p[2])
+		p[1].set_pos_by_children()
+		p[0] = p[1]
+		p[1] = None
+		p[2] = None
+		return
+
+	def p_option_space_declaration_code(self,p):
+		''' option_space_declaration : CODE WIDTH NUMBER
+		'''
+		p[0] = dhcpconf.OptionSpaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0].set_code(p.slice[3].value)
+		return
+
+	def p_option_space_declaration_length(self,p):
+		''' option_space_declaration : LENGTH WIDTH NUMBER
+		'''
+		p[0] = dhcpconf.OptionSpaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0].set_length(p.slice[3].value)
+		return
+
+	def p_option_space_declaration_hash(self,p):
+		''' option_space_declaration : HASH SIZE NUMBER
+		'''
+		p[0] = dhcpconf.OptionSpaceDeclaration(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0].set_hash(p.slice[3].value)
+		return
+
+	def p_option_name_value(self,p):
+		''' option_statement : option_name_value
+		'''
+		p[0] = dhcpconf.OptionStatement()
+		p[0].append_child(p[1])
+		p[0].set_pos_by_children()
+		p[1] = None
+		return
+
+	def p_option_name_value_detail(self,p):
+		''' option_name_value : OPTION option_name option_values SEMI
+		'''
+		p[0] = dhcpconf.OptionNameValue(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].set_name(p[2])
+		p[0].set_value(p[3])
+		p[2] = None
 		p[3] = None
 		return
+
+	def p_option_name(self,p):
+		''' option_name : TEXT
+			   | TEXT DOT TEXT
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.OptionName(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+			p[0].set_name(p.slice[1].value)
+		else:
+			p[0] = dhcpconf.OptionName(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+			value = '%s.%s'%(p.slice[1].value,p.slice[3].value)
+			p[0].set_name(value)
+		return
+
+	def p_option_values_empty(self,p):
+		''' option_values : empty
+		'''
+		p[0] = dhcpconf.OptionValues(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[1] = None
+		return
+
+	def p_option_values_recur(self,p):
+		''' option_values : option_values option_value
+		'''
+		p[1].append_child(p[2])
+		p[1].set_pos_by_children()
+		p[0] = p[1]
+		p[1] = None
+		p[2] = None
+		return
+
+	def p_option_value_code(self,p):
+		''' option_value : CODE NUMBER EQUAL option_code_clauses
+		'''
+		p[0] = dhcpconf.OptionValue(None,None,p.slice[1].startline,p.slice[1].startpos,p[4].endline,p[4].endpos)
+		p[0].set_code_child(p.slice[2].value,p[4])
+		p[4] = None
+		return
+
+	def p_option_code_clauses_empty(self,p):
+		''' option_code_clauses : empty
+		'''
+		p[0] = dhcpconf.OptionCodeClauses(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[1] = None
+		return
+
+	def p_option_code_clauses_recur(self,p):
+		''' option_code_clauses : option_code_clauses option_code_clause
+		'''
+		p[1].append_child(p[2])
+		p[1].set_pos_by_children()
+		p[0] = p[1]
+		p[1] = None
+		p[2] = None
+		return
+
+	def p_option_code_clause_ocsd_type(self,p):
+		''' option_code_clause : ocsd_type
+		'''
+		p[0] = dhcpconf.OptionCodeClause(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[0].append_child(p[1])
+		p[1] = None
+		return
+
+	def p_option_code_clause_ocsd_type_sequence(self,p):
+		'''option_code_clause  : ocsd_type_sequence
+		'''
+		p[0] = dhcpconf.OptionCodeClause(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[0].append_child(p[1])
+		p[1] = None
+		return
+
+	def p_option_code_clause_ocsd_simple_type_sequence(self,p):
+		'''option_code_clause : ARRAY OF ocsd_simple_type_sequence
+		'''
+		p[0] = dhcpconf.OptionCodeClause(None,None,p.slice[1].startline,p.slice[1].startpos,p[3].endline,p[3].endpos)
+		p[0].append_array_child(p[3])
+		p[1] = None
+		return
+
+	def p_ocsd_type_sequence(self,p):
+		''' ocsd_type_sequence : LBRACE ocsd_types RBRACE
+		'''
+		p[0] = p[2]
+		p[1] = None
+		return
+
+	def p_ocsd_types(self,p):
+		''' ocsd_types : ocsd_type
+				| ocsd_types ocsd_type
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.OptionCodeSimpleTypes(None,None)
+			p[0].append_child(p[1])
+			p[0].set_pos_by_children()
+			p[1] = None
+		else:
+			p[0] = p[1]
+			p[0].append_child(p[2])
+			p[0].set_pos_by_children()
+			p[1] = None
+			p[2] = None
+		return
+
+	def p_ocsd_type(self,p):
+		''' ocsd_type : ocsd_simple_type
+		        | ARRAY OF ocsd_simple_type
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.OptionCodeSimpleType(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+			p[0].append_child(p[1])
+			p[1] = None
+		else:
+			p[0] = dhcpconf.OptionCodeSimpleType(None,None,p.slice[1].startline,p.slice[1].startpos,p[3].endline,p[3].endpos)
+			p[0].append_array_child(p[3])
+			p[3] = None
+		return
+	def p_ocsd_simple_types(self,p):
+		'''ocsd_simple_types : ocsd_simple_type
+		      | ocsd_simple_types ocsd_simple_type
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.OptionCodeSimpleDeclareTypes()
+			p[0].append_child(p[1])
+			p[0].set_pos_by_children()
+			p[1] = None
+		else:
+			p[0] = p[1]
+			p[0].append_child(p[2])
+			p[0].set_pos_by_children()
+			p[1] = None
+			p[2] = None
+		return
+
+	def p_ocsd_simple_type_boolean(self,p):
+		''' ocsd_simple_type : BOOLEAN 
+		'''
+		p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0].set_type_name('boolean')
+		return
+
+	def p_ocsd_simple_type_number(self,p):
+		''' ocsd_simple_type : INTEGER NUMBER 
+		         | SIGNED INTEGER NUMBER
+		         | UNSIGNED INTEGER NUMBER
+		'''
+		if len(p) == 3:
+			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
+			p[0].set_type_name('integer')
+			p[0].set_number(p.slice[2].value)
+		elif len(p) == 4:
+			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+			typename = '%s %s'%(p.slice[1].value,p.slice[2].value)
+			p[0].set_type_name(typename)
+			p[0].set_number(p.slice[3].value)
+		return
+
+	def p_ocsd_simple_type_name(self,p):
+		''' ocsd_simple_type : IP_ADDRESS
+		             | TOKEN_TEXT
+		'''
+		p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[0].set_type_name(p.slice[1].value)
+		return
+
+	def p_ocsd_simple_type_text(self,p):
+		''' ocsd_simple_type : TEXT 
+		          | ENCAPSULATE TEXT
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+			p[0].set_text(p.slice[1].value)
+		else:
+			p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
+			p[0].set_type_name('encapsulate')
+			p[0].set_text(p.slice[2].value)
+		return
+
+
+
+
+
+
+
+
+
+
+
 
 
 
