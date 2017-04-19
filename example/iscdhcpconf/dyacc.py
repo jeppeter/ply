@@ -949,14 +949,14 @@ class DhcpConfYacc(object):
 	def p_substring_expr_op(self,p):
 		''' substring_expr_op : SUBSTRING LPAREN data_expr_op COMMA NUMBER COMMA NUMBER RPAREN
 		'''
-		p[0] = dhcpconf.SubstringExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[8].endline,p.slice[8].endpos)
+		p[0] = dhcpconf.SubstringExprOp(None,None,p.slice[1],p.slice[8])
 		p[0].set_parameter(p.slice[5].value,p.slice[7].value)
 		return
 
 	def p_suffix_expr_op(self,p):
 		''' suffix_expr_op : SUFFIX LPAREN data_expr_op COMMA NUMBER RPAREN
 		'''
-		p[0] = dhcpconf.SuffixExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[6].endline,p.slice[6].endpos)
+		p[0] = dhcpconf.SuffixExprOp(None,None,p.slice[1],p.slice[6])
 		p[0].append_child(p[3])
 		p[0].set_parameter(p.slice[5].value)
 		p[3] = None
@@ -965,7 +965,7 @@ class DhcpConfYacc(object):
 	def p_lcase_expr_op(self,p):
 		''' lcase_expr_op : LCASE LPAREN data_expr_op RPAREN
 		'''
-		p[0] = dhcpconf.LcaseExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0] = dhcpconf.LcaseExprOp(None,None,p.slice[1],p.slice[4])
 		p[0].append_child(p[3])
 		p[3] = None
 		return
@@ -973,7 +973,7 @@ class DhcpConfYacc(object):
 	def p_ucase_expr_op(self,p):
 		''' ucase_expr_op : UCASE LPAREN data_expr_op RPAREN
 		'''
-		p[0] = dhcpconf.UcaseExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0] = dhcpconf.UcaseExprOp(None,None,p.slice[1],p.slice[4])
 		p[0].append_child(p[3])
 		p[3] = None
 		return
@@ -981,7 +981,7 @@ class DhcpConfYacc(object):
 	def p_concat_expr_op(self,p):
 		''' concat_expr_op : CONCAT LPAREN concat_param_list RPAREN
 		'''
-		p[0] = dhcpconf.ConcatExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0] = dhcpconf.ConcatExprOp(None,None,p.slice[1],p.slice[4])
 		p[0].append_child(p[3])
 		p[3] = None
 		return
@@ -1007,7 +1007,7 @@ class DhcpConfYacc(object):
 		''' binary_to_ascii_expr_op : BINARY_TO_ASCII LPAREN NUMBER COMMA NUMBER COMMA data_expr_op COMMA data_expr_op RPAREN
 		'''
 		## to base width seperator buffer
-		p[0] = dhcpconf.BinaryToAsciiExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[10].endline,p.slice[10].endpos)
+		p[0] = dhcpconf.BinaryToAsciiExprOp(None,None,p.slice[1],p.slice[10])
 		p[0].set_base(p.slice[3].value)
 		p[0].set_width(p.slice[5].value)
 		p[0].set_seperator(p[7])
