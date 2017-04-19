@@ -896,6 +896,16 @@ class DhcpConfYacc(object):
 		        | dns_update_expr_op
 		        | dns_delete_expr_op
 		        | ns_update_expr_op
+		        | option_expr_op
+		        | config_option_expr_op
+		        | hardware_expr_op
+		        | leased_address_expr_op
+		        | client_state_expr_op
+		        | filename_expr_op
+		        | server_name_expr_op
+		        | lease_time_expr_op
+		        | null_expr_op
+		        | host_decl_name_expr_op
 		'''
 		p[0] = dhcpconf.NonBinaryExprOp()
 		p[0].append_child(p[1])
@@ -1023,6 +1033,224 @@ class DhcpConfYacc(object):
 		p[0].set_width(p.slice[3].value)
 		p[0].set_buffer(p[5])
 		p[5] = None
+		return
+
+	def p_pick_expr_op(self,p):
+		''' pick_expr_op : PICK LPAREN pick_expr_op_param_list RPAREN
+		'''
+		p[0] = dhcpconf.PickExprOp(None,None,p.slice[1],p.slice[4])
+		p[0].append_child(p[3])
+		p[3] = None
+		return
+
+	def p_pick_expr_op_param_list(self,p):
+		''' pick_expr_op_param_list : data_expr_op
+				| pick_expr_op_param_list COMMA data_expr_op
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.PickExprOpParamList()
+			p[0].append_child(p[1])
+			p[0].set_pos_by_children()
+			p[1] = None
+		else:
+			p[0] = p[1]
+			p[0].append_child(p[3])
+			p[0].set_pos_by_children()
+			p[1] = None
+			p[3] = None
+		return
+
+	def p_dns_update_expr_op(self,p):
+		''' dns_update_expr_op : DNS_UPDATE LPAREN dns_type COMMA data_expr_op COMMA data_expr_op COMMA NUMBER RPAREN
+		'''
+		p[0] = dhcpconf.DnsUpdateExprOp(None,None,p.slice[1],p.slice[10])
+		p[0].set_dns_type(p[3])
+		p[0].set_dns_param1(p[5])
+		p[0].set_dns_param2(p[7])
+		p[0].set_dns_number(p.slice[9].value)
+		p[3] = None
+		p[5] = None
+		p[7] = None
+		return
+
+	def p_dns_delete_expr_op(self,p):
+		''' dns_delete_expr_op : DNS_DELETE LPAREN dns_type COMMA data_expr_op COMMA data_expr_op RPAREN
+		'''
+		p[0] = dhcpconf.DnsDeleteExprOp(None,None,p.slice[1],p.slice[8])
+		p[0].set_dns_type(p[3])
+		p[0].set_dns_param1(p[5])
+		p[0].set_dns_param2(p[7])
+		p[3] = None
+		p[5] = None
+		p[7] = None
+		return
+
+	def p_ns_update_expr_op(self,p):
+		''' ns_update_expr_op : NS_UPDATE LPAREN ns_update_func_list RPAREN
+		'''
+		p[0] = dhcpconf.NsUpdateExprOp(None,None,p.slice[1],p.slice[4])
+		p[0].append_child(p[3])
+		p[3] = None
+		return
+
+	def p_ns_update_func_list(self,p):
+		''' ns_update_func_list : ns_update_func
+				| ns_update_func_list COMMA ns_update_func
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.NsUpdateFuncList(None,None)
+			p[0].append_child(p[1])
+			p[0].set_pos_by_children()
+			p[1] = None
+		else:
+			p[0] = p[1]
+			p[0].append_child(p[3])
+			p[0].set_pos_by_children()
+			p[1] = None
+			p[3] = None
+		return
+
+	def p_ns_update_func(self,p):
+		''' ns_update_func : dns_update_expr_op
+				| dns_delete_expr_op
+				| ns_add_expr_op
+				| ns_delete_expr_op
+				| ns_not_exists_expr_op
+				| ns_exists_expr_op
+		'''
+		p[0] = dhcpconf.NsUpdateFunc()
+		p[0].append_child(p[1])
+		p[0].set_pos_by_children()
+		p[1] = None
+		return
+	def p_ns_add_expr_op(self,p):
+		''' ns_add_expr_op : ADD LPAREN ns_add_param_list RPAREN
+		'''
+		p[0] = dhcpconf.NsAddExprOp(None,None,p.slice[1],p.slice[4])
+		p[0].append_child(p[3])
+		p[3] = None
+		return
+
+	def p_ns_delete_expr_op(self,p):
+		''' ns_delete_expr_op : DELETE LPAREN ns_param_list RPAREN
+		'''
+		p[0] = dhcpconf.NsDeleteExprOp(None,None,p.slice[1],p.slice[4])
+		p[0].append_child(p[3])
+		p[3] = None
+		return
+
+	def p_ns_exists_expr_op(self,p):
+		''' ns_exists_expr_op : EXISTS LPAREN ns_param_list RPAREN
+		'''
+		p[0] = dhcpconf.NsExistsExprOp(None,None,p.slice[1],p.slice[4])
+		p[0].append_child(p[3])
+		p[3] = None
+		return
+
+	def p_ns_not_exists_expr_op(self,p):
+		''' ns_not_exists_expr_op : NOT EXISTS LPAREN ns_param_list RPAREN
+		'''
+		p[0] = dhcpconf.NsNotExistsExprOp(None,None,p.slice[1],p.slice[4])
+		p[0].append_child(p[3])
+		p[3] = None
+		return
+
+	def p_ns_add_param_list(self,p):
+		''' ns_add_param_list : ns_param_list COMMA NUMBER
+		'''
+		p[0] = p[1]
+		p[0].set_dns_number(p.slice[3].value)
+		p[0].set_endpos(p.slice[3])
+		p[1] = None
+		return
+
+	def p_ns_param_list(self,p):
+		''' ns_param_list : dns_class COMMA dns_type COMMA data_expr_op COMMA data_expr_op
+		'''
+		p[0] = dhcpconf.NsParamList(None,None,p[1],p[7])
+		p[0].set_dns_class(p[1])
+		p[0].set_dns_type(p[3])
+		p[0].set_dns_param1(p[5])
+		p[0].set_dns_param2(p[7])
+		p[1] = None
+		p[3] = None
+		p[5] = None
+		p[7] = None
+		return
+
+	def p_option_expr_op(self,p):
+		''' option_expr_op : OPTION option_name
+		'''
+		p[0] = dhcpconf.OptionExprOp(None,None,p.slice[1],p[2])
+		p[0].set_name(p[2])
+		p[2] = None
+		return
+
+	def p_config_option_expr_op(self,p):
+		''' config_option_expr_op : CONFIG_OPTION option_name
+		'''
+		p[0] = dhcpconf.ConfigOptionExprOp(None,None,p.slice[1],p[2])
+		p[0].set_name(p[2])
+		p[2] = None
+		return
+
+	def p_hardware_expr_op(self,p):
+		''' hardware_expr_op : HARDWARE
+		'''
+		p[0] = dhcpconf.HardwareExprOp(None,None,p.slice[1],p.slice[1])
+		return
+
+	def p_leased_address_expr_op(self,p):
+		''' leased_address_expr_op : LEASED_ADDRESS
+		'''
+		p[0] = dhcpconf.LeasedAddressExprOp(None,None,p.slice[1],p.slice[1])
+		return
+
+	def p_client_state_expr_op(self,p):
+		''' client_state_expr_op : CLIENT_STATE
+		'''
+		p[0] = dhcpconf.ClientStateExprOp(None,None,p.slice[1],p.slice[1])
+		return
+
+	def p_filename_expr_op(self,p):
+		''' filename_expr_op : FILENAME
+		'''
+		p[0] = dhcpconf.FilenameExprOp(None,None,p.slice[1],p.slice[1])
+		return
+
+	def p_server_name_expr_op(self,p):
+		''' server_name_expr_op : SERVER_NAME
+		'''
+		p[0] = dhcpconf.ServerNameExprOp(None,None,p.slice[1],p.slice[1])
+		return
+
+	def p_lease_time_expr_op(self,p):
+		''' lease_time_expr_op : LEASE_TIME
+		'''
+		p[0] = dhcpconf.LeaseTimeExprOp(None,None,p.slice[1],p.slice[1])
+		return
+
+	def p_null_expr_op(self,p):
+		''' null_expr_op : NULL
+		'''
+		p[0] = dhcpconf.NullExprOp(None,None,p.slice[1],p.slice[1])
+		return
+
+	def p_host_decl_name_expr_op(self,p):
+		''' host_decl_name_expr_op : HOST_DECL_NAME
+		'''
+		p[0] = dhcpconf.HostDeclNameExprOp(None,None,p.slice[1],p.slice[1])
+		return
+
+	def p_dns_type(self,p):
+		'''dns_type : TEXT
+				| NUMBER
+		'''
+		p[0] = dhcpconf.DnsType(None,None,p.slice[1],p.slice[1])
+		if p.slice[1].type == 'TEXT':
+			p[0].set_type(p.slice[1].value)
+		else:
+			p[0].set_inttype(p.slice[1].value)
 		return
 
 
