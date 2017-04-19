@@ -246,7 +246,7 @@ class DhcpConfYacc(object):
 		return
 
 	def p_option_value_equal(self,p):
-		''' option_value : EQUAL date_expression
+		''' option_value : EQUAL data_expression_op
 		'''
 		p[0] = dhcpconf.OptionValue(None,None,p.slice[1].startline,p.slice[1].startpos,p[2].endline,p[2].endpos)
 		p[0].set_equal_child(p[2])
@@ -845,14 +845,12 @@ class DhcpConfYacc(object):
 	def p_date_format_yeardate(self,p):
 		''' date_format : day_format time_format
 			|  day_format time_format PLUS NUMBER
-			|  day_format time_format TEXT
+			|  day_format time_format MINUS NUMBER
 		'''
 		if len(p) == 3:
 			p[0] = dhcpconf.DateFormat(None,None,p[1].startline,p[1].startpos,p[2].endline,p[2].endpos)
 		elif len(p) == 5:
 			p[0] = dhcpconf.DateFormat(None,None,p[1].startline,p[1].startpos,p.slice[4].endline,p.slice[4].endpos)
-		elif len(p) == 4:
-			p[0] = dhcpconf.DateFormat(None,None,p[1].startline,p[1].startpos,p.slice[3].endline,p.slice[3].endpos)
 		else:
 			raise Exception('unknown date_format')
 		p[0].set_date(p[1].value_format())
@@ -860,12 +858,10 @@ class DhcpConfYacc(object):
 		if len(p) == 3:
 			p[0].set_tzoff('0')
 		elif len(p) == 5:
-			p[0].set_tzoff('+' + p.slice[4].value)
-		elif len(p) == 4:
-			matchexpr = re.compile('^\-[0-9]+$')
-			if not matchexpr.match(p.slice[3].value):
-				raise Exception('with format')
-			p[0].set_tzoff(p.slice[3].value)
+			if p.slice[3].type == 'PLUS':
+				p[0].set_tzoff('+' + p.slice[4].value)
+			else:
+				p[0].set_tzoff('-' + p.slice[4].value)
 		p[1] = None
 		p[2] = None
 		return 
@@ -886,6 +882,136 @@ class DhcpConfYacc(object):
 		p[0].set_hour(p.slice[1].value)
 		p[0].set_minute(p.slice[3].value)
 		p[0].set_second(p.slice[5].value)
+		return
+
+	def p_expression_op(self,p):
+		''' expr_op : non_binary_expr_op binary_expr_op
+		'''
+		return
+
+	def p_non_binary_expr_op(self,p):
+		''' non_binary_expr_op : check_expr_op
+		        | not_expr_op
+		        | paren_expr_op
+		        | exists_expr_op
+		        | static_expr_op
+		        | known_expr_op
+		        | substring_expr_op
+		        | suffix_expr_op
+		        | lcase_expr_op
+		        | ucase_expr_op
+		        | concat_expr_op
+		        | binary_to_ascii_expr_op
+		        | reserve_expr_op
+		        | pick_expr_op
+		        | dns_update_expr_op
+		        | dns_delete_expr_op
+		        | ns_update_expr_op
+		'''
+		p[0] = dhcpconf.NonBinaryExprOp()
+		p[0].append_child(p[1])
+		p[0].set_pos_by_children()
+		p[1] = None
+		return
+
+	def p_check_expr_op(self,p):
+		''' check_expr_op : CHECK TEXT
+		'''
+		p[0] = dhcpconf.CheckExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[2].endline,p.slice[2].endpos)
+		p[0].set_check_text(p.slice[2].value)
+		return
+
+	def p_not_expr_op(self,p):
+		''' not_expr_op : NOT boolean_expr_op
+		'''
+		p[0] = dhcpconf.NotExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p[2].endline,p[2].endpos)
+		p[0].append_child(p[2])
+		p[2] = None
+		return
+
+	def p_exists_expr_op(self,p):
+		''' exists_expr_op : EXISTS option_name
+		'''
+		p[0] = dhcpconf.ExistsExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p[2].endline,p[2].endpos)
+		p[0].append_child(p[1])
+		p[1] = None
+		return
+
+	def p_paren_expr_op(self,p):
+		''' paren_expr_op : LPAREN expr_op RPAREN
+		'''
+		p[0] = dhcpconf.ParenExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[3].endline,p.slice[3].endpos)
+		p[0].append_child(p[2])
+		p[2] = None
+		return
+
+	def p_static_expr_op(self,p):
+		''' static_expr_op : STATIC
+		'''
+		p[0] = dhcpconf.StaticExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		return
+
+	def p_known_expr_op(self,p):
+		''' known_expr_op : KNOWN
+		'''
+		p[0] = dhcpconf.KnownExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		return
+
+	def p_substring_expr_op(self,p):
+		''' substring_expr_op : SUBSTRING LPAREN data_expr_op COMMA NUMBER COMMA NUMBER RPAREN
+		'''
+		p[0] = dhcpconf.SubstringExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[8].endline,p.slice[8].endpos)
+		p[0].set_parameter(p.slice[5].value,p.slice[7].value)
+		return
+
+	def p_suffix_expr_op(self,p):
+		''' suffix_expr_op : SUFFIX LPAREN data_expr_op COMMA NUMBER RPAREN
+		'''
+		p[0] = dhcpconf.SuffixExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[6].endline,p.slice[6].endpos)
+		p[0].append_child(p[3])
+		p[0].set_parameter(p.slice[5].value)
+		p[3] = None
+		return
+
+	def p_lcase_expr_op(self,p):
+		''' lcase_expr_op : LCASE LPAREN data_expr_op RPAREN
+		'''
+		p[0] = dhcpconf.LcaseExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].append_child(p[3])
+		p[3] = None
+		return
+
+	def p_ucase_expr_op(self,p):
+		''' ucase_expr_op : UCASE LPAREN data_expr_op RPAREN
+		'''
+		p[0] = dhcpconf.UcaseExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].append_child(p[3])
+		p[3] = None
+		return
+
+	def p_concat_expr_op(self,p):
+		''' concat_expr_op : CONCAT LPAREN concat_param_list RPAREN
+		'''
+		p[0] = dhcpconf.ConcatExprOp(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[4].endline,p.slice[4].endpos)
+		p[0].append_child(p[3])
+		p[3] = None
+		return
+
+	def p_concat_param_list(self,p):
+		''' concat_param_list : data_expr_op
+		        | concat_param_list COMMA data_expr_op
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.ConcatParamList()
+			p[0].append_child(p[1])
+			p[0].set_pos_by_children()
+			p[1] = None
+		else:
+			p[0] = p[1]
+			p[0].append_child(p[3])
+			p[0].set_pos_by_children()
+			p[3] = None
+			p[1] = None
 		return
 
 

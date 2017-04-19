@@ -60,7 +60,7 @@ class DhcpConfLex(object):
 		'not' : 'NOT',
 		'text' : 'TOKEN_TEXT'
 	}
-	tokens = ['TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER','SLASH','PLUS'] + list(reserved.values())
+	tokens = ['TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER','SLASH','PLUS','MINUS'] + list(reserved.values())
 	t_ignore = ' \t'
 	t_doublequoted_ignore = ''	
 	t_comment_ignore = ''
@@ -216,11 +216,32 @@ class DhcpConfLex(object):
 		#logging.info('SEMI lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
+	@lex.TOKEN(r'\-')
+	def t_MINUS(self,p):
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		return p
 
 
 
-	@lex.TOKEN(r'[a-zA-Z_0-9_\-][a-zA-Z\-_0-9]*')
+
+	@lex.TOKEN(r'[a-zA-Z_0-9][a-zA-Z_0-9]*')
 	def t_TEXT(self,p):
+		# now to check whether it is the value of next is -
+		if p.lexer.lexpos < len(p.lexer.lexdata):
+			curch = p.lexer.lexdata[p.lexer.lexpos]
+			if curch == '-':
+				leftdata = p.lexer.lexdata[(p.lexer.lexpos+1):]
+				findre = re.compile('^([a-zA-Z_0-9]+)')
+				m = findre.findall(leftdata)
+				if m is not None and len(m) > 0:
+					totaldata = p.value + '-'+m[0]
+					newtype = self.__class__.reserved.get(totaldata,'TEXT')
+					if newtype != 'TEXT':
+						p.value = totaldata
+						p.lexer.lexpos += ( 1 + len(m[0]))
 		p.startline = p.lexer.lineno
 		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
 		p.endpos = p.startpos + len(p.value)
