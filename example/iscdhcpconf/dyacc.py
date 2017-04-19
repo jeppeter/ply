@@ -906,6 +906,15 @@ class DhcpConfYacc(object):
 		        | lease_time_expr_op
 		        | null_expr_op
 		        | host_decl_name_expr_op
+		        | update_ddns_rr_expr_op
+		        | packet_expr_op
+		        | const_data_expr_op
+		        | extract_int_expr_op
+		        | encode_int_expr_op
+		        | defined_expr_op
+		        | gethostname_expr_op
+		        | gethostbyname_expr_op
+		        | user_define_func_expr_op
 		'''
 		p[0] = dhcpconf.NonBinaryExprOp()
 		p[0].append_child(p[1])
@@ -1240,6 +1249,131 @@ class DhcpConfYacc(object):
 		''' host_decl_name_expr_op : HOST_DECL_NAME
 		'''
 		p[0] = dhcpconf.HostDeclNameExprOp(None,None,p.slice[1],p.slice[1])
+		return
+
+	def p_update_ddns_rr_expr_op(self,p):
+		''' update_ddns_rr_expr_op : UPDATED_DNS_RR LPAREN ddns_type RPAREN
+		'''
+		p[0] = dhcpconf.UpdateDdnsRRExprOp(None,None,p.slice[1],p.slice[4])
+		p[0].set_ddns_type(p[3])
+		p[3] = None
+		return
+
+	def p_packet_expr_op(self,p):
+		''' packet_expr_op : PACKET LPAREN NUMBER COMMA NUMBER RPAREN
+		'''
+		p[0] = dhcpconf.PacketExprOp(None,None,p.slice[1],p.slice[6])
+		p[0].set_packet_pair(p.slice[3].value,p.slice[5].value)
+		return
+
+	def p_const_data_expr_op(self,p):
+		''' const_data_expr_op : TEXT
+		        | NUMBER
+		        | FORMERR
+		        | NOERROR
+		        | NOTAUTH
+		        | NOTIMP
+		        | NOTZONE
+		        | NXDOMAIN
+		        | NXRRSET
+		        | REFUSED
+		        | SERVFAIL
+		        | YXDOMAIN
+		        | YXRRSET
+		        | BOOTING
+		        | REBOOT
+		        | SELECT
+		        | REQUEST
+		        | BOUND
+		        | RENEW
+		        | REBIND
+		'''
+		p[0] = dhcpconf.ConstDataExprOp(None,None,p.slice[1],p.slice[1])
+		p[0].set_const(p.slice[1].value)
+		return
+
+	def p_extract_int_expr_op(self,p):
+		''' extract_int_expr_op : EXTRACT_INT LPAREN data_expr_op COMMA NUMBER RPAREN
+		'''
+		p[0] = dhcpconf.ExtractIntExprOp(None,None,p.slice[1],p.slice[6])
+		p[0].set_target(p[3])
+		p[0].set_offset(p.slice[5].value)
+		p[3] = None
+		return
+
+	def p_encode_int_expr_op(self,p):
+		''' encode_int_expr_op : ENCODE_INT LPAREN numeric_expr_op COMMA NUMBER RPAREN
+		'''
+		p[0] = dhcpconf.EncodeIntExprOp(None,None,p.slice[1],p.slice[6])
+		p[0].set_target(p[3])
+		p[0].set_offset(p.slice[5].value)
+		return
+
+	def p_formerr_expr_op(self,p):
+		''' formerr_expr_op : FORMERR
+		'''
+		p[0] = dhcpconf.FormErrExprOp(None,None,p.slice[1],p.slice[1])
+		return
+
+	def p_defined_expr_op(self,p):
+		''' defined_expr_op : DEFINED LPAREN  TEXT RPAREN
+		'''
+		p[0] = dhcpconf.DefinedExprOp(None,None,p.slice[1],p.slice[4])
+		p[0].set_text(p.slice[3].value)
+		return
+
+	def p_gethostname_expr_op(self,p):
+		''' gethostname_expr_op : GETHOSTNAME LPAREN RPAREN
+		'''
+		p[0] = dhcpconf.GetHostNameExprOp(None,None,p.slice[1],p.slice[3])
+		return
+
+	def p_gethostbyname_expr_op(self,p):
+		''' gethostbyname_expr_op : GETHOSTBYNAME LPAREN TEXT RPAREN
+		'''
+		p[0] = dhcpconf.GetHostByNameExprOp(None,None,p.slice[1],p.slice[4])
+		p[0].set_hostname(p.slice[3].value)
+		return
+
+	def p_user_define_func_expr_op(self,p):
+		''' user_define_func_expr_op : TEXT LPAREN user_define_func_param_list RPAREN
+		'''
+		p[0] = dhcpconf.UserDefineFuncExprOp(None,None,p.slice[0],p.slice[4])
+		p[0].set_funcname(p.slice[1].value)
+		p[0].append_child(p[3])
+		return
+
+	def p_user_define_func_param_list_empty(self,p):
+		''' user_define_func_param_list : empty
+		'''
+		p[0] = dhcpconf.UserDefineFuncParamList(None,None,p.slice[1],p.slice[1])
+		p[1] = None
+		return
+
+	def p_user_define_func_param_list_recur(self,p):
+		''' user_define_func_param_list : user_define_func_param_list COMMA expr_op
+		'''
+		p[0] = p[1]
+		p[0].append_child(p[3])
+		p[0].set_pos_by_children()
+		p[1] = None
+		return
+
+	def p_user_define_func_param_list_expr_op(self,p):
+		''' user_define_func_param_list : expr_op
+		'''
+		p[0] = dhcpconf.UserDefineFuncParamList()
+		p[0].append_child(p[1])
+		p[0].set_pos_by_children()
+		return
+
+
+
+	def p_ddns_type(self,p):
+		''' ddns_type : TEXT
+		'''
+		p[0] = dhcpconf.DdnsType(None,None,p.slice[1],p.slice[1])
+		p[0].set_type(p.slice[1].value)
 		return
 
 	def p_dns_type(self,p):
