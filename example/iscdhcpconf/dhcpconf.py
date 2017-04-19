@@ -964,3 +964,19 @@ class AuthoritativeStatement(YaccDhcpObject):
 	def set_mode(self,mode):
 		self.mode = mode
 		return True
+
+class ExprOpBase(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def check_data_expr_op(self):
+		return False
+
+	def check_numeric_expr_op(self):
+		return False
+
+
+
