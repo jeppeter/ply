@@ -1065,6 +1065,12 @@ class DhcpConfYacc(object):
 		p[1] = None
 		return
 
+	def p_data_expr_op(self,p):
+		''' data_expr_op : expr_op
+		'''
+		p[0] = p[1]
+		return
+
 	def p_check_expr_op(self,p):
 		''' check_expr_op : CHECK TEXT
 		'''
