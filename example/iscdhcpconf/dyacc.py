@@ -220,21 +220,21 @@ class DhcpConfYacc(object):
 			p[0].set_name(value)
 		return
 
-	def p_option_values_empty(self,p):
-		''' option_values : empty
-		'''
-		p[0] = dhcpconf.OptionValues(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
-		p[1] = None
-		return
-
 	def p_option_values_recur(self,p):
 		''' option_values : option_values option_value
+		         | option_value
 		'''
-		p[1].append_child(p[2])
-		p[1].set_pos_by_children()
-		p[0] = p[1]
-		p[1] = None
-		p[2] = None
+		if len(p) == 3:
+			p[1].append_child(p[2])
+			p[1].set_pos_by_children()
+			p[0] = p[1]
+			p[1] = None
+			p[2] = None
+		else:
+			p[0] = dhcpconf.OptionValues()
+			p[0].append_child(p[1])
+			p[0].set_pos_by_children()
+			p[1] = None
 		return
 
 	def p_option_value_code(self,p):
@@ -243,6 +243,29 @@ class DhcpConfYacc(object):
 		p[0] = dhcpconf.OptionValue(None,None,p.slice[1].startline,p.slice[1].startpos,p[4].endline,p[4].endpos)
 		p[0].set_code_child(p.slice[2].value,p[4])
 		p[4] = None
+		return
+
+	def p_option_value_equal(self,p):
+		''' option_value : EQUAL date_expression
+		'''
+		p[0] = dhcpconf.OptionValue(None,None,p.slice[1].startline,p.slice[1].startpos,p[2].endline,p[2].endpos)
+		p[0].set_equal_child(p[2])
+		p[2] = None
+		return
+
+	def p_option_value_data(self,p):
+		''' option_value : option_data
+		'''
+		p[0] = dhcpconf.OptionValue(None,None,p[1].startline,p[1].startpos,p[1].endline,p[1].endpos)
+		p[0].set_data_child(p[1])
+		p[1] = None
+		return
+
+	def p_option_value_empty(self,p):
+		''' option_value : empty
+		'''
+		p[0] = dhcpconf.OptionValue(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
+		p[1] = None
 		return
 
 	def p_option_code_clauses_empty(self,p):
@@ -342,9 +365,12 @@ class DhcpConfYacc(object):
 
 	def p_ocsd_simple_type_boolean(self,p):
 		''' ocsd_simple_type : BOOLEAN 
+		         | TOKEN_TEXT
+		         | IP_ADDRESS
+		         | ZEROLEN
 		'''
 		p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
-		p[0].set_type_name('boolean')
+		p[0].set_type_name(p.slice[1].value)
 		return
 
 	def p_ocsd_simple_type_number(self,p):
@@ -361,14 +387,6 @@ class DhcpConfYacc(object):
 			typename = '%s %s'%(p.slice[1].value,p.slice[2].value)
 			p[0].set_type_name(typename)
 			p[0].set_number(p.slice[3].value)
-		return
-
-	def p_ocsd_simple_type_name(self,p):
-		''' ocsd_simple_type : IP_ADDRESS
-		             | TOKEN_TEXT
-		'''
-		p[0] = dhcpconf.OptionCodeSimpleDeclareType(None,None,p.slice[1].startline,p.slice[1].startpos,p.slice[1].endline,p.slice[1].endpos)
-		p[0].set_type_name(p.slice[1].value)
 		return
 
 	def p_ocsd_simple_type_text(self,p):
