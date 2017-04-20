@@ -581,7 +581,7 @@ class DhcpConfYacc(object):
 				| deleted_declaration
 				| uid_statement
 				| host_identifier_declaration
-		        | hardware_declaration
+		        | hardware_statement
 				| fixed_address_declaration
 				| host_group_declaration
 				| statements
@@ -643,33 +643,38 @@ class DhcpConfYacc(object):
 		p[4] = None
 		return
 
-	def p_hardware_declaration(self,p):
-		''' hardware_declaration : HARDWARE hardware_type SEMI
+	def p_hardware_statement(self,p):
+		''' hardware_statement : HARDWARE hardware_type SEMI
+				| HARDWARE hardware_type hardware_addr SEMI
 		'''
-		p[0] = p[2]
+		if len(p) == 3:
+			p[0] = dhcpconf.HardwareStatement(None,None,p.slice[1],p.slice[3])
+			p[0].set_type(p[2])
+		else:
+			p[0] = dhcpconf.HardwareStatement(None,None,p.slice[1],p.slice[4])
+			p[0].set_type(p[2])
+			p[0].set_addr(p[3])		
 		return
 
 	def p_hardware_type(self,p):
-		''' hardware_type : ETHERNET macaddr
+		''' hardware_type : ETHERNET
+		       | TOKEN_RING
+		       | TOKEN_FDDI
+		       | TOKEN_INFINIBAND
+		       | TEXT
 		'''
-		p[2].check_valid_macaddr()
-		hardwaretype = dhcpconf.HardwareType('ethernet',None,p.slice[1],p.slice[1])
-		children = []
-		children.append(hardwaretype)
-		children.append(p[2])
-		hardware = dhcpconf.HardwareDeclaration(children)
-		hardware.set_pos_by_children()
-		p[0] = hardware
+		p[0] = dhcpconf.HardwareType(None,None,p.slice[1],p.slice[1])
+		p[0].set_type(p.slice[1].value)
 		return
 
-	def p_macaddr(self,p):
-		''' macaddr : macaddr COLON TEXT
-				| macaddr COLON NUMBER
+	def p_hardware_addr(self,p):
+		''' hardware_addr : hardware_addr COLON TEXT
+				| hardware_addr COLON NUMBER
 				| TEXT
 				| NUMBER
 		'''
 		if len(p) == 2:
-			macobj = dhcpconf.MacAddress(p.slice[1].value,None,p.slice[1],p.slice[1])
+			macobj = dhcpconf.HardwareAddr(p.slice[1].value,None,p.slice[1],p.slice[1])
 		else:
 			macobj = p[1]
 			macobj.append_colon_part(p.slice[3].value,p.slice[3])
