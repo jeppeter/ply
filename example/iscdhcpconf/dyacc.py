@@ -58,15 +58,20 @@ class DhcpConfYacc(object):
 		return
 
 	def p_statement_multi(self,p):
-		''' statement : host_statement
+		''' statement : include_statement
+		     | host_statement
+		     | group_statement
 			 | shared_network_statement
 			 | subnet_statement
+			 | subnet6_statement
+			 | vendor_class_statement
 			 | option_statement
 			 | pool_statement
 			 | range_declaration
 			 | prefix6_statement
 			 | fixed_prefix6_statement
 			 | authoritative_statement
+			 | server_identifier_statement
 		'''
 		children = []
 		children.append(p[1])
@@ -74,58 +79,124 @@ class DhcpConfYacc(object):
 		p[1] = None
 		return
 
+	def p_include_statement(self,p):
+		''' include_statement : INCLUDE TEXT SEMI
+		'''
+		p[0] = dhcpconf.IncludeStatement(None,None,p.slice[1],p.slice[3])
+		p[0].set_file(p.slice[2].value)
+		return
+
+	def p_server_identifier_statement(self,p):
+		''' server_identifier_statement : SERVER_IDENTIFIER option_values SEMI
+		'''
+		p[0] = dhcpconf.ServerIdentifier(None,None,p.slice[1],p.slice[3])
+		p[0].append_child(p[2])
+		p[2] = None
+		return
+
 	def p_shared_network_statement(self,p):
-		''' shared_network_statement : SHARED_NETWORK TEXT LBRACE shared_network_declarations RBRACE
-				 | SHARED_NETWORK NUMBER LBRACE shared_network_declarations RBRACE
+		''' shared_network_statement : SHARED_NETWORK host_name LBRACE shared_network_declarations RBRACE
 		'''
 		children = []
 		children.append(p[4])
 		p[0] = dhcpconf.SharedNetwork(None,children,p.slice[1],p.slice[5])
-		p[0].set_shared_host(p.slice[2].value)
+		p[0].set_shared_host(p[2])
 		p[4] = None
 		return
 
-	def p_shared_network_delcaration_empty(self,p):
+	def p_shared_network_delcarations(self,p):
 		''' shared_network_declarations : empty
+		         | shared_network_declarations shared_network_declaration
 		'''
-		children = []
-		children.append(p[1])
-		p[0] = dhcpconf.SharedNetworkDeclarations(None,children)
+		if len(p) == 2:
+			p[0] = dhcpconf.SharedNetworkDeclarations(None,None,p[1],p[1])
+			p[1] = None
+		else:
+			p[0] = p[1]
+			p[0].append_child(p[2])
+			p[0].set_pos_by_children()
+			p[1] = None
+			p[2] = None
+		return
+
+	def p_shared_network_declaration(self,p):
+		''' shared_network_declaration : interface_declaration
+		           | statements
+		'''
+		p[0] = dhcpconf.SharedNetworkDeclaration()
+		p[0].append_child(p[1])
 		p[0].set_pos_by_children()
 		p[1] = None
 		return
 
-	def p_shared_network_declaration_combine(self,p):
-		''' shared_network_declarations : shared_network_declarations interface_declaration
-		           | shared_network_declarations statements
+	def p_group_statement(self,p):
+		'''group_statement : GROUP TEXT LBRACE group_declarations RBRACE
 		'''
-		p[1].append_child(p[2])
-		p[1].set_pos_by_children()
-		p[0] = p[1]
+		p[0] = dhcpconf.GroupStatement(None,None,p.slice[1],p.slice[5])
+		p[0].set_groupname(p.slice[2].value)
+		p[0].append_child(p[4])
+		p[4] = None
+		return
+
+	def p_group_declarations(self,p):
+		''' group_declarations : empty
+		             | group_declarations group_declaration
+		'''
+		if len(p) == 2:
+			p[0] =dhcpconf.GropuDeclarations(None,None,p[1],p[1])
+			p[1] = None
+		else:
+			p[0] = p[1]
+			p[0].append_child(p[2])
+			p[0].set_pos_by_children()
+			p[1] = None
+			p[2] = None
+		return
+
+	def p_group_declaraion(self,p):
+		''' group_declaration : deleted_declaration
+		          | dynamic_declaration
+		          | static_declaraion
+		          | statements
+		'''
+		p[0] = dhcpconf.GroupDeclaration()
+		p[0].append_child(p[1])
+		p[0].set_pos_by_children()
 		p[1] = None
-		p[2] = None
+		return
+
+
+	def p_dynamic_declaration(self,p):
+		''' dynamic_declaration : DYNAMIC SEMI
+		'''
+		p[0] = dhcpconf.DynamicDeclaration(None,None,p.slice[1],p.slice[2])
+		return
+
+	def p_static_declaration(self,p):
+		''' static_declaration : STATIC SEMI
+		'''
+		p[0] = dhcpconf.StaticDeclaration(None,None,p.slice[1],p.slice[2])
 		return
 
 	def p_interface_declaration(self,p):
 		''' interface_declaration : INTERFACE interface_name SEMI
 		'''
 		p[0] = dhcpconf.InterfaceDeclaration(None,None,p.slice[1],p.slice[3])
-		p[0].set_interface(p[2].value_format())
-		logging.info('%s'%(p[0].format_config()))
+		p[0].set_interface(p[2])
 		return
 
 	def p_interface_name(self,p):
 		''' interface_name : TEXT
 		'''
 		p[0] = dhcpconf.InterfaceName(None,None,p.slice[1],p.slice[1])
-		p[0].start_interfacename(p.slice[1].value)		
+		p[0].start_interfacename(p.slice[1].value)
 		return
 
 	def p_option_routers(self,p):
 		''' option_statement : OPTION ROUTERS host_name SEMI
 		'''
-		p[0] = dhcpconf.OptionStatement(None,p.slice[1],p.slice[4])
-		p[0].set_routername(p[3].value_format())
+		p[0] = dhcpconf.OptionRouters(None,p.slice[1],p.slice[4])
+		p[0].set_routername(p[3])
 		p[3] = None
 		return
 
@@ -189,7 +260,7 @@ class DhcpConfYacc(object):
 		return
 
 	def p_option_name_value(self,p):
-		''' option_statement : option_name_value
+		''' option_statement : option_name_value 
 		'''
 		p[0] = dhcpconf.OptionStatement()
 		p[0].append_child(p[1])
@@ -405,7 +476,7 @@ class DhcpConfYacc(object):
 
 
 	def p_host_statement(self,p):
-		''' host_statement : HOST host_name LBRACE declarations RBRACE
+		''' host_statement : HOST host_name LBRACE host_declarations RBRACE
 		'''
 		children = []
 		# this is for declarations
@@ -416,23 +487,27 @@ class DhcpConfYacc(object):
 		p[4] = None
 		return
 
-
-	def p_host_name_colon_text(self,p):
-		''' host_name : host_name COLON TEXT
-			| host_name COLON NUMBER
-		'''		
-		p[0] = p[1]
-		p[0].append_colone_text(p.slice[3].value,p.slice[3])
-		p[1] = None
-		return
+	  # we do not make this ok for not colon handle
+	# def p_host_name_colon_text(self,p):
+	# 	''' host_name : host_name COLON TEXT
+	# 		| host_name COLON NUMBER
+	# 	'''		
+	# 	p[0] = p[1]
+	# 	p[0].append_colone_text(p.slice[3].value,p.slice[3])
+	# 	p[1] = None
+	# 	return
 
 	def p_host_name_dot_text(self,p):
 		''' host_name : host_name DOT TEXT
 			| host_name DOT NUMBER
+			| host_name DOT
 		'''
 		p[0] = p[1]
-		p[0].append_dot_text(p.slice[3].value,p.slice[3])
-		p[1] = None
+		if len(p) == 3:
+			p[0].append_dot_text(p.slice[3].value,p.slice[3])		
+			p[1] = None
+		else:
+			p[0].append_dot(p.slice[2])
 		return
 
 	def p_host_name_text(self,p):
@@ -460,23 +535,22 @@ class DhcpConfYacc(object):
 		p[0].start_dnsname(p.slice[1].value)
 		return
 
-	def p_declarations_empty(self,p):
-		'''declarations : empty
+	def p_host_declarations_empty(self,p):
+		'''host_declarations : empty
 		'''
-		declarations = dhcpconf.Declarations(None,None,p[1],p[1])
+		declarations = dhcpconf.HostDeclarations(None,None,p[1],p[1])
 		p[0] = declarations
 		p[1] = None
 		return
 
-	def p_declarations_declaration(self,p):
-		''' declarations : declarations declaration
+	def p_host_declarations_declaration(self,p):
+		''' host_declarations : host_declarations host_declaration
 		'''
-		declarations = dhcpconf.Declarations()
-		declarations.extend_children(p[1].children)
-		declarations.append_child(p[2])
-		declarations.set_pos_by_children()
-		p[0] = declarations
+		p[0] = p[1]
+		p[0].append_child(p[2])
+		p[0].set_pos_by_children()
 		p[1] = None
+		p[2] = None
 		return
 
 	def p_prefix6_statement(self,p):
@@ -499,15 +573,71 @@ class DhcpConfYacc(object):
 		return
 
 
-	def p_declaration(self,p):
-		''' declaration : hardware_declaration
+	def p_host_declaration(self,p):
+		''' host_declaration : dynamic_declaration				
+				| deleted_declaration
+				| uid_statement
+				| host_identifier_declaration
+		        | hardware_declaration
 				| fixed_address_declaration
+				| host_group_declaration
+				| statements
+
 		'''
 		children = []
 		children.append(p[1])
-		p[0] = dhcpconf.Declaration(children)
+		p[0] = dhcpconf.HostDeclaration(children)
 		p[0].set_pos_by_children()
 		p[1] = None
+		return
+
+
+	def p_deleted_declaration(self,p):
+		''' deleted_declaration : DELETED SEMI
+		'''
+		p[0] = dhcpconf.DeletedDeclaration(None,None,p.slice[1],p.slice[2])
+		return
+
+	def p_host_group_declaration(self,p):
+		''' host_group_declaration : GROUP TEXT  SEMI
+		'''
+		p[0] = dhcpconf.HostGroupDeclaration(None,None,p.slice[1],p.slice[3])
+		p[0].set_groupname(p.slice[2].value)
+		return
+
+	def p_uid_statement(self,p):
+		''' uid_statement : UID uid_data SEMI
+		'''
+		bval = p[2].verify_uid_data()
+		if not bval:
+			raise Exception('not valid uid [%s] %s'%(p[2].location(),p[2].value_format()))
+		p[0] = dhcpconf.UidStatement(None,None,p.slice[1],p.slice[3])
+		p[0].set_uid(p[2])
+		p[2] = None
+		return
+
+	def p_uid_data(self,p):
+		''' uid_data : TEXT
+		          | NUMBER
+		          | uid_data COLON TEXT
+		          | uid_data COLON NUMBER
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.UidData(None,None,p.slice[1],p.slice[1])
+			p[0].append_text(p.slice[1].value)
+		else:
+			p[0] = p[1]
+			p[0].append_colone_text(p.slice[3].value)
+			p[1] = None
+		return
+
+	def p_host_identifier_declaration(self,p):
+		''' host_identifier_declaration : HOST_IDENTIFIER OPTION option_name option_values SEMI
+		'''
+		p[0] = dhcpconf.HostIdentifierDeclaration(None,None,p.slice[1],p.slice[5])
+		p[0].set_key_value(p[3],p[4])
+		p[3] = None
+		p[4] = None
 		return
 
 	def p_hardware_declaration(self,p):
@@ -555,37 +685,137 @@ class DhcpConfYacc(object):
 		return
 
 	def p_subnet_statement(self,p):
-		''' subnet_statement : SUBNET ipaddr NETMASK ipmask LBRACE subnet_declarations RBRACE
+		''' subnet_statement : SUBNET ipv4_addr NETMASK ipv4_addr LBRACE subnet_declarations RBRACE
 		'''
 		children = []
 		children.append(p[6])
 		p[0] = dhcpconf.SubnetStatement(None,children,p.slice[1],p.slice[7])
-		p[0].set_ipaddr(p[2].value_format())
-		p[0].set_mask(p[4].value_format())
+		p[0].set_ipaddr(p[2])
+		p[0].set_mask(p[4])
 		p[2] = None
 		p[4] = None
 		p[6] = None
 		return
 
-	def p_subnet_delcaration_empty(self,p):
-		''' subnet_declarations : empty
+	def p_subnet6_statement(self,p):
+		''' subnet6_statement : SUBNET6 ipv6_addr SLASH NUMBER LBRACE subnet_declarations BRACE
 		'''
 		children = []
-		children.append(p[1])
-		p[0] = dhcpconf.SubnetDeclarations('SubnetDeclarations',children)
+		children.append(p[6])
+		p[0] = dhcpconf.Subnet6Statement(None,children,p.slice[1],p.slice[7])
+		p[0].set_ipaddr6(p[2])
+		p[0].set_netmask6(p.slice[4].value)
+		return
+
+	def p_subnet_delcarations(self,p):
+		''' subnet_declarations : empty
+				| subnet_declarations subnet_declaration
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.SubnetDeclarations(None,None,p[1],p[1])
+			p[1] = None
+		else:
+			p[0] = p[1]
+			p[0].append_child(p[2])
+			p[0].set_pos_by_children()
+			p[1] = None
+			p[2] = None
+		return
+
+	def p_subnet_declaration(self,p):
+		''' subnet_declaration : interface_declaration
+		           | statements
+		'''
+		p[0] = dhcpconf.SubnetDeclaration()
+		p[0].append_child(p[1])
 		p[0].set_pos_by_children()
 		p[1] = None
 		return
 
-	def p_subnet_declaration_combine(self,p):
-		''' subnet_declarations : subnet_declarations interface_declaration
-		           | subnet_declarations statements
+	def p_vendor_class_statement(self,p):
+		''' vendor_class_statement : VENDOR_CLASS class_name LBRACE class_declarations RBRACE
 		'''
-		p[1].append_child(p[2])
-		p[1].set_pos_by_children()
-		p[0] = p[1]
-		p[1] = None
+		p[0] = dhcpconf.VendorClassStatement(None,None,p.slice[1],p.slice[5])
+		p[0].set_classname(p[2])
+		p[0].append_child(p[4])
 		p[2] = None
+		p[4] = None
+		return
+
+	def p_class_name(self,p):
+		''' class_name : TEXT
+		'''
+		p[0] = dhcpconf.ClassName(None,None,p.slice[1],p.slice[1])
+		p[0].set_name(p.slice[1].value)
+		return
+
+	def p_class_declarations(self,p):
+		''' class_declarations : empty
+		        | class_declarations class_declaration
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.ClassDeclartions(None,None,p[1],p[1])
+		else:
+			p[0] = p[1].append_child_and_set_pos(p[2])
+			p[1] = None
+			p[2] = None
+		return
+
+	def p_class_declaration(self,p):
+		''' class_declaration : dynamic_declaration
+		           | deleted_declaration
+		           | class_match_declaration
+		           | class_spawn_declaration
+		           | class_lease_declaration
+		           | statements
+		'''
+		p[0] = dhcpconf.ClassDeclaration()
+		p[0].append_child_and_set_pos(p[1])
+		p[1] = None
+		return
+
+	def p_class_match_declaration(self,p):
+		''' class_match_declaration : class_match_if_declaration
+		          | class_match_sub_declaration
+		'''
+		p[0] = dhcpconf.ClassMatchDeclaration(None,None,p[1],p[1])
+		p[0].append_child(p[1])
+		p[1] = None
+		return
+
+	def p_class_match_if_declaration(self,p):
+		''' class_match_if_declaration : MATCH IF boolean_expr_op SEMI
+		'''
+		p[0] = dhcpconf.ClassMatchIfDeclaration(None,None,p.slice[1],p.slice[4])
+		p[0].append_child(p[3])
+		p[3] = None
+		return
+
+	def p_class_match_sub_declaration(self,p):
+		''' class_match_sub_declaration : MATCH data_expr_op SEMI
+		'''
+		p[0] = dhcpconf.ClassMatchSubDeclaration(None,None,p.slice[1],p.slice[3])
+		p[0].append_child(p[2])
+		p[2] = None
+		return
+
+	def p_class_spawn_declaration(self,p):
+		''' class_spawn_declaration : SPAWN WIDTH data_expr_op SEMI
+		'''
+		p[0] = dhcpconf.ClassSpawnDeclaration(None,None,p.slice[1],p.slice[4])
+		p[0].append_child(p[3])
+		p[3] = None
+		return
+
+	def p_class_lease_declaration(self,p):
+		''' class_lease_declaration : LEASE SEMI
+		         | LEASE LIMIT NUMBER SEMI
+		'''
+		if len(p) == 3:
+			p[0] = dhcpconf.ClassLeaseDeclaration(None,None,p.slice[1],p.slice[2])
+		else:
+			p[0] = dhcpconf.ClassLeaseDeclaration(None,None,p.slice[1],p.slice[4])
+			p[0].set_limit(p.slice[3].value)
 		return
 
 	def p_authoritative_statement(self,p):

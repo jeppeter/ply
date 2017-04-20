@@ -50,6 +50,24 @@ class YaccDhcpObject(object):
 			return cmpvalue
 		return value
 
+	def location(self):
+		return '%s:%s-%s:%s'%(self.startline,self.startpos,self.endline,self.endpos)
+
+	def append_child_and_set_pos(self,*childs):
+		for c in childs:
+			if isinstance(c,list) or isinstance(c,tuple):
+				for k in c:
+					if k is not None and isinstance(c,object) \
+					      and issubclass(k.__class__,YaccDhcpObject):
+					      self.append_child(k)
+					else:
+						logging.error('%s not valid YaccDhcpObject'%(repr(k)))
+			elif isinstance(c,object) and issubclass(c.__format_ipaddr,YaccDhcpObject):
+				self.append_child(c)
+			else:
+				logging.error('%s not valid YaccDhcpObject'%(repr(c)))
+		self.set_pos_by_children()
+		return self
 
 	def set_pos_by_children(self):
 		startline = None
