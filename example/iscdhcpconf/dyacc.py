@@ -75,12 +75,13 @@ class DhcpConfYacc(object):
              | range_statement
              | range6_statement
              | prefix6_statement
+             | fixed_prefix6_statement
              | authoritative_statement
              | server_identifier_statement
              | option_statement
              | failover_statement
              | server_duid_statement
-             | fixed_prefix6_statement
+             | execute_statement
         '''
         children = []
         children.append(p[1])
@@ -2266,6 +2267,78 @@ class DhcpConfYacc(object):
         p[0].set_number(p.slice[2].value)
         p[0].set_text(p.slice[3].value)
         return
+
+    def p_execuate_statements(self,p):
+        ''' execute_statements : empty
+              | execute_statements execute_statement
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.ExecuteStatements(None,None,p[1],p[1])
+            p[1] = None
+        else:
+            p[0] = p[1].append_child_and_set_pos(p[2])
+            p[1] = None
+            p[2] = None
+        return
+
+    def p_execute_statement(self,p):
+        ''' execute_statement : db_time_format_exec
+                | if_exec
+                | add_exec
+                | break_exec
+                | send_exec
+                | supersede_exec
+                | option_exec
+                | allow_exec
+                | deny_exec
+                | ignore_exec
+                | default_exec
+                | prepend_exec
+                | append_exec
+                | on_exec
+                | switch_exec
+                | case_exec
+                | define_exec
+                | set_exec
+                | unset_exec
+                | eval_exec
+                | execuate_exec
+                | return_exec
+                | log_exec
+                | zone_exec
+                | key_exec
+        '''
+        p[0] = dhcpconf.ExecuteStatement()
+        p[0].append_child_and_set_pos(p[1])
+        p[1] = None
+        return
+
+    def p_db_time_format_exec(self,p):
+        ''' db_time_format_exec : DB_TIME_FORMAT DEFAULT  SEMI
+                | DB_TIME_FORMAT LOCAL SEMI
+        '''
+        p[0] = dhcpconf.DbTimeFormatExec(None,None,p.slice[1],p.slice[-1])
+        p[0].set_type(p.slice[2].value)
+        return
+
+    def p_if_exec(self,p):
+        ''' if_exec : IF boolean_expr_op LBRACE execute_statements RBRACE
+              | IF LPAREN boolean_expr_op RPAREN LBRACE execute_statements RBRACE
+        '''
+        p[0] = dhcpconf.IfExec(None,None,p.slice[1],p.slice[-1])
+        if len(p) > 6:
+            p[0].set_bool_expr(p[2])
+            p[0].append_child(p[4])
+            p[2] = None
+            p[4] = None
+        else:
+            p[0].set_bool_expr(p[3])
+            p[0].append_child(p[6])
+            p[3] = None
+            p[6] = None
+        return
+
+
 
     def p_empty(self,p):
         ''' empty :     
