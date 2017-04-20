@@ -79,6 +79,7 @@ class DhcpConfYacc(object):
              | server_identifier_statement
              | option_statement
              | failover_statement
+             | server_duid_statement
              | fixed_prefix6_statement
         '''
         children = []
@@ -2101,37 +2102,108 @@ class DhcpConfYacc(object):
         p[0].set_peer_mode(p[1])
         p[1] = None
         return
+    def get_class_init_name(self,modname):
+        modname = '__main__'
+        clsname = n
+        if '.'  in n:
+            sarr = re.split('\.',n)
+            modname = '.'.join(sarr[:-1])
+            clsname = sarr[-1]  
+        m = importlib.import_module(modname)
+        clsname = getattr(m,clsname,None)
+        if clsname is None:
+            return None
+        return clsname
 
-    def failover_set_value(self,p,callname):
-        p[0] = dhcpconf
+
+    def failover_set_value_3(self,p,callname):
+        clsfunc = self.get_class_init_name('dhcpconf.%s'%(callname))
+        if clsfunc is None:
+            raise Exception('can not find %s'%(callname))
+        p[0] = clsfunc(None,None,p.slice[1],p.slice[3])
+        p[0].set_value(p.slice[2].value)
+        return
+
+    def failover_set_value_4(self,p,callname):
+        clsfunc = self.get_class_init_name('dhcpconf.%s'%(callname))
+        if clsfunc is None:
+            raise Exception('can not find %s'%(callname))
+        p[0] = clsfunc(None,None,p[1],p.slice[4])
+        p[0].set_value(p.slice[3].value)
+        p[0].set_peer_mode(p[1])
+        return
+
 
     def p_failover_max_lease_misbalance_declaration(self,p):
         ''' failover_max_lease_misbalance_declaration : MAX_LEASE_MISBALANCE NUMBER SEMI
         '''
-        p[0] = dhcpconf.FailoverMaxLeaseMisbalanceDeclaration(None,None,p.slice[1],p.slice[3])
-        p[0].set_value(p.slice[2].value)
+        self.failover_set_value_3(p,'FailoverMaxLeaseMisbalanceDeclaration')
         return
 
     def p_failover_max_lease_ownership_declaration(self,p):
         ''' failover_max_lease_ownership_declaration : MAX_LEASE_OWNERSHIP NUMBER SEMI
         '''
-        p[0] = dhcpconf.FailoverMaxLeaseOwnershipDeclaration(None,None,p.slice[1],p.slice[3])
-        p[0].set_value(p.slice[2].value)
+        self.failover_set_value_3(p,'FailoverMaxLeaseOwnershipDeclaration')
         return
 
     def p_failover_max_balance_declaration(self,p):
         '''failover_max_balance_declaration : MAX_BALANCE NUMBER SEMI
         '''
-        p[0] = dhcpconf.FailoverMaxBalanceDeclaration(None,None,p.slice[1],p.slice[3])
-        p[0].set_value(p.slice[2].value)
+        self.failover_set_value_3(p,'FailoverMaxBalanceDeclaration')
         return
 
-    def p_failover_max_balance_declaration(self,p):
+    def p_failover_min_balance_declaration(self,p):
         '''failover_max_balance_declaration : MAX_BALANCE NUMBER SEMI
         '''
-        p[0] = dhcpconf.FailoverMaxBalanceDeclaration(None,None,p.slice[1],p.slice[3])
-        p[0].set_value(p.slice[2].value)
+        self.failover_set_value_3(p,'FailoverMinBalanceDeclaration')
         return
+
+    def p_failover_auto_partner_down_declaration(self,p):
+        ''' failover_auto_partner_down_declaration : AUTO_PARTNER_DOWN NUMBER SEMI
+        '''
+        self.failover_set_value_3(p,'FailoverAuotPartnerDownDeclaration')
+        return
+
+    def p_failover_max_response_delay_declaration(self,p):
+        ''' failover_max_response_delay_declaration : failover_peer_selected MAX_RESPONSE_DELAY NUMBER SEMI
+        '''
+        self.failover_set_value_4(p,'FailoverMaxResponseDelayDeclaration')
+        return
+
+    def p_failover_max_unacked_updates_declaration(self,p):
+        ''' failover_max_unacked_updates_declaration : failover_peer_selected MAX_UNACKED_UPDATES NUMBER SEMI
+        '''
+        self.failover_set_value_4(p,'FailoverMaxUnackedUpdatesDeclaration')
+        return
+
+    def p_failover_mclt_declaration(self,p):
+        ''' failover_mclt_declaration : MCLT NUMBER SEMI
+        '''
+        self.failover_set_value_3(p,'FailoverMcltDeclaration')
+        return
+
+    def p_failover_hba_declaration(self,p):
+        ''' failover_hba_declaration : HBA hardware_addr SEMI
+        '''
+        p[0] = dhcpconf.FailoverHbaDeclaration(None,None,p.slice[1],p.slice[3])
+        p[0].append_child(p[2])
+        p[2] = None
+        return
+
+    def p_failover_split_declaration(self,p):
+        ''' failover_split_declaration : SPLIT NUMBER SEMI
+        '''
+        self.failover_set_value_3(p,'FailoverSplitDeclaration')
+        return
+
+    def p_failover_load_declaration(self,p):
+        ''' failover_load_declaration : LOAD BALANCE MAX SECONDS NUMBER SEMI
+        '''
+        p[0] = dhcpconf.FailoverLoadDeclaration(None,None,p.slice[1],p.slice[6])
+        p[0].set_value(p.slice[5].value)
+        return
+
+
 
     def p_failover_peer_selected_empty(self,p):
         ''' failover_peer_selected : empty
@@ -2146,10 +2218,54 @@ class DhcpConfYacc(object):
         p[0] = dhcpconf.FailoverPeerSelected(None,None,p.slice[1],p.slice[1])
         p[0].set_peer(True)
         return
-        
 
+    def p_server_duid_statement(self,p):
+        ''' server_duid_statement : server_duid_en_declaration
+               | server_duid_ll_declaration
+               | server_duid_llt_declaration
+               | server_duid_simple_declaration
+        '''
+        p[0] = dhcpconf.ServerDuidStatement()
+        p[0].append_child_and_set_pos(p[1])
+        p[1] = None
+        return
 
+    def p_server_duid_en_declaration(self,p):
+        ''' server_duid_en_declaration : SERVER_DUID EN NUMBER TEXT SEMI
+        '''
+        p[0] = dhcpconf.ServerDuidEnDeclaration(None,None,p.slice[1],p.slice[5])
+        p[0].set_number(p.slice[3].value)
+        p[0].set_text(p.slice[4].value)
+        return
 
+    def p_server_duid_ll_declaration(self,p):
+        ''' server_duid_ll_declaration : SERVER_DUID LL  SEMI
+                 | SERVER_DUID LL hardware_type hardware_addr SEMI
+        '''
+        p[0] = dhcpconf.ServerDuidLLDeclaration(None,None,p.slice[1],p.slice[-1])
+        if len(p) > 4:
+            p[0].set_type(p[3])
+            p[0].set_addr(p[4])
+        return
+
+    def p_server_duid_llt_declaration(self,p):
+        ''' server_duid_llt_declaration : SERVER_DUID LLT SEMI
+                | SERVER_DUID LL hardware_type NUMBER hardware_addr SEMI
+        '''
+        p[0] = dhcpconf.ServerDuidLLTDeclaration(None,None,p.slice[1],p.slice[-1])
+        if len(p) > 4:
+            p[0].set_type(p[3])
+            p[0].set_time(p.slice[4].value)
+            p[0].set_addr(p[5])
+        return
+
+    def p_server_duid_simple_declaration(self,p):
+        ''' server_duid_simple_declaration : SERVER_DUID NUMBER TEXT SEMI
+        '''
+        p[0] = dhcpconf.ServerDuidSimpleDeclaration(None,None,p.slice[1],p.slice[-1])
+        p[0].set_number(p.slice[2].value)
+        p[0].set_text(p.slice[3].value)
+        return
 
     def p_empty(self,p):
         ''' empty :     
