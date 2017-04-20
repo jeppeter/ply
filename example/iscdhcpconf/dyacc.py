@@ -68,13 +68,17 @@ class DhcpConfYacc(object):
 			 | user_class_statement
 			 | class_statement
 			 | subclass_statement
-			 | option_statement
+			 | hardware_statement
+			 | fixed_addr_statement
+			 | fixed_addr6_statement
 			 | pool_statement
-			 | range_declaration
+			 | range_statement
+			 | range6_statement
 			 | prefix6_statement
-			 | fixed_prefix6_statement
 			 | authoritative_statement
 			 | server_identifier_statement
+			 | option_statement
+			 | fixed_prefix6_statement
 		'''
 		children = []
 		children.append(p[1])
@@ -560,11 +564,12 @@ class DhcpConfYacc(object):
 		''' prefix6_statement : PREFIX6 ipv6_addr ipv6_addr SLASH NUMBER SEMI
 		'''
 		p[0] = dhcpconf.Prefix6Statement(None,None,p.slice[1],p.slice[6])
-		p[0].set_ipv6_pair(p[2].value_format(),p[3].value_format())
-		p[0].set_mask(p.slice[5].value)
+		p[0].set_ipv6_pair(p[2],p[3])
+		p[0].set_mask_number(p.slice[5].value)
 		p[2] = None
 		p[3] = None
 		return
+
 
 	def p_fixed_prefix6_statement(self,p):
 		''' fixed_prefix6_statement : FIXED_PREFIX6 ipv6_addr SLASH NUMBER SEMI
@@ -643,44 +648,6 @@ class DhcpConfYacc(object):
 		p[4] = None
 		return
 
-	def p_hardware_statement(self,p):
-		''' hardware_statement : HARDWARE hardware_type SEMI
-				| HARDWARE hardware_type hardware_addr SEMI
-		'''
-		if len(p) == 3:
-			p[0] = dhcpconf.HardwareStatement(None,None,p.slice[1],p.slice[3])
-			p[0].set_type(p[2])
-		else:
-			p[0] = dhcpconf.HardwareStatement(None,None,p.slice[1],p.slice[4])
-			p[0].set_type(p[2])
-			p[0].set_addr(p[3])		
-		return
-
-	def p_hardware_type(self,p):
-		''' hardware_type : ETHERNET
-		       | TOKEN_RING
-		       | TOKEN_FDDI
-		       | TOKEN_INFINIBAND
-		       | TEXT
-		'''
-		p[0] = dhcpconf.HardwareType(None,None,p.slice[1],p.slice[1])
-		p[0].set_type(p.slice[1].value)
-		return
-
-	def p_hardware_addr(self,p):
-		''' hardware_addr : hardware_addr COLON TEXT
-				| hardware_addr COLON NUMBER
-				| TEXT
-				| NUMBER
-		'''
-		if len(p) == 2:
-			macobj = dhcpconf.HardwareAddr(p.slice[1].value,None,p.slice[1],p.slice[1])
-		else:
-			macobj = p[1]
-			macobj.append_colon_part(p.slice[3].value,p.slice[3])
-			p[1] = None
-		p[0] = macobj
-		return
 
 	def p_error(self,p):
 		raise Exception('find error %s'%(repr(p)))
@@ -866,6 +833,92 @@ class DhcpConfYacc(object):
 			p[0].set_limit(p.slice[3].value)
 		return
 
+	def p_hardware_statement(self,p):
+		''' hardware_statement : HARDWARE hardware_type SEMI
+				| HARDWARE hardware_type hardware_addr SEMI
+		'''
+		if len(p) == 3:
+			p[0] = dhcpconf.HardwareStatement(None,None,p.slice[1],p.slice[3])
+			p[0].set_type(p[2])
+		else:
+			p[0] = dhcpconf.HardwareStatement(None,None,p.slice[1],p.slice[4])
+			p[0].set_type(p[2])
+			p[0].set_addr(p[3])		
+		return
+
+	def p_hardware_type(self,p):
+		''' hardware_type : ETHERNET
+		       | TOKEN_RING
+		       | TOKEN_FDDI
+		       | TOKEN_INFINIBAND
+		       | TEXT
+		'''
+		p[0] = dhcpconf.HardwareType(None,None,p.slice[1],p.slice[1])
+		p[0].set_type(p.slice[1].value)
+		return
+
+	def p_hardware_addr(self,p):
+		''' hardware_addr : hardware_addr COLON TEXT
+				| hardware_addr COLON NUMBER
+				| TEXT
+				| NUMBER
+		'''
+		if len(p) == 2:
+			macobj = dhcpconf.HardwareAddr(p.slice[1].value,None,p.slice[1],p.slice[1])
+		else:
+			macobj = p[1]
+			macobj.append_colon_part(p.slice[3].value,p.slice[3])
+			p[1] = None
+		p[0] = macobj
+		return
+
+	def p_fixed_addr_statement(self,p):
+		''' fixed_addr_statement : FIXED_ADDR fixed_addr_elements SEMI
+		'''
+		p[0] = dhcpconf.FixedAddrStatement(None,None,p.slice[1],p.slice[3])
+		p[0].append_child(p[2])
+		p[2] = None
+		return
+
+	def p_fixed_addr_elements(self,p):
+		''' fixed_addr_elements : host_name
+		        | fixed_addr_elements host_name
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.FixedAddrElements()
+			p[0].append_child_and_set_pos(p[1])
+			p[1] = None
+		else:
+			p[0] = p[1].append_child_and_set_pos(p[2])
+			p[1] = None
+			p[2] = None
+		return
+
+
+
+	def p_fixed_addr6_statement(self,p):
+		''' fixed_addr6_statement : FIXED_ADDR6 fixed_addr6_elements SEMI
+		'''
+		p[0] = dhcpconf.FixedAddr6Statement(None,None,p.slice[1],p.slice[3])
+		p[0].append_child(p[2])
+		p[2] = None
+		return
+
+	def p_fixed_addr6_elements(self,p):
+		''' fixed_addr6_elements : ipv6_addr
+		        | fixed_addr6_elements ipv6_addr
+		'''
+		if len(p) == 2:
+			p[0] = dhcpconf.FixedAddr6Elements()
+			p[0].append_child_and_set_pos(p[1])
+			p[1] = None
+		else:
+			p[0] = p[1].append_child_and_set_pos(p[2])
+			p[1] = None
+			p[2] = None
+		return
+
+
 	def p_authoritative_statement(self,p):
 		'''authoritative_statement : NOT AUTHORITATIVE SEMI
 		         | AUTHORITATIVE SEMI
@@ -946,23 +999,18 @@ class DhcpConfYacc(object):
 		p[3] = None
 		return
 
-	def p_pool_declarations_empty(self,p):
-		''' pool_declarations : empty
-		'''
-		p[0] = dhcpconf.PoolDeclarations(None,None)
-		p[0].append_child(p[1])
-		p[0].set_pos_by_children()
-		p[1] = None
-		return
 
 	def p_pool_declarations_recursive(self,p):
-		'''pool_declarations : pool_declarations pool_declaration
+		'''pool_declarations : empty
+				| pool_declarations pool_declaration
 		'''
-		p[0] = p[1]
-		p[1] = None
-		p[0].append_child(p[2])
-		p[0].set_pos_by_children()
-		p[2] = None
+		if len(p) == 2:
+			p[0] = dhcpconf.PoolDeclarations(None,None,p[1],p[1])
+			p[1] = None
+		else:
+			p[0] = p[1].append_child_and_set_pos(p[2])
+			p[1] = None
+			p[2] = None
 		return
 
 
@@ -970,62 +1018,87 @@ class DhcpConfYacc(object):
 		''' pool_declaration : NO FAILOVER PEER SEMI
 		'''
 		p[0] = dhcpconf.Failover(None,None,p.slice[1],p.slice[4])
-		p[0].set_no_failover()
 		return
 
 	def p_pool_declaration_failover_peer(self,p):
 		''' pool_declaration : FAILOVER PEER dns_name SEMI
 		'''
 		p[0] = dhcpconf.Failover(None,None,p.slice[1],p.slice[4])
-		p[0].set_failover(p[3].value_format())
+		p[0].append_child(p[3])
 		p[3] = None
 		return
 
-	def p_pool_declaration_range_declaration(self,p):
-		'''pool_declaration : range_declaration
+	def p_pool_declaration_range_statement(self,p):
+		'''pool_declaration : range_statement
+		         | range6_statement
 		'''
 		p[0] = p[1]
 		p[1] = None
 		return
 
-	def p_range_declaration_two(self,p):
-		'''range_declaration : RANGE ipaddr ipaddr SEMI
-		         | RANGE6 ipaddr ipaddr SEMI
+	def p_range_statement_pair(self,p):
+		'''range_statement : RANGE ipv4_addr ipv4_addr SEMI
 		'''
-		p[0] = dhcpconf.IpRange(None,None,p.slice[1],p.slice[4])
-		p[0].set_mode(p.slice[1].value)
-		p[0].set_range_ips(p[2].value_format(),p[3].value_format())
+		p[0] = dhcpconf.RangeStatement(None,None,p.slice[1],p.slice[4])
+		p[0].set_range_ips(p[2],p[3])
 		p[2] = None
 		p[3] = None
 		return
 
-	def p_range_declaration_one(self,p):
-		'''range_declaration : RANGE ipaddr SEMI
-		       | RANGE6 ipaddr SEMI
+	def p_range_statement_one(self,p):
+		'''range_statement : RANGE ipv4_addr SEMI
 		'''
-		p[0] = dhcpconf.IpRange(None,None,p.slice[1],p.slice[3])
-		p[0].set_mode(p.slice[1].value)
-		p[0].set_range_ips(p[2].value_format(),p[2].value_format())
+		p[0] = dhcpconf.RangeStatement(None,None,p.slice[1],p.slice[3])
+		p[0].set_range_ips(p[2],p[2])
 		p[2] = None
 		return
 
 
-	def p_range_declaration_part(self,p):
-		'''range_declaration : RANGE DYNAMIC_BOOTP ipaddr ipaddr SEMI
-			| RANGE DYNAMIC_BOOTP ipaddr SEMI
-			| RANGE6 DYNAMIC_BOOTP ipaddr ipaddr SEMI
-			| RANGE6 DYNAMIC_BOOTP ipaddr SEMI
+	def p_range_statement_part(self,p):
+		'''range_statement : RANGE DYNAMIC_BOOTP ipv4_addr ipv4_addr SEMI
+			| RANGE DYNAMIC_BOOTP ipv4_addr SEMI
 		'''
 		if len(p) == 5:
-			p[0] = dhcpconf.IpRange(None,None,p.slice[1],p.slice[4])
+			p[0] = dhcpconf.RangeStatement(None,None,p.slice[1],p.slice[4])
 			p[3] = None
 		else:
-			p[0] = dhcpconf.IpRange(None,None,p.slice[1],p.slice[5])
+			p[0] = dhcpconf.RangeStatement(None,None,p.slice[1],p.slice[5])
 			p[3] = None
 			p[4] = None
-		p[0].set_mode(p.slice[1].value)
 		p[0].set_dynamic()
 		return
+
+	def p_range6_statement_ipv6_slash(self,p):
+		''' range6_statement : RANGE6 ipv6_addr SLASH NUMBER SEMI
+		       | RANGE6 ipv6_addr SLASH NUMBER TEMPORARY SEMI
+		'''
+		p[0] = dhcpconf.Range6Statement(None,None,p.slice[1],p.slice[5])
+		p[0].set_start_ip(p[2])
+		p[0].set_mask_number(p.slice[4].value)
+		p[2] = None
+		if len(p) > 6:
+			p[0].set_temporary()
+		return
+
+	def p_range6_statement_ipv6_two(self,p):
+		''' range6_statement : RANGE6 ipv6_addr ipv6_addr SEMI
+		'''
+		p[0] = dhcpconf.RangeStatement(None,None,p.slice[1],p.slice[4])
+		p[0].set_ipv6_pair(p[2],p[3])
+		p[2] = None
+		p[3] = None
+		return
+
+	def p_range6_statement_ipv6_temp(self,p):
+		''' range6_statement : RANGE6 ipv6_addr TEMPORARY SEMI
+		        | RANGE6 ipv6_addr SEMI
+		'''
+		p[0] = dhcpconf.Range6Statement(None,None,p.slice[1],p.slice[4])
+		p[0].set_start_ip(p[2])
+		if len(p) > 4:
+			p[0].set_temporary()
+		return
+
 
 	def p_pool_declaration_allow(self,p):
 		'''pool_declaration : permit_declaration
