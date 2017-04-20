@@ -65,6 +65,9 @@ class DhcpConfYacc(object):
 			 | subnet_statement
 			 | subnet6_statement
 			 | vendor_class_statement
+			 | user_class_statement
+			 | class_statement
+			 | subclass_statement
 			 | option_statement
 			 | pool_statement
 			 | range_declaration
@@ -740,6 +743,46 @@ class DhcpConfYacc(object):
 		p[0].append_child(p[4])
 		p[2] = None
 		p[4] = None
+		return
+
+	def p_user_class_statement(self,p):
+		''' user_class_statement : USER_CLASS class_name LBRACE class_declarations RBRACE
+		'''
+		p[0] = dhcpconf.UserClassStatement(None,None,p.slice[1],p.slice[5])
+		p[0].set_classname(p[2])
+		p[0].append_child(p[4])
+		p[2] = None
+		p[4] = None
+		return
+
+	def p_class_statement(self,p):
+		''' class_statement : CLASS class_name LBRACE class_declarations RBRACE
+		'''
+		p[0] = dhcpconf.ClassStatement(None,None,p.slice[1],p.slice[5])
+		p[0].set_classname(p[2])
+		p[0].append_child(p[4])
+		p[2] = None
+		p[4] = None
+		return
+
+	def p_subclass_statement(self,p):
+		''' subclass_statement : SUBCLASS class_name LBRACE class_declarations RBRACE
+		         | SUBCLASS class_name class_name LBRACE class_declarations RBRACE
+		'''
+		if len(p) == 5:
+			p[0] = dhcpconf.SubClassStatement(None,None,p.slice[1],p.slice[5])
+			p[0].set_classname(p[2])
+			p[0.append_child(p[4])]
+			p[2] = None
+			p[4] = None
+		else:
+			p[0] = dhcpconf.SubClassStatement(None,None,p.slice[1],p.slice[6])
+			p[0].set_classname(p[2])
+			p[0].set_parentclass(p[3])
+			p[0].append_child(p[5])
+			p[2] = None
+			p[3] = None
+			p[5] = None
 		return
 
 	def p_class_name(self,p):
