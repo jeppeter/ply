@@ -2820,6 +2820,74 @@ class DhcpConfYacc(object):
             p[2] = None
         return
 
+    def p_key_exec(self,p):
+        ''' key_exec : KEY host_name LBRACE key_exec_declarations RBRACE
+                  | KEY host_name LBRACE key_exec_declarations RBRACE SEMI
+        '''
+        p[0] = dhcpconf.KeyExec(None,None,p.slice[1],p.slice[-1])
+        p[0].set_name(p[2])
+        p[0].append_child(p[4])
+        p[2] = None
+        p[4] = None
+        return
+
+    def p_key_exec_declarations(self,p):
+        ''' key_exec_declarations : empty
+                 | key_exec_declarations key_exec_declaration
+        '''
+        if len(p) == 0:
+            p[0] = dhcpconf.KeyExecDeclarations(None,None,p[1],p[1])
+            p[1] = None
+        else:
+            p[0] = p[1].append_child_and_set_pos(p[2])
+            p[1] = None
+            p[2] = None
+        return
+
+    def p_key_exec_declaration(self,p):
+        ''' key_exec_declaration : key_exec_algorithm_declaration
+               | key_exec_secret_declaration
+        '''
+        p[0] = dhcpconf.KeyExecDeclaration()
+        p[0].append_child_and_set_pos(p[1])
+        p[1] = None
+        return
+
+    def p_key_exec_algorithm_declaration(self,p):
+        ''' key_exec_algorithm_declaration : ALGORITHM host_name  SEMI
+        '''
+        p[0] = dhcpconf.KeyExecAlgorithmDeclaration(None,None,p.slice[1],p.slice[3])
+        p[0].append_child(p[2])
+        p[2] = None
+        return
+
+    def p_key_exec_secret_declaration(self,p):
+        ''' key_exec_secret_declaration : KEY base64_text SEMI
+        '''
+        p[0] = dhcpconf.KeyExecKeyDeclaration(None,None,p.slice[1],p.slice[3])
+        p[0].append_child(p[2])
+        p[2] = None
+        return
+
+    def p_base64_text(self,p):
+        ''' base64_text : empty
+             | base64_text TEXT
+             | base64_text NUMBER
+             | base64_text EQUAL
+             | base64_text PLUS
+             | base64_text SLASH
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.Base64Text(None,None,p[1],p[1])
+            p[1] = None
+        elif len(p) == 3:
+            p[0] = p[1]
+            p[0].append_text(p.slice[2].value)
+            p[1] = None
+        else:
+            raise Exception('can not parse in %d p'%(len(p)))
+        return
+
 
 
     def p_empty(self,p):
