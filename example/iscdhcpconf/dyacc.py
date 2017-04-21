@@ -1488,7 +1488,7 @@ class DhcpConfYacc(object):
                 | defined_expr_op
                 | gethostname_expr_op
                 | gethostbyname_expr_op
-                | user_define_func_expr_op
+                | func_call_expr_op
         '''
         p[0] = dhcpconf.NonBinaryExprOp()
         p[0].append_child(p[1])
@@ -1825,19 +1825,25 @@ class DhcpConfYacc(object):
         p[0] = dhcpconf.HostDeclNameExprOp(None,None,p.slice[1],p.slice[1])
         return
 
+    def check_ddns_type(self,arg1):
+        v = arg1.value_format()
+        valid_ddns_type = ['a','ptr']
+        if v not in valid_ddns_type:
+            errstr = '[%s] %s not valid ddns type %s'%(arg1.location(),v,valid_ddns_type)
+            raise Exception(errstr)
+        return
+
     def p_update_ddns_rr_expr_op(self,p):
-        ''' update_ddns_rr_expr_op : UPDATED_DNS_RR LPAREN ddns_type RPAREN
+        ''' update_ddns_rr_expr_op : UPDATED_DNS_RR LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.UpdateDdnsRRExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].set_ddns_type(p[3])
-        p[3] = None
+        self.set_arg_list(p,'UpdateDdnsRRExprOp',1,'update-dns-rr(ddnstype)')
+        self.check_ddns_type(p[0].children[0])
         return
 
     def p_packet_expr_op(self,p):
-        ''' packet_expr_op : PACKET LPAREN NUMBER COMMA NUMBER RPAREN
+        ''' packet_expr_op : PACKET LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.PacketExprOp(None,None,p.slice[1],p.slice[6])
-        p[0].set_packet_pair(p.slice[3].value,p.slice[5].value)
+        self.set_arg_list(p,'PacketExprOp',2,'packet(offset,len)')
         return
 
     def p_const_data_expr_op(self,p):
@@ -1866,21 +1872,37 @@ class DhcpConfYacc(object):
         p[0].set_const(p.slice[1].value)
         return
 
+    def check_const_int(self,arg1,paramok):
+        if not issubclass(arg1.__class__,dhcpconf.ConstDataExprOp):
+            errstr = '[%s] %s not valid Const data'%(arg1.location(),arg1.value_format())
+            raise Exception()
+        v = arg1.value_format()
+        if isinstance(paramok,list) or isinstance(paramok,tuple):
+            if v not in paramok:
+                errstr = '[%s] %s not value in %s'%(arg1.location(),v,paramok)
+                raise Exception(errstr)
+        elif isinstance(paramok,str):
+            if v != paramok:
+                errstr = '[%s] %s not value %s'%(arg1.location(),v,paramok)
+                raise Exception(errstr)
+        else:
+            errstr = '%s not valid paramok'%(paramok)
+            raise Exception(errstr)
+        return
+
+
     def p_extract_int_expr_op(self,p):
-        ''' extract_int_expr_op : EXTRACT_INT LPAREN data_expr_op COMMA NUMBER RPAREN
+        ''' extract_int_expr_op : EXTRACT_INT LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.ExtractIntExprOp(None,None,p.slice[1],p.slice[6])
-        p[0].set_target(p[3])
-        p[0].set_offset(p.slice[5].value)
-        p[3] = None
+        self.set_arg_list(p,'ExtractIntExprOp',2,'extract-int(buffer,size)')
+        self.check_const_int(p[0].children[1],['8','16','32'])
         return
 
     def p_encode_int_expr_op(self,p):
-        ''' encode_int_expr_op : ENCODE_INT LPAREN numeric_expr_op COMMA NUMBER RPAREN
+        ''' encode_int_expr_op : ENCODE_INT LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.EncodeIntExprOp(None,None,p.slice[1],p.slice[6])
-        p[0].set_target(p[3])
-        p[0].set_offset(p.slice[5].value)
+        self.set_arg_list(p,'EncodeIntExprOp',2,'encode-int(number,mode)')
+        self.check_const_int(p[0].children[1],['8','16','32'])
         return
 
     def p_formerr_expr_op(self,p):
@@ -1890,53 +1912,32 @@ class DhcpConfYacc(object):
         return
 
     def p_defined_expr_op(self,p):
-        ''' defined_expr_op : DEFINED LPAREN  TEXT RPAREN
+        ''' defined_expr_op : DEFINED LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.DefinedExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].set_text(p.slice[3].value)
+        self.set_arg_list(p,'DefinedExprOp',1,'defined(name)')
         return
 
     def p_gethostname_expr_op(self,p):
-        ''' gethostname_expr_op : GETHOSTNAME LPAREN RPAREN
+        ''' gethostname_expr_op : GETHOSTNAME LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.GetHostNameExprOp(None,None,p.slice[1],p.slice[3])
+        self.set_arg_list(p,'GetHostNameExprOp',0,'gethostname()')
         return
 
     def p_gethostbyname_expr_op(self,p):
-        ''' gethostbyname_expr_op : GETHOSTBYNAME LPAREN TEXT RPAREN
+        ''' gethostbyname_expr_op : GETHOSTBYNAME LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.GetHostByNameExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].set_hostname(p.slice[3].value)
+        self.set_arg_list(p,'GetHostByNameExprOp',1,'gethostbyname(hostname)')
         return
 
-    def p_user_define_func_expr_op(self,p):
-        ''' user_define_func_expr_op : TEXT LPAREN arg_list RPAREN
+    def p_func_call_expr_op(self,p):
+        ''' func_call_expr_op : TEXT LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.UserDefineFuncExprOp(None,None,p.slice[0],p.slice[4])
+        p[0] = dhcpconf.FuncCallExprOp(None,None,p.slice[0],p.slice[4])
         p[0].set_funcname(p.slice[1].value)
-        p[0].append_child(p[3])
+        p[0].expand_children(p[3].children)
+        p[3] = None
         return
 
-
-
-
-    def p_ddns_type(self,p):
-        ''' ddns_type : TEXT
-        '''
-        p[0] = dhcpconf.DdnsType(None,None,p.slice[1],p.slice[1])
-        p[0].set_type(p.slice[1].value)
-        return
-
-    def p_dns_type(self,p):
-        '''dns_type : TEXT
-                | NUMBER
-        '''
-        p[0] = dhcpconf.DnsType(None,None,p.slice[1],p.slice[1])
-        if p.slice[1].type == 'TEXT':
-            p[0].set_type(p.slice[1].value)
-        else:
-            p[0].set_inttype(p.slice[1].value)
-        return
 
     def p_failover_statement_simple(self,p):
         '''failover_statement : FAILOVER PEER TEXT SEMI
