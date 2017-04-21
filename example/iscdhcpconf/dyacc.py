@@ -1416,6 +1416,41 @@ class DhcpConfYacc(object):
         p[3] = None
         return
 
+    def p_boolean_expr_op(self,p):
+        ''' boolean_expr_op : expr_op
+        '''
+        p[0] = p[1]
+        p[1] = None
+        return
+
+    def p_arg_list_empty(self,p):
+        ''' arg_list : empty
+        '''
+        p[0] = dhcpconf.ArgList(None,None,p.slice[1],p.slice[1])
+        p[1] = None
+        return
+
+    def p_arg_list_not_empty(self,p):
+        ''' arg_list : arg_list_not_empty
+        '''
+        p[0] = p[1]
+        p[1] = None
+        return
+
+    def p_arg_list_not_empty_recur(self,p):
+        ''' arg_list_not_empty : expr_op
+                  | arg_list_not_empty COMMA expr_op
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.ArgList()
+            p[0].append_child_and_set_pos(p[1])
+            p[1] = None
+        else:
+            p[0] = p[1].append_child_and_set_pos(p[3])
+            p[1] = None
+            p[3] = None
+        return
+
 
     def p_basic_expr_op(self,p):
         ''' basic_expr_op : check_expr_op
@@ -1482,13 +1517,6 @@ class DhcpConfYacc(object):
         p[2] = None
         return
 
-    def p_exists_expr_op(self,p):
-        ''' exists_expr_op : EXISTS option_name
-        '''
-        p[0] = dhcpconf.ExistsExprOp(None,None,p.slice[1],p[2])
-        p[0].append_child(p[1])
-        p[1] = None
-        return
 
     def p_paren_expr_op(self,p):
         ''' paren_expr_op : LPAREN expr_op RPAREN
@@ -1496,6 +1524,14 @@ class DhcpConfYacc(object):
         p[0] = dhcpconf.ParenExprOp(None,None,p.slice[1],p.slice[3])
         p[0].append_child(p[2])
         p[2] = None
+        return
+
+    def p_exists_expr_op(self,p):
+        ''' exists_expr_op : EXISTS option_name
+        '''
+        p[0] = dhcpconf.ExistsExprOp(None,None,p.slice[1],p[2])
+        p[0].append_child(p[1])
+        p[1] = None
         return
 
     def p_static_expr_op(self,p):
@@ -1510,140 +1546,139 @@ class DhcpConfYacc(object):
         p[0] = dhcpconf.KnownExprOp(None,None,p.slice[1],p.slice[1])
         return
 
-    def p_substring_expr_op(self,p):
-        ''' substring_expr_op : SUBSTRING LPAREN data_expr_op COMMA NUMBER COMMA NUMBER RPAREN
+    def p_numeric_expr_op(self,p):
+        ''' numeric_expr_op : expr_op
         '''
-        p[0] = dhcpconf.SubstringExprOp(None,None,p.slice[1],p.slice[8])
-        p[0].set_parameter(p.slice[5].value,p.slice[7].value)
+        p[0] = p[1]
+        p[1] = None
+        return
+
+    def set_arg_list(self,p,clsname,paramok,fmts):
+        clsfunc = self.get_class_init_name('dhcpconf.%s'%(clsname))
+        if clsfunc is None:
+            raise Exception('can not find [%s] class'%(clsname))
+        p[0] = clsfunc(None,None,p.slice[1],p.slice[4])
+        if isinstance(paramok,int):
+            if len(p[3].children) != paramok:
+                errstr = '[%s] not match %s parameter'%(p[3].location(),fmts)
+                if paramok > 1:
+                    errstr += 's'
+                raise Exception(errstr)
+        elif isinstance(paramok,list):
+            if len(p[3].children) not in paramok:
+                errstr = '[%s] not match %s parameters'%(p[3].location(),fmts)
+                raise Exception(errstr)
+        elif isinstance(paramok,str):
+            spanexpr = re.compile('^(\d+)\-(\d+)$')
+            plusexpr = re.compile('^(\d+)\+$')
+            starexpr = re.compile('^(\d+)\*$')
+            if spanexpr.match(paramok):
+                m = spanexpr.findall(paramok)
+                minnum = int(m[0])
+                maxnum = int(m[1])
+                if minnum > len(p[3].children) or maxnum < len(p[3].children):
+                    errstr = '[%s] not match %s parameters'%(p[3].location(),fmts)
+                    raise Exception(errstr)
+            elif plusexpr.match(paramok):
+                m = plusexpr.findall(paramok)
+                minnum = int(m[0])
+                if minnum >= len(p[3].children):
+                    errstr = '[%s] not match %s parameters'%(p[3].location(),fmts)
+                    raise Exception(errstr)
+            elif starexpr.match(paramok):
+                m = starexpr.findall(paramok)
+                minnum = int(m[0])
+                if minnum > len(p[3].children):
+                    errstr = '[%s] not match %s parameters'%(p[3].location(),fmts)
+                    raise Exception(errstr)
+            else:
+                errstr = 'not valid string [%s]'%(paramok)
+                raise Exception(errstr)
+        else:
+            raise Exception('not supported paramok')
+        p[0].extend_children(p[3].children)
+        p[3] = None
+        return
+
+
+    def p_substring_expr_op(self,p):
+        ''' substring_expr_op : SUBSTRING LPAREN arg_list RPAREN
+        '''
+        self.set_arg_list(p,'SubstringExprOp',3,'substring(instr,offset,len)')
         return
 
     def p_suffix_expr_op(self,p):
-        ''' suffix_expr_op : SUFFIX LPAREN data_expr_op COMMA NUMBER RPAREN
+        ''' suffix_expr_op : SUFFIX LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.SuffixExprOp(None,None,p.slice[1],p.slice[6])
-        p[0].append_child(p[3])
-        p[0].set_parameter(p.slice[5].value)
-        p[3] = None
+        self.set_arg_list(p,'SuffixExprOp',2,'suffix(instr,len)')
         return
 
     def p_lcase_expr_op(self,p):
-        ''' lcase_expr_op : LCASE LPAREN data_expr_op RPAREN
+        ''' lcase_expr_op : LCASE LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.LcaseExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].append_child(p[3])
-        p[3] = None
+        self.set_arg_list(p,'LcaseExprOp',1,'lcase(instr)')
         return
 
     def p_ucase_expr_op(self,p):
-        ''' ucase_expr_op : UCASE LPAREN data_expr_op RPAREN
+        ''' ucase_expr_op : UCASE LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.UcaseExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].append_child(p[3])
-        p[3] = None
+        self.set_arg_list(p,'UcaseExprOp',1,'ucase(instr)')
         return
 
     def p_concat_expr_op(self,p):
-        ''' concat_expr_op : CONCAT LPAREN concat_param_list RPAREN
+        ''' concat_expr_op : CONCAT LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.ConcatExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].append_child(p[3])
-        p[3] = None
-        return
-
-    def p_concat_param_list(self,p):
-        ''' concat_param_list : data_expr_op
-                | concat_param_list COMMA data_expr_op
-        '''
-        if len(p) == 2:
-            p[0] = dhcpconf.ConcatParamList()
-            p[0].append_child(p[1])
-            p[0].set_pos_by_children()
-            p[1] = None
-        else:
-            p[0] = p[1]
-            p[0].append_child(p[3])
-            p[0].set_pos_by_children()
-            p[3] = None
-            p[1] = None
+        self.set_arg_list(p,'ConcatExprOp','1+','concat(basestr,instr,...)')
         return
 
     def p_binary_to_ascii_expr_op(self,p):      
-        ''' binary_to_ascii_expr_op : BINARY_TO_ASCII LPAREN NUMBER COMMA NUMBER COMMA data_expr_op COMMA data_expr_op RPAREN
+        ''' binary_to_ascii_expr_op : BINARY_TO_ASCII LPAREN arg_list RPAREN
         '''
         ## to base width seperator buffer
-        p[0] = dhcpconf.BinaryToAsciiExprOp(None,None,p.slice[1],p.slice[10])
-        p[0].set_base(p.slice[3].value)
-        p[0].set_width(p.slice[5].value)
-        p[0].set_seperator(p[7])
-        p[0].set_buffer(p[9])
-        p[7] = None
-        p[9] = None
+        self.set_arg_list(p,'BinaryToAsciiExprOp',4,'binary-to-ascii(base,width,seperator,buffer)')
         return
 
     def p_reverse_expr_op(self,p):
-        ''' reverse_expr_op : REVERSE LPAREN NUMBER COMMA data_expr_op RPAREN
+        ''' reverse_expr_op : REVERSE LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.ReverseExprOp(None,None,p.slice[1],p.slice[6])
-        p[0].set_width(p.slice[3].value)
-        p[0].set_buffer(p[5])
-        p[5] = None
+        self.set_arg_list(p,'ReverseExprOp',2,'reverse(width,buffer)')
         return
 
     def p_pick_expr_op(self,p):
-        ''' pick_expr_op : PICK LPAREN pick_expr_op_param_list RPAREN
+        ''' pick_expr_op : PICK LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.PickExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].append_child(p[3])
-        p[3] = None
+        self.set_arg_list(p,'PickExprOp',r'1*','pick(a,...)')
         return
 
-    def p_pick_expr_op_param_list(self,p):
-        ''' pick_expr_op_param_list : data_expr_op
-                | pick_expr_op_param_list COMMA data_expr_op
-        '''
-        if len(p) == 2:
-            p[0] = dhcpconf.PickExprOpParamList()
-            p[0].append_child(p[1])
-            p[0].set_pos_by_children()
-            p[1] = None
-        else:
-            p[0] = p[1]
-            p[0].append_child(p[3])
-            p[0].set_pos_by_children()
-            p[1] = None
-            p[3] = None
+    def check_old_dns_type(self,arg1):
+        valid_dns_type = ['a','aaaa','ptr','mx','cname','TXT']
+        if arg1.value_format() not in valid_dns_type:
+            errstr = '[%s] [%s] dnstype is not valid one must in %s'%(arg1.location(),arg1.value_format(),valid_dns_type)
+            raise Exception(errstr)
         return
+
 
     def p_dns_update_expr_op(self,p):
-        ''' dns_update_expr_op : DNS_UPDATE LPAREN dns_type COMMA data_expr_op COMMA data_expr_op COMMA NUMBER RPAREN
+        ## dns_update_expr_op : DNS_UPDATE LPAREN dns_type COMMA data_expr_op COMMA data_expr_op COMMA numeric_expr_op RPAREN
+        ''' dns_update_expr_op : DSN_UPDATE LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.DnsUpdateExprOp(None,None,p.slice[1],p.slice[10])
-        p[0].set_dns_type(p[3])
-        p[0].set_dns_param1(p[5])
-        p[0].set_dns_param2(p[7])
-        p[0].set_dns_number(p.slice[9].value)
-        p[3] = None
-        p[5] = None
-        p[7] = None
+        self.set_arg_list(p,'DnsUpdateExprOp',4,'dns_update(dnstype,arg1,arg2,arg3)')
+        self.check_old_dns_type(p[0].children[0])
         return
 
     def p_dns_delete_expr_op(self,p):
-        ''' dns_delete_expr_op : DNS_DELETE LPAREN dns_type COMMA data_expr_op COMMA data_expr_op RPAREN
+        ## dns_delete_expr_op : DNS_DELETE LPAREN dns_type COMMA data_expr_op COMMA data_expr_op RPAREN
+        ''' dns_delete_expr_op : DNS_DELETE LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.DnsDeleteExprOp(None,None,p.slice[1],p.slice[8])
-        p[0].set_dns_type(p[3])
-        p[0].set_dns_param1(p[5])
-        p[0].set_dns_param2(p[7])
-        p[3] = None
-        p[5] = None
-        p[7] = None
+        self.set_arg_list(p,'DnsDeleteExprOp',3,'dns_delete(dnstype,arg1,arg2)')
+        self.check_old_dns_type(p[0].children[0])
         return
 
     def p_ns_update_expr_op(self,p):
         ''' ns_update_expr_op : NS_UPDATE LPAREN ns_update_func_list RPAREN
         '''
         p[0] = dhcpconf.NsUpdateExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].append_child(p[3])
+        p[0].extend_children(p[3].children)
         p[3] = None
         return
 
@@ -1653,13 +1688,10 @@ class DhcpConfYacc(object):
         '''
         if len(p) == 2:
             p[0] = dhcpconf.NsUpdateFuncList(None,None)
-            p[0].append_child(p[1])
-            p[0].set_pos_by_children()
+            p[0].append_child_and_set_pos(p[1])
             p[1] = None
         else:
-            p[0] = p[1]
-            p[0].append_child(p[3])
-            p[0].set_pos_by_children()
+            p[0] = p[1].append_child_and_set_pos(p[3])
             p[1] = None
             p[3] = None
         return
@@ -1672,64 +1704,61 @@ class DhcpConfYacc(object):
                 | ns_not_exists_expr_op
                 | ns_exists_expr_op
         '''
-        p[0] = dhcpconf.NsUpdateFunc()
-        p[0].append_child(p[1])
-        p[0].set_pos_by_children()
+        p[0] = p[1]
         p[1] = None
         return
+
+    def check_rrclass(self,arg1):
+        v = arg1.value_format()
+        valid_rrclass = ['in','chaos','hs']
+        if v not in valid_rrclass:
+            intexpr = re.compile('^[\d]+$')
+            if not intexpr.match(v):
+                errstr = '[%s] %s not valid rrclass %s'%(arg1.location(),v,valid_rrclass)
+                raise Exception(errstr)
+        return
+
+    def check_rrtype(self,arg1):
+        v = arg1.value_format()
+        valid_rrtype = ['a','aaaa','ptr','mx','cname','TXT']
+        if v not in valid_rrtype:
+            intexpr =re.compile('^(\d+)$')
+            if not intexpr.match(v):
+                errstr = '[%s] [%s] not valid for rrtype %s'%(arg1.location(),v,valid_rrtype)
+                raise Exception(errstr)
+        return
+
     def p_ns_add_expr_op(self,p):
-        ''' ns_add_expr_op : ADD LPAREN ns_add_param_list RPAREN
+        ''' ns_add_expr_op : ADD LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.NsAddExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].append_child(p[3])
-        p[3] = None
+        self.set_arg_list(p,'NsAddExprOp',5,'add(rrclass,rrtype,arg1,arg2,arg3)')
+        self.check_rrclass(p[0].children[0])
+        self.check_rrtype(p[0].children[1])
         return
 
     def p_ns_delete_expr_op(self,p):
-        ''' ns_delete_expr_op : DELETE LPAREN ns_param_list RPAREN
+        ''' ns_delete_expr_op : DELETE LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.NsDeleteExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].append_child(p[3])
-        p[3] = None
+        self.set_arg_list(p,'NsDeleteExprOp',4,'delete(rrclass,rrtype,arg1,arg2)')
+        self.check_rrclass(p[0].children[0])
+        self.check_rrtype(p[0].children[1])
         return
 
     def p_ns_exists_expr_op(self,p):
-        ''' ns_exists_expr_op : EXISTS LPAREN ns_param_list RPAREN
+        ''' ns_exists_expr_op : EXISTS LPAREN arg_list RPAREN
         '''
-        p[0] = dhcpconf.NsExistsExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].append_child(p[3])
-        p[3] = None
+        self.set_arg_list(p,'NsExistsExprOp',4,'exists(rrclass,rrtype,arg1,arg2)')
+        self.check_rrclass(p[0].children[0])
+        self.check_rrtype(p[0].children[1])
         return
 
     def p_ns_not_exists_expr_op(self,p):
         ''' ns_not_exists_expr_op : NOT EXISTS LPAREN ns_param_list RPAREN
         '''
-        p[0] = dhcpconf.NsNotExistsExprOp(None,None,p.slice[1],p.slice[4])
-        p[0].append_child(p[3])
-        p[3] = None
-        return
-
-    def p_ns_add_param_list(self,p):
-        ''' ns_add_param_list : ns_param_list COMMA NUMBER
-        '''
-        p[0] = p[1]
-        p[0].set_dns_number(p.slice[3].value)
-        p[0].set_endpos(p.slice[3])
-        p[1] = None
-        return
-
-    def p_ns_param_list(self,p):
-        ''' ns_param_list : dns_class COMMA dns_type COMMA data_expr_op COMMA data_expr_op
-        '''
-        p[0] = dhcpconf.NsParamList(None,None,p[1],p[7])
-        p[0].set_dns_class(p[1])
-        p[0].set_dns_type(p[3])
-        p[0].set_dns_param1(p[5])
-        p[0].set_dns_param2(p[7])
-        p[1] = None
-        p[3] = None
-        p[5] = None
-        p[7] = None
+        self.set_arg_list(p,'NsExistsExprOp',4,'not exists(rrclass,rrtype,arg1,arg2)')
+        self.check_rrclass(p[0].children[0])
+        self.check_rrtype(p[0].children[1])
+        p[0].set_exists(False)
         return
 
     def p_option_expr_op(self,p):
@@ -1881,36 +1910,13 @@ class DhcpConfYacc(object):
         return
 
     def p_user_define_func_expr_op(self,p):
-        ''' user_define_func_expr_op : TEXT LPAREN user_define_func_param_list RPAREN
+        ''' user_define_func_expr_op : TEXT LPAREN arg_list RPAREN
         '''
         p[0] = dhcpconf.UserDefineFuncExprOp(None,None,p.slice[0],p.slice[4])
         p[0].set_funcname(p.slice[1].value)
         p[0].append_child(p[3])
         return
 
-    def p_user_define_func_param_list_empty(self,p):
-        ''' user_define_func_param_list : empty
-        '''
-        p[0] = dhcpconf.UserDefineFuncParamList(None,None,p.slice[1],p.slice[1])
-        p[1] = None
-        return
-
-    def p_user_define_func_param_list_recur(self,p):
-        ''' user_define_func_param_list : user_define_func_param_list COMMA expr_op
-        '''
-        p[0] = p[1]
-        p[0].append_child(p[3])
-        p[0].set_pos_by_children()
-        p[1] = None
-        return
-
-    def p_user_define_func_param_list_expr_op(self,p):
-        ''' user_define_func_param_list : expr_op
-        '''
-        p[0] = dhcpconf.UserDefineFuncParamList()
-        p[0].append_child(p[1])
-        p[0].set_pos_by_children()
-        return
 
 
 
@@ -2362,7 +2368,7 @@ class DhcpConfYacc(object):
         return
 
     def p_if_exec_boolean_expr_op(self,p):
-        ''' if_exec_boolean_expr_op : bool_expr_op
+        ''' if_exec_boolean_expr_op : boolean_expr_op
                    | LPAREN if_exec_boolean_expr_op RPAREN
         '''
         if len(p) == 2:
