@@ -2298,6 +2298,7 @@ class DhcpConfYacc(object):
                 | on_exec
                 | switch_exec
                 | case_exec
+                | switch_default_exec
                 | define_exec
                 | set_exec
                 | unset_exec
@@ -2340,6 +2341,16 @@ class DhcpConfYacc(object):
             p[2] = None
             p[4] = None
         return
+
+    def p_if_exec_else_if(self,p):
+        ''' if_exec : IF if_exec_simple ELSE IF elsif_exec_simple
+        '''
+        p[0] = dhcpconf.IfExec(None,None,p.slice[1],p[5])
+        p[0].append_if_condition(p[2])
+        p[0].extend_elsif_execution(p[5])
+        return
+
+
     def p_if_exec_simple(self,p):
         ''' if_exec_simple : if_exec_boolean_expr_op brace_execute_statements
         '''
@@ -2393,6 +2404,421 @@ class DhcpConfYacc(object):
             p[3] = None
         return
 
+    def p_elsif_exec_simple_more(self,p):
+        ''' elsif_exec_simple : if_exec_simple ELSE IF eseif_exec_simple
+        '''
+        p[0] = dhcpconf.ElseIfExecSimple(None,None,p[1],p[4])
+        p[0].append_if_condition(p[1])
+        p[0].extend_elsif_execution(p[4])
+        return
+
+    def p_add_exec(self,p):
+        ''' add_exec : ADD TEXT SEMI
+        '''
+        p[0] = dhcpconf.AddExec(None,None,p.slice[1],p.slice[3])
+        p[0].set_text(p.slice[2].value)
+        return
+
+    def p_bread_exec(self,p):
+        ''' break_exec : BREAK SEMI
+        '''
+        p[0] = dhcpconf.BreakExec(None,None,p.slice[1],p.slice[2])
+        return
+
+    def set_option_name_exec_4(self,p,clsname):
+        clsfunc = self.get_class_init_name('dhcpconf.%s'%(clsname))
+        if clsfunc is None:
+            raise Exception('can not find [%s]'%(clsname))
+        p[0] = clsfunc(None,None,p.slice[1],p.slice[4])
+        p[0].set_option_name(p[2])
+        p[0].set_option_statement(p[3])
+        p[2] = None
+        p[3] = None
+        return
+
+    def p_send_exec(self,p):
+        ''' send_exec : SEND option_name option_statement_part SEMI
+        '''
+        self.set_option_name_exec_4(p,'SendExec')
+        return
+
+    def p_supersed_exec(self,p):
+        ''' supersed_exec : SUPERSEDE option_name option_statement_part SEMI
+        '''
+        self.set_option_name_exec_4(p,'SupersedeExec')
+        return
+
+    def p_option_exec(self,p):
+        ''' option_exec : OPTION option_name option_statement_part SEMI
+        '''
+        self.set_option_name_exec_4(p,'OptionExec')
+        return
+
+    def p_allow_exec(self,p):
+        ''' allow_exec : ALLOW permit_exec_flags SEMI
+        '''
+        p[0] = dhcpconf.AllowExec(None,None,p.slice[1],p.slice[3])
+        p[0].set_flag(p[2])
+        p[2] = None
+        return
+
+    def p_deny_exec(self,p):
+        ''' deny_exec : DENY permit_exec_flags SEMI
+        '''
+        p[0] = dhcpconf.DenyExec(None,None,p.slice[1],p.slice[3])
+        p[0].set_flag(p[2])
+        p[2] = None
+        return
+
+    def p_ignore_exec(self,p):
+        ''' ignore_exec : IGNORE permit_exec_flags SEMI
+        '''
+        p[0] = dhcpconf.IgnoreExec(None,None,p.slice[1],p.slice[3])
+        p[0].set_flag(p[2])
+        p[2] = None
+        return
+
+    def p_permit_exec_flags(self,p):
+        ''' permit_exec_flags : BOOTP
+                   | BOOTING
+                   | DYNAMIC_BOOTP
+                   | UNKNOWN_CLIENTS
+                   | DUPLICATES
+                   | DECLINES
+                   | CLIENT_UPDATES
+                   | LEASEQUERY
+                   | IGNORE_CLIENT_UIDS
+        '''
+        p[0] = dhcpconf.PermitExecFlags(None,None,p.slice[1],p.slice[1])
+        p[0].set_flag(p.slice[1].value)
+        return
+
+    def p_default_exec(self,p):
+        ''' default_exec : DEFAULT option_name option_statements_part SEMI
+        '''
+        self.set_option_name_exec_4(p,'DefaultExec')
+        return
+
+    def p_prepend_exec(self,p):
+        ''' prepend_exec : PREPEND option_name option_statements_part SEMI
+        '''
+        self.set_option_name_exec_4(p,'PrependExec')
+        return
+
+    def p_append_exec(self,p):
+        ''' append_exec : APPEND  option_name option_statements_part SEMI
+        '''
+        self.set_option_name_exec_4(p,'AppendExec')
+        return
+
+    def p_on_exec(self,p):
+        ''' on_exec : ON on_exec_states SEMI
+                 |　ON on_exec_states LBRACE execute_statements RBRACE
+        '''
+        if len(p) == 4:
+            p[0] = dhcpconf.OnExec(None,None,p.slice[1],p.slice[3])
+            p[0].set_state(p[2])
+            p[2] = None
+        else:
+            p[0] = dhcpconf.OnExec(None,None,p.slice[1],p.slice[5])
+            p[0].set_state(p[2])
+            p[0].append_child(p[4])
+            p[2] = None
+            p[4] = None
+        return
+
+    def p_on_exec_states(self,p):
+        ''' on_exec_states : on_exec_state
+                   | on_exec_states OR on_exec_state
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.OnExecStates()
+            p[0].append_child_and_set_pos(p[1])
+            p[1] = None
+        else:
+            p[0] = p[1].append_child_and_set_pos(p[2])
+            p[1] = None
+            p[2] = None
+        return
+
+    def p_on_exec_state(self,p):
+        ''' on_exec_state : EXPIRY
+                 | COMMIT
+                 | RELEASE
+                 | TRANSMISSION
+        '''
+        p[0] = dhcpconf.OnExecState(None,None,p.slice[1],p.slice[1])
+        p[0].set_state(p.slice[1].value)
+        return
+
+    def p_switch_exec_state(self,p):
+        ''' switch_exec : SWITCH LPAREN expr_op RPAREN LBRACE execute_statements RBRACE
+        '''
+        p[0] = dhcpconf.SwitchExec(None,None,p.slice[1],p.slice[7])
+        p[0].set_data_expr(p[3])
+        p[0].append_child(p[6])
+        p[3] = None
+        p[6] = None
+        return
+
+    def p_case_exec_state(self,p):
+        ''' case_exec : CASE expr_op COLON
+        '''
+        p[0] = dhcpconf.CaseExec(None,None,p.slice[1],p.slice[3])
+        p[0].set_data_expr(p[2])
+        p[2] = None
+        return
+
+    def p_switch_default_exec(self,p):
+        ''' switch_default_exec : DEFAULT COLON
+        '''
+        p[0] = dhcpconf.SwitchDefaultExec(None,None,p.slice[1],p.slice[2])
+        return
+
+    def p_define_exec(self,p):
+        ''' define_exec : DEFINE TEXT EQUAL expr_op SEMI
+                  | DEFINE TEXT LPAREN arg_params RPAREN LBRACE execute_statements RBRACE
+        '''
+        if len(p) == 6:
+            p[0] = dhcpconf.DefineExec(None,None,p.slice[1],p.slice[5])
+            p[0].set_name(p.slice[2].value)
+            p[0].set_expr_op(p[4])
+            p[4] = None
+        elif len(p) == 9:
+            p[0] = dhcpconf.DefineExec(None,None,p.slice[1],p.slice[8])
+            p[0].set_name(p.slice[2].value)
+            p[0].set_args(p[4])
+            p[0].append_child(p[7])
+            p[4] = None
+            p[7] = None
+        else:
+            raise Exception('can not parse in %d p'%(len(p)))
+        return
+
+    def p_set_exec(self,p):
+        ''' set_exec : SET TEXT EQUAL expr_op SEMI
+                  | SET TEXT LPAREN arg_params RPAREN LBRACE execute_statements RBRACE
+        '''
+        if len(p) == 6:
+            p[0] = dhcpconf.SetExec(None,None,p.slice[1],p.slice[5])
+            p[0].set_name(p.slice[2].value)
+            p[0].set_expr_op(p[4])
+            p[4] = None
+        elif len(p) == 9:
+            p[0] = dhcpconf.SetExec(None,None,p.slice[1],p.slice[8])
+            p[0].set_name(p.slice[2].value)
+            p[0].set_args(p[4])
+            p[0].append_child(p[7])
+            p[4] = None
+            p[7] = None
+        else:
+            raise Exception('can not parse in %d p'%(len(p)))
+        return
+
+    def p_arg_params_empty(self,p):
+        ''' arg_params : empty
+        '''
+        p[0] = dhcpconf.ArgParams(None,None,p[1],p[1])
+        p[1] = None
+        return
+    def p_arg_params_list(self,p):
+        ''' arg_params : arg_params_not_empty
+        '''
+        p[0] = p[1]
+        return
+
+    def p_args_params_not_empty(self,p):
+        ''' arg_params_not_empty : TEXT
+                  | arg_params_not_empty COMMA TEXT
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.ArgParams(None,None,p.slice[1],p.slice[1])
+            p[0].append_param(p.slice[1].value)
+        elif len(p) == 4:
+            p[0] = p[1]
+            p[0].append_param(p.slice[3].value)
+            p[0].set_endpos(p.slice[3])
+            p[1] = None
+        else:
+            raise Exception('can not parse in %d p'%(len(p)))
+        return
+
+    def p_unset_exec(self,p):
+        ''' unset_exec : UNSET TEXT SEMI
+        '''
+        p[0] = dhcpconf.UnsetExec(None,None,p.slice[1],p.slice[3])
+        p[0].set_name(p.slice[2].value)
+        return
+
+    def p_eval_exec(self,p):
+        ''' eval_exec : EVAL expr_op SEMI
+        '''
+        p[0] = dhcpconf.EvalExec(None,None,p.slice[1],p.slice[3])
+        p[0].append_child(p[2])
+        p[2] = None
+        return
+
+    def p_execute_exec(self,p):
+        ''' execute_exec : EXECUTE LPAREN TEXT execute_exec_exprs BPAREN SEMI
+        '''
+        p[0] = dhcpconf.ExecuteExec(None,None,p.slice[1],p.slice[5])
+        p[0].set_name(p.slice[3].value)
+        p[0].append_child(p[4])
+        p[4] = None
+        return
+
+    def p_execute_exec_exprs(self,p):
+        ''' execute_exec_exprs : empty
+                  | execute_exec_exprs COMMA data_expr_op
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.ExecuteExecExprs(None,None,p[1],p[1])
+            p[1] = None
+        elif len(p) == 4:
+            p[0] = p[1].append_child_and_set_pos(p[3])
+            p[1] = None
+            p[3] = None
+        else:
+            raise Exception('can not parse in %d p'%(len(p)))
+        return
+
+    def p_return_exec(self,p):
+        ''' return_exec : RETURN expr_op SEMI
+        '''
+        p[0] = dhcpconf.ReturnExec(None,None,p.slice[1],p.slice[3])
+        p[0].append_child(p[2])
+        p[2] = None
+        return
+
+    def p_log_exec(self,p):
+        ''' log_exec : LOG LPAREN log_exec_level data_expr_op RPAREN SEMI
+        '''
+        p[0] = dhcpconf.LogExec(None,None,p.slice[1],p.slice[6])
+        p[0].set_level(p[3])
+        p[0].append_child(p[4])
+        p[3] = None
+        p[4] = None
+        return
+
+    def p_log_exec_level(self,p):
+        ''' log_exec_level : empty
+                | FATAL COMMA
+                | ERROR COMMA
+                | DEBUG COMMA
+                | INFO COMMA
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.LogExecLevel(None,None,p[1],p[1])
+            p[1] = None
+        elif len(p) == 3:
+            p[0] = dhcpconf.LogExecLevel(None,None,p.slice[1],p.slice[2])
+            p[0].set_level(p.slice[1].value)
+        else:
+            raise Exception('can not parse in %d p'%(len(p)))
+        return
+
+    def p_zone_exec(self,p):
+        ''' zone_exec : ZONE host_name LBRACE zone_exec_delcarations RBRACE
+        '''
+        p[0] = dhcpconf.ZoneExec(None,None,p.slice[1],p.slice[5])
+        p[0].set_host(p[2])
+        p[0].append_child(p[4])
+        p[2] = None
+        p[4] = None
+        return
+
+    def p_zone_exec_declarations(self,p):
+        ''' zone_exec_declarations : empty
+                | zone_exec_declarations zone_exec_declaration
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.ZoneExecDeclarations(None,None,p[1],p[1])
+            p[1] = None
+        else:
+            p[0] = p[1].append_child_and_set_pos(p[2])
+            p[1] = None
+            p[2] = None
+        return
+
+    def p_zone_exec_declaration(self,p):
+        ''' zone_exec_declaration : zone_exec_primary_declaration
+                  | zone_exec_secondary_declaration
+                  | zone_exec_primary6_declaration
+                  | zone_exec_secondary6_declaration
+                  | zone_exec_key_declaration
+        '''
+        p[0] = dhcpconf.ZoneExecDeclaration()
+        p[0].append_child_and_set_pos(p[1])
+        p[1] = None
+        return
+
+    def set_zone_declaration_3(self,p,clsname):
+        clsfunc = self.get_class_init_name('dhcpconf.%s'%(clsname))
+        if clsfunc is None:
+            raise Exception('can not get [%s]'%(clsname))
+        p[0] = clsfunc(None,None,p.slice[1],p.slice[3])
+        p[0].append_child(p[2])
+        p[2] = None
+        return
+
+    def p_zone_exec_primary_declaration(self,p):
+        ''' zone_exec_primary_declaration : PRIMARY host_name_list SEMI
+        '''
+        self.set_zone_declaration_3(p,'ZoneExecPrimaryDeclaration')
+        return
+
+    def p_zone_exec_secondary_declaration(self,p):
+        ''' zone_exec_secondary_declaration : SECONDARY host_name_list SEMI
+        '''
+        self.set_zone_declaration_3(p,'ZoneExecSecondaryDeclaration')
+        return
+
+    def p_zone_exec_primary6_declaration(self,p):
+        ''' zone_exec_primary6_declaration : PRIMARY6 ipv6_addr_list SEMI
+        '''
+        self.set_zone_declaration_3(p,'ZoneExecPrimary6Declaration')
+        return
+
+    def p_zone_exec_secondary6_declaration(self,p):
+        ''' zone_exec_secondary6_declaration : SECONDARY6 ipv6_addr_list SEMI
+        '''
+        self.set_zone_declaration_3(p,'ZoneExecSecondary6Declaration')
+        return
+
+    def p_zone_exec_key_declaration(self,p):
+        ''' zone_exec_key_declaration : KEY host_name SEMI
+        '''
+        self.set_zone_declaration_3(p,'ZoneExecKeyDeclaration')
+        return
+
+
+    def p_host_name_list(self,p):
+        ''' host_name_list : host_name
+              | host_name_list COMMA host_name
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.HostNameList()
+            p[0].append_child_and_set_pos(p[1])
+            p[1] = None
+        else:
+            p[0] = p[1].append_child_and_set_pos(p[2])
+            p[1] = None
+            p[2] = None
+        return
+
+    def p_ipv6_addr_list(self,p):
+        ''' ipv6_addr_list : ipv6_addr
+               | ipv6_addr_list COMMA ipv6_addr
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.Ipv6AddrList()
+            p[0].append_child_and_set_pos(p[1])
+            p[1] = None
+        else:
+            p[0] = p[1].append_child_and_set_pos(p[2])
+            p[1] = None
+            p[2] = None
+        return
 
 
 
