@@ -2322,21 +2322,77 @@ class DhcpConfYacc(object):
         return
 
     def p_if_exec(self,p):
-        ''' if_exec : IF boolean_expr_op LBRACE execute_statements RBRACE
-              | IF LPAREN boolean_expr_op RPAREN LBRACE execute_statements RBRACE
+        ''' if_exec : IF if_exec_simple
+                   | IF if_exec_simple ELSE brace_execute_statements
+                   | IF if_exec_simple ELSIF elsif_exec_simple
         '''
-        p[0] = dhcpconf.IfExec(None,None,p.slice[1],p.slice[-1])
-        if len(p) > 6:
-            p[0].set_bool_expr(p[2])
-            p[0].append_child(p[4])
+        if len(p) == 3:
+            p[0] = dhcpconf.IfExec(None,None,p.slice[1],p[2])
+            p[0].append_if_condition(p[2])
+            p[2] = None
+        else:
+            p[0] = dhcpconf.IfExec(None,None,p.slice[1],p[4])
+            p[0].append_if_condition(p[2])
+            if p.slice[3].value == 'else':
+                p[0].append_else_execution(p[4])
+            elif p.slice[3].value == 'elsif':
+                p[0].extend_elsif_execution(p[4])
             p[2] = None
             p[4] = None
-        else:
-            p[0].set_bool_expr(p[3])
-            p[0].append_child(p[6])
-            p[3] = None
-            p[6] = None
         return
+    def p_if_exec_simple(self,p):
+        ''' if_exec_simple : if_exec_boolean_expr_op brace_execute_statements
+        '''
+        p[0] = dhcpconf.IfExecSimple(None,None,p[1],p[2])
+        p[0].set_condition(p[1])
+        p[0].set_execution(p[2])
+        p[1] = None
+        p[2] = None
+        return
+
+    def p_if_exec_boolean_expr_op(self,p):
+        ''' if_exec_boolean_expr_op : bool_expr_op
+                   | LPAREN if_exec_boolean_expr_op RPAREN
+        '''
+        if len(p) == 2:
+            p[0] = p[1]
+            p[1] = None
+        else:
+            p[0] = p[2]
+            p[0].set_startpos(p.slice[1])
+            p[0].set_endpos(p.slice[3])
+            p[2] = None
+        return
+
+    def p_brace_execute_statements(self,p):
+        ''' brace_execute_statements : LBRACE execute_statements RBRACE
+        '''
+        p[0] = p[3]
+        p[0].set_startpos(p.slice[1])
+        p[0].set_endpos(p.slice[3])
+        p[3] = None
+        return
+
+    def p_elsif_exec_simple(self,p):
+        ''' elsif_exec_simple : if_exec_simple
+                  | if_exec_simple ELSIF elsif_exec_simple
+                  | if_exec_simple ELSE brace_execute_statements
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.ElseIfExecSimple(None,None,p[1],p[1])
+            p[0].append_if_condition(p[1])
+            p[1] = None
+        else:
+            p[0] = dhcpconf.ElseIfExecSimple(None,None,p[1],p[3])
+            p[0].append_if_condition(p[1])
+            if p.slice[2] == 'else':
+                p[0].append_else_execution(p[3])
+            elif p.slice[2] == 'elsif':
+                p[0].extend_elsif_execution(p[3])
+            p[1] = None
+            p[3] = None
+        return
+
 
 
 
