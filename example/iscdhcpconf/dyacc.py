@@ -333,6 +333,7 @@ class DhcpConfYacc(object):
         consdata = None
         return
 
+
     def p_option_token_compose(self,p):
         ''' option_token : domain_list                
         '''
@@ -356,8 +357,6 @@ class DhcpConfYacc(object):
             p[1] = None
             p[2] = None
         return
-
-
 
     def p_option_statement_part_code(self,p):
         ''' option_statement_part : CODE NUMBER EQUAL option_code_clauses
