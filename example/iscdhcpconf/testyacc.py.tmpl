@@ -25,7 +25,7 @@ class ConfigDhcpYacc(object):pass
 class DhcpConfYacc(ConfigDhcpYacc):
     tokens = dlex.DhcpConfLex.tokens
     def __init__(self,lexer=None):
-    	super(DhcpConfYacc,self).__init__()
+        super(DhcpConfYacc,self).__init__()
         self.lexer = lexer
         self.statements = None
         return
@@ -61,6 +61,7 @@ class DhcpConfYacc(ConfigDhcpYacc):
 
     def p_statement_multi(self,p):
         ''' statement :  option_statement
+                  | execute_statement
         '''
         children = []
         children.append(p[1])
@@ -75,8 +76,18 @@ class DhcpConfYacc(ConfigDhcpYacc):
         p[0] = dhcpconf.YaccDhcpObject('Empty',None,startpos,startpos)
         return
 
-   	def p_error(self,p):
-   		raise Exception('get error %s'%(repr(p)))
+    def p_data_expr_op(self,p):
+        ''' data_expr_op : NUMBER
+               | TEXT
+        '''
+        p[0] = dhcpconf.ExprOp()
+        constdata = dhcpconf.ConstData(p.slice[1].value,p.slice[1],p.slice[1])
+        p[0].append_child_and_set_pos(constdata)
+        constdata = None
+        return
+
+    def p_error(self,p):
+        raise Exception('get error %s'%(repr(p)))
 
     def build(self,**kwargs):
         return yacc.yacc(module=self,start='statements',**kwargs)

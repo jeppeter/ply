@@ -21,7 +21,7 @@ import ply.lex as lex
 class ConfigDhcpLex(object):pass
 
 class DhcpConfLex(ConfigDhcpLex):
-	tokens = ['TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER','SLASH','PLUS','MINUS']
+	tokens = ['TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER','SLASH','PLUS','MINUS','EQUAL']
 	t_ignore = ' \t'
 	t_doublequoted_ignore = ''	
 	t_comment_ignore = ''
@@ -68,6 +68,15 @@ class DhcpConfLex(ConfigDhcpLex):
 		p.endpos = p.startpos + len(p.value)
 		p.endline = p.startline
 		return p
+
+	@lex.TOKEN(r'\=')
+	def t_EQUAL(self,p):
+		p.startline = p.lexer.lineno
+		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
+		p.endpos = p.startpos + len(p.value)
+		p.endline = p.startline
+		return p
+
 
 	@lex.TOKEN(r'\+')
 	def t_PLUS(self,p):

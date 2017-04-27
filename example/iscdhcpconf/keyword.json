@@ -5,17 +5,56 @@
         "prefix" : "option_statement",
         "yacc" : [{
                 "clause" : "DEFAULT_LEASE_TIME NUMBER SEMI;",
-                "func" : "p[0] = dhcpconf.DefaultLeaseTime(None,None,p.slice[1],p.slice[3]);bval = p[0].set_value(p.slice[2].value); if not bval : ;{raise Exception('[%s:%s-%s:%s] not valid value (%s)'%(p.slice[2].startline,p.slice[2].startpos,p.slice[2].endline,p.slice[2].endpos,p.slice[2].value));}return ;"
+                "func" : "p[0] = dhcpconf.DefaultLeaseTime(None,None,p.slice[1],p.slice[3]);number = dhcpconf.ConstData(p.slice[2].value,p.slice[2],p.slice[2]);p[0].append_child(number);number=None;return ;"
+            },{
+                "clause" : "DEFAULT_LEASE_TIME EQUAL data_expr_op SEMI;",
+                "func" : "p[0] = dhcpconf.DefaultLeaseTime(None,None,p.slice[1],p.slice[4]);equal = dhcpconf.ConstData('=',p.slice[2],p.slice[2]);p[0].append_child(equal);equal=None;p[0].append_child(p[3]);p[3] = None;return;"
             }]
     },
     "option_ddns_update_style" : {
         "prefix" : "option_statement",
         "yacc" : [{
                 "clause" : "DDNS_UPDATE_STYLE NONE SEMI;DDNS_UPDATE_STYLE AD_HOC SEMI;DDNS_UPDATE_STYLE INTERIM SEMI;",
-                "func" : "p[0] = dhcpconf.DDnsUpdateStyle(None,None,p.slice[1],p.slice[3]);bval = p[0].set_value(p.slice[2].value); if not bval : ;{raise Exception('[%s:%s-%s:%s] not valid value (%s)'%(p.slice[2].startline,p.slice[2].startpos,p.slice[2].endline,p.slice[2].endpos,p.slice[2].value));}return;"
+                "func" : "p[0] = dhcpconf.DDnsUpdateStyle(None,None,p.slice[1],p.slice[3]);typecls = dhcpconf.ConstData(p.slice[2].value,p.slice[2],p.slice[2]);p[0].append_child(typecls);return;"
+        },{
+                "clause" : "DDNS_UPDATE_STYLE EQUAL NONE SEMI;DDNS_UPDATE_STYLE EQUAL  AD_HOC SEMI;DDNS_UPDATE_STYLE EQUAL INTERIM SEMI;",
+                "func" : "p[0] = dhcpconf.DDnsUpdateStyle(None,None,p.slice[1],p.slice[4]);equal = dhcpconf.ConstData('=',p.slice[2],p.slice[2]);p[0].append_child(equal);equal=None;typecls = dhcpconf.ConstData(p.slice[3].value,p.slice[3],p.slice[3]);p[0].append_child(typecls);return;"
+            }]
+    },
+    "option_domain_name" : {
+        "prefix" : "option_statement",
+        "yacc" : [{
+            "clause" : "DOMAIN_NAME data_expr_op SEMI;",
+            "func" : "p[0] = dhcpconf.DomainName(None,None,p.slice[1],p.slice[3]);p[0].append_child(p[2]);p[2] = None;return;"
         }]
+    },
+    "permit_execute_statement" : {
+        "prefix" : "execute_statement",
+        "yacc" : [{
+            "clause" : "ALLOW BOOTP SEMI;ALLOW BOOTING SEMI;ALLOW DYNAMIC_BOOTP SEMI; ALLOW UNKNOWN_CLIENTS SEMI; ALLOW DUPLICATES SEMI;ALLOW DECLINES SEMI;ALLOW CLIENT_UPDATES SEMI; ALLOW LEASEQUERY SEMI;ALLOW IGNORE_CLIENT_UIDS SEMI;",
+            "func" : "p[0] = dhcpconf.AllowPermit(None,None,p.slice[1],p.slice[3]);constdata = dhcpconf.ConstData(p.slice[2].value,p.slice[2],p.slice[2]);p[0].append_child(constdata);constdata=None;return;"
+            },{
+            "clause" : "DENY BOOTP SEMI;DENY BOOTING SEMI;DENY DYNAMIC_BOOTP SEMI; DENY UNKNOWN_CLIENTS SEMI; DENY DUPLICATES SEMI;DENY DECLINES SEMI;DENY CLIENT_UPDATES SEMI; DENY LEASEQUERY SEMI;DENY IGNORE_CLIENT_UIDS SEMI;",
+            "func" : "p[0] = dhcpconf.DenyPermit(None,None,p.slice[1],p.slice[3]);constdata = dhcpconf.ConstData(p.slice[2].value,p.slice[2],p.slice[2]);p[0].append_child(constdata);constdata=None;return;"
+            },{
+            "clause" : "IGNORE BOOTP SEMI;IGNORE BOOTING SEMI;IGNORE DYNAMIC_BOOTP SEMI; IGNORE UNKNOWN_CLIENTS SEMI; IGNORE DUPLICATES SEMI;IGNORE DECLINES SEMI;IGNORE CLIENT_UPDATES SEMI; IGNORE LEASEQUERY SEMI;IGNORE IGNORE_CLIENT_UIDS SEMI;",
+            "func" : "p[0] = dhcpconf.IgnorePermit(None,None,p.slice[1],p.slice[3]);constdata = dhcpconf.ConstData(p.slice[2].value,p.slice[2],p.slice[2]);p[0].append_child(constdata);constdata=None;return;"
+            }]
     },
     "interim" : "INTERIM",
     "ad-hoc" : "AD_HOC",
-    "none" : "NONE"
+    "none" : "NONE",
+    "bootp" : "BOOTP",
+    "booting" : "BOOTING",
+    "dynamic-bootp" : "DYNAMIC_BOOTP",
+    "unknown-clients" : "UNKNOWN_CLIENTS",
+    "duplicates" : "DUPLICATES",
+    "declines" : "DECLINES",
+    "client-updates" : "CLIENT_UPDATES",
+    "leasequery" : "LEASEQUERY",
+    "ignore-client-uids" : "IGNORE_CLIENT_UIDS",
+    "allow" : "ALLOW",
+    "deny" : "DENY",
+    "ignore" : "IGNORE",
+    "domain-name" : "DOMAIN_NAME"
 }

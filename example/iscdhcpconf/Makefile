@@ -13,10 +13,10 @@ all: test
 
 test:testyacc.py testlex.py
 
-testlex.py:testlex.py.tmpl
+testlex.py:testlex.py.tmpl keyword.json
 	$(call call_exec,${PYTHON} ${CURDIR}/makecode.py -i ${CURDIR}/keyword.json lclass -c ConfigDhcpLex $< $@,"GEN","$@")
 
-testyacc.py:testyacc.py.tmpl
+testyacc.py:testyacc.py.tmpl keyword.json
 	$(call call_exec,${PYTHON} ${CURDIR}/makecode.py -i ${CURDIR}/keyword.json yclass -c ConfigDhcpYacc $< $@,"GEN","$@")
 
 

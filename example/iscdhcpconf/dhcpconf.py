@@ -88,7 +88,7 @@ class YaccDhcpObject(object):
 					      self.append_child(k)
 					else:
 						logging.error('%s not valid YaccDhcpObject'%(repr(k)))
-			elif isinstance(c,object) and issubclass(c.__format_ipaddr,YaccDhcpObject):
+			elif isinstance(c,object) and issubclass(c.__class__,YaccDhcpObject):
 				self.append_child(c)
 			else:
 				logging.error('%s not valid YaccDhcpObject'%(repr(c)))
@@ -1022,30 +1022,45 @@ class ExprOpBase(YaccDhcpObject):
 	def check_numeric_expr_op(self):
 		return False
 
+class ConstData(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		children = []
+		super(ConstData,self).__init__(typename,children,startelm,endelm)
+		self.value = value
+		return
+
+	def set_value(self,value):
+		self.value = value
+		return
+
+	def value_format(self):
+		return self.value
 
 
 class DDnsUpdateStyle(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startelm,endelm)
-		self.value = ''
+		super(DDnsUpdateStyle,self).__init__(typename,children,startelm,endelm)
 		return
 
 	def value_format(self):
-		return self.value
-
-	def set_value(self,value):
-		if value not in ['ad-hoc','none','interim']:
-			return False
-		self.value = value
-		return True
+		s = ''
+		if len(self.children) > 0:
+			idx = 0
+			for c in self.children:
+				if idx > 0:
+					s += ' '
+				s += c.value_format()
+				idx += 1
+		return s
 
 	def format_config(self,tabs=0):
 		s = ''
-		if len(self.value) > 0:
+		if len(self.value_format()) > 0:
 			s += ' ' * tabs * 4
-			s += 'ddns-update-style %s;\n'%(self.value)
+			s += 'ddns-update-style %s;\n'%(self.value_format())
 		return s
 
 
@@ -1053,23 +1068,86 @@ class DefaultLeaseTime(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
-		super(self.__class__,self).__init__(typename,children,startelm,endelm)
-		self.value = ''
+		super(DefaultLeaseTime,self).__init__(typename,children,startelm,endelm)
 		return
 
 	def value_format(self):
-		return self.value
-
-	def set_value(self,value):
-		numexpr = re.compile('^[\d]+$')
-		if not numexpr.match(value):
-			return False
-		self.value = value
-		return True
+		s = ''
+		if len(self.children) > 0:
+			idx = 0
+			for c in self.children:
+				if idx > 0:
+					s += ' '
+				s += c.value_format()
+				idx += 1
+		return s
 
 	def format_config(self,tabs=0):
 		s = ''
-		if len(self.value) > 0:
+		if len(self.value_format()) > 0:
 			s += ' ' * tabs * 4
-			s += 'default-lease-time %s;\n'%(self.value)
+			s += 'default-lease-time %s;\n'%(self.value_format())
+		return s
+
+class PermitExec(YaccDhcpObject):
+	def __init__(self,permit='allow',typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(PermitExec,self).__init__(typename,children,startelm,endelm)
+		self.permit = permit
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			idx = 0
+			for c in self.children:
+				if idx > 0:
+					s += ' '
+				s += c.value_format()
+				idx += 1
+		return s
+
+
+	def format_config(self,tabs=0):
+		s = ''
+		if len(self.value_format()) > 0:
+			s += ' ' * tabs * 4
+			s += '%s %s;\n'%(self.permit,self.value_format())
+		return s
+
+
+class AllowPermit(PermitExec):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		super(AllowPermit,self).__init__('allow',typename,children,startelm,endelm)
+		return
+
+
+class DenyPermit(PermitExec):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		super(DenyPermit,self).__init__('deny',typename,children,startelm,endelm)
+		return
+
+
+class IgnorePermit(PermitExec):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		super(IgnorePermit,self).__init__('ignore',typename,children,startelm,endelm)
+		return
+
+class ExprOp(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(ExprOp,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			idx = 0
+			for c in self.children:
+				if idx > 0:
+					s += ' '
+				s += c.value_format()
+				idx += 1
 		return s
