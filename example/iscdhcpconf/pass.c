@@ -1,1 +1,1 @@
-{hello ;}
+p[0] = dhcpconf.DefaultLeaseTime(None,None,p.slice[1],p.slice[2]);p[0].set_value(p.slice[2].value);

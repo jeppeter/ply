@@ -215,19 +215,79 @@ class FunctionLex(object):
         return lexer
 
 
-
-class FunctionCode(object):
-    def __init__(self,s):
-        self.code= s
+class Location(object):
+    def __init__(self,startline=None,startpos=None,endline=None,endpos=None):
+        self.startline = 1
+        self.startpos = 1
+        self.endline = 1
+        self.endpos = 1
+        if startline is not None:
+            self.startline = startline
+        if startpos is not None:
+            self.startpos = startpos
+        if endline is not None:
+            self.endline = endline
+        if endpos is not None:
+            self.endpos = endpos
         return
 
+    def __format(self):
+        s = '[%s:%s-%s:%s]'%(self.startline,self.startpos,self.endline,self.endpos)
+        return s
+
+    def __str__(self):
+        return self.__format()
+
+    def __repr__(self):
+        return self.__format()
+
+class FunctionCode(object):
+    def __init__(self,s,startpos,endpos):
+        self.code= s
+        self.startline = startpos.startline
+        self.startpos = startpos.startpos
+        self.endline = endpos.endline
+        self.endpos = endpos.endpos
+        return
+
+    def location(self):
+        s = '[%s:%s-%s:%s]'%(self.startline,self.startpos,self.endline,self.endpos)
+        return s
+
+    def format_self(self):
+        s = ''
+        s += '%s[%s]%s('%(self.location(),id(self),self.__class__.__name__)
+        s += '%s'%(self.code)
+        s += ')'
+        return s
+
+    def __str__(self):
+        return self.format_self()
+
+    def __repr__(self):
+        return self.format_self()
+
 class FunctionCodes(object):
-    def __init__(self,tabs=0):
+    def __init__(self,tabs,startpos,endpos):
         self.curtab = tabs
         self.codes = []
         self.codetabs = []
         self.precodes = []
         self.precodetabs = []
+        self.startline = startpos.startline
+        self.startpos = startpos.startpos
+        self.endline = endpos.endline
+        self.endpos = endpos.endpos
+        return
+
+    def set_endpos(self,endpos):
+        self.endline = endpos.endline
+        self.endpos = endpos.endpos
+        return
+
+    def set_startpos(self,startpos):
+        self.startline = startpos.startline
+        self.startpos = startpos.startpos
         return
 
     def append_code(self,s):
@@ -264,6 +324,29 @@ class FunctionCodes(object):
             idx += 1
         return s
 
+    def location(self):
+        s = '[%s:%s-%s:%s]'%(self.startline,self.startpos,self.endline,self.endpos)
+        return s
+
+    def format_self(self):
+        s = ''
+        s += '%s[%s]%s('%(self.location(),id(self),self.__class__.__name__)
+        idx = 0
+        while idx < len(self.codes):
+            if idx > 0:
+                s += ','
+            s += '[%d][%s]'%(self.codetabs[idx],repr(self.codes[idx]))
+            idx += 1
+        s += ')'
+        return s
+
+    def __str__(self):
+        return self.format_self()
+
+    def __repr__(self):
+        return self.format_self()
+
+
 class FunctionYacc(object):
     tokens = FunctionLex.tokens
     def __init__(self,lexer=None,tabs=0):
@@ -273,10 +356,7 @@ class FunctionYacc(object):
         return
 
     def set_statements(self,p):
-        if self.statements is not None:
-            self.statements.extend_codes(p)
-        else:
-            self.statements = p
+        self.statements = p
         return
 
 
@@ -285,11 +365,12 @@ class FunctionYacc(object):
         ''' statements : statements lb_statements
         '''
         p[0] = p[1]
-        logging.info('p1 [%s] p0 [%s] p2 [%s]'%(repr(p[1].codes),repr(p[0].codes),repr(p[2].codes)))
+        logging.info('p1 [%s] p0 [%s] p2 [%s]'%(repr(p[1]),repr(p[0]),repr(p[2])))
         p[0].extend_codes(p[2])
-        logging.info('extend_codes [%s] p2 [%s]'%(repr(p[0].codes),repr(p[2].codes)))
-        #p[2] = None
-        #p[1] = None
+        p[0].set_endpos(p[2])
+        logging.info('extend_codes [%s] p2 [%s]'%(repr(p[0]),repr(p[2])))
+        p[1] = None
+        p[2] = None
         self.set_statements(p[0])
         return
 
@@ -297,10 +378,11 @@ class FunctionYacc(object):
         ''' statements : statements statement
         '''
         p[1].append_code(p[2].code)
-        logging.info('append [%s]'%(p[2].code))
+        p[1].set_endpos(p[2])
         p[0] = p[1]
-        #p[1] = None
-        #p[2] = None
+        logging.info('[%s]append [%s]'%(p[0],p[2]))
+        p[1] = None
+        p[2] = None
         self.set_statements(p[0])
         return
 
@@ -309,9 +391,15 @@ class FunctionYacc(object):
     def p_statements_empty(self,p):
         ''' statements : 
         '''
-        p[0] = FunctionCodes(self.tabs)
+        startpos = Location()
+        startpos.startline = p.lexer.lineno
+        startpos.startpos = (p.lexer.lexpos-p.lexer.linepos)
+        startpos.endline = startpos.startline
+        startpos.endpos = startpos.startpos
+        p[0] = FunctionCodes(self.tabs,startpos,startpos)
+        startpos = None
         self.set_statements(p[0])
-        logging.info('p0 [%s]'%(repr(p[0].codes)))
+        logging.info('p0 [%s]'%(repr(p[0])))
         return
 
     def p_lb_statements(self,p):
@@ -319,8 +407,10 @@ class FunctionYacc(object):
         '''
         p[0] = p[2]
         p[0].brace_code()
-        logging.info('pcode [%s]'%(repr(p[0].codes)))
-        #p[2] = None
+        p[0].set_startpos(p.slice[1])
+        p[0].set_endpos(p.slice[3])
+        logging.info('BRACE [%s]'%(repr(p[0])))
+        p[2] = None
         return
 
 
@@ -334,8 +424,8 @@ class FunctionYacc(object):
     def p_statement_text(self,p):
         ''' statement : TEXT SEMI
         '''
-        p[0] = FunctionCode(p.slice[1].value)
-        logging.info('code [%s]'%(p[0].code))
+        p[0] = FunctionCode(p.slice[1].value,p.slice[1],p.slice[2])
+        logging.info('code [%s]'%(p[0]))
         return
 
     def p_error(self,p):
@@ -402,7 +492,7 @@ def yacc_handler(args,parser):
     s = read_file(args.input)
     lexinput = FunctionLex()
     lexer = lexinput.build()
-    yacchandle = FunctionYacc(lexer)
+    yacchandle = FunctionYacc(lexer,args.tabs)
     parser = yacchandle.build()
     parser.parse(s)
     s = yacchandle.format_code()
@@ -416,6 +506,7 @@ def main():
     {
         "verbose|v" : "+",
         "input|i" : null,
+        "tabs|t" : 0,
         "lex<lex_handler>" : {
             "$" : 0
         },
