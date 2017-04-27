@@ -557,12 +557,12 @@ class IpAddress(YaccDhcpObject):
 
 	def start_ipv6_address(self,value,startelm=None,endelm=None):
 		self.ipv6addr = value
-		if startline is not None and startpos is not None \
-			and endline is not None and endpos is not None:
-			self.startline = startline
-			self.startpos = startpos
-			self.endline = endline
-			self.endpos = endpos
+		if startelm.startline is not None and startelm.startpos is not None \
+			and endelm.endline is not None and endelm.endpos is not None:
+			self.startline = startelm.startline
+			self.startpos = startelm.startpos
+			self.endline = endelm.endline
+			self.endpos = endelm.endpos
 		return True
 
 	def append_ipv6_colon(self,endelm=None):
@@ -1236,3 +1236,89 @@ class DomainNameServers(YaccDhcpObject):
 		s += ' ' * tabs * 4
 		s += 'option domain-name-servers %s;\n'%(self.value_format())
 		return s
+
+
+class LogServers(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = 'LogServers'
+		super(LogServers,self).__init__(typename,children,startelm,endelm)
+		return
+
+
+	def value_format(self):
+		s = ''
+		idx = 0
+		for c in self.children:
+			if idx > 0:
+				s += ','
+			s += c.value_format()
+			idx += 1
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += 'option log-servers %s;\n'%(self.value_format())
+		return s
+
+class MaxLeaseTime(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(MaxLeaseTime,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			idx = 0
+			for c in self.children:
+				if idx > 0:
+					s += ' '
+				s += c.value_format()
+				idx += 1
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		if len(self.value_format()) > 0:
+			s += ' ' * tabs * 4
+			s += 'max-lease-time %s;\n'%(self.value_format())
+		return s
+
+
+class LogFacility(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(LogFacility,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			idx = 0
+			for c in self.children:
+				if idx > 0:
+					s += ' '
+				s += c.value_format()
+				idx += 1
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		if len(self.value_format()) > 0:
+			s += ' ' * tabs * 4
+			s += 'log-facility %s;\n'%(self.value_format())
+		return s
+
+class SyslogValues(ConstData):
+	def __init__(self,value,startelm=None,endelm=None):
+		super(SyslogValues,self).__init__(value,startelm,endelm)
+		valid_values = ['kern','user','mail','daemon','auth','syslog','lpr','news','uucp','cron','authpriv','ftp']
+		for i in range(8):
+			valid_values.append('local%d'%(i))
+		if value not in valid_values:
+			raise Exception('%s [%s] not valid type %s'%(self.location(),value,repr(valid_values)))
+		return
