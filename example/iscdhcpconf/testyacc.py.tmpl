@@ -17,14 +17,15 @@ _insert_path(os.path.dirname(os.path.realpath(__file__)))
 _insert_path(os.path.dirname(os.path.realpath(__file__)),'..','..')
 
 import ply.yacc as yacc
-import testlex
+import testlex as dlex
 import dhcpconf
 
 class ConfigDhcpYacc(object):pass
 
 class DhcpConfYacc(ConfigDhcpYacc):
-    tokens = testlex.DhcpConfLex.tokens
+    tokens = dlex.DhcpConfLex.tokens
     def __init__(self,lexer=None):
+    	super(DhcpConfYacc,self).__init__()
         self.lexer = lexer
         self.statements = None
         return
@@ -67,161 +68,15 @@ class DhcpConfYacc(ConfigDhcpYacc):
         p[1] = None
         return
 
-    def p_option_name_value(self,p):
-        ''' option_statement : option_name_value 
+    def p_empty(self,p):
+        ''' empty :     
         '''
-        p[0] = dhcpconf.OptionStatement()
-        p[0].append_child(p[1])
-        p[0].set_pos_by_children()
-        p[1] = None
+        startpos = dhcpconf.Location(p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos),p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos))
+        p[0] = dhcpconf.YaccDhcpObject('Empty',None,startpos,startpos)
         return
 
-    def p_option_name_value_detail(self,p):
-        ''' option_name_value : OPTION option_name option_statement_part SEMI
-        '''
-        p[0] = dhcpconf.OptionNameValue(None,None,p.slice[1],p.slice[4])
-        p[0].set_name(p[2])
-        p[0].set_value(p[3])
-        p[2] = None
-        p[3] = None
-        return
-
-    def p_option_name(self,p):
-        ''' option_name : TEXT
-               | TEXT DOT TEXT
-        '''
-        if len(p) == 2:
-            p[0] = dhcpconf.OptionName(None,None,p.slice[1],p.slice[1])
-            p[0].set_name(p.slice[1].value)
-        else:
-            p[0] = dhcpconf.OptionName(None,None,p.slice[1],p.slice[3])
-            value = '%s.%s'%(p.slice[1].value,p.slice[3].value)
-            p[0].set_name(value)
-        return
-
-    def p_option_statement_part_recur(self,p):
-        ''' option_statement_part : option_tokens
-        '''
-        p[0] = dhcpconf.OptionStatementPart()
-        p[0].append_child_and_set_pos(p[1])
-        p[1] = None
-        return
-
-    def p_option_tokens(self,p):
-        ''' option_tokens : empty
-                | option_tokens option_token
-        '''
-        if len(p) == 2:
-            p[0] = dhcpconf.OptionTokens(None,None,p[1],p[1])
-            p[1] = None
-        else:
-            p[0] = p[1].append_child_and_set_pos(p[2])
-            p[1] = None
-            p[2] = None
-        return
-
-    def p_option_token_simple(self,p):
-        ''' option_token : TEXT
-                | NUMBER
-        '''
-        consdata = dhcpconf.ConstDataExprOp(None,None,p.slice[1],p.slice[1])
-        consdata.set_const(p.slice[1].value)
-        p[0] = dhcpconf.OptionToken()
-        p[0].append_child_and_set_pos(consdata)
-        consdata = None
-        return
-
-
-    def p_option_token_compose(self,p):
-        ''' option_token : domain_list                
-        '''
-        p[0] = dhcpconf.OptionToken()
-        p[0].append_child_and_set_pos(p[1])
-        p[1] = None
-        return
-
-    def p_domain_list(self,p):
-        ''' domain_list : dns_name
-                 | ipaddr
-                 | domain_list COMMA dns_name
-                 | domain_list COMMA ipaddr
-        '''
-        if len(p) == 2:
-            p[0] = dhcpconf.DomainList()
-            p[0].append_child_and_set_pos(p[1])
-            p[1] = None
-        else:
-            p[0] = p[1].append_child_and_set_pos(p[2])
-            p[1] = None
-            p[2] = None
-        return
-
-
-    def p_dns_name(self,p):
-        ''' dns_name : dns_name DOT TEXT
-        '''
-        p[0] = p[1]
-        p[0].append_dot_name(p.slice[3].value,p.slice[3])
-        p[1] = None
-        return
-
-    def p_dns_name_text(self,p):
-        ''' dns_name : TEXT 
-                 | NUMBER
-        '''
-        p[0] = dhcpconf.DnsName(None,None,p.slice[1],p.slice[1])
-        p[0].start_dnsname(p.slice[1].value)
-        return
-
-
-    def p_ipaddr(self,p):
-        ''' ipaddr : ipv4_addr
-            | ipv6_addr
-        '''
-        p[1].check_valid_address()
-        p[0] = p[1]
-        p[1] = None
-        return
-
-    def p_ipv4_addr(self,p):
-        ''' ipv4_addr : NUMBER DOT NUMBER DOT NUMBER DOT NUMBER
-        '''
-        p[0] = dhcpconf.IpAddress(None,None,p.slice[1],p.slice[7])
-        value = ''
-        for i in range(4):
-            if len(value) > 0:
-                value += '.'
-            value += '%s'%(p.slice[2*i+1].value)
-        p[0].set_ipv4_address(value)
-        return
-
-    def p_ipv6_addr_colon_text(self,p):
-        ''' ipv6_addr :  ipv6_addr COLON TEXT
-             | ipv6_addr COLON NUMBER
-        '''
-        if len(p.slice[3].value) < 1 or len(p.slice[3].value) > 4:
-            raise Exception('can not parse [%s:%s-%s:%s] %s'%(p.slice[3].startline,
-                p.slice[3].startpos,p.slice[3].endline,p.slice[3].endpos,p.slice[3].value))
-        p[0] = p[1]
-        p[1] = None
-        p[0].append_ipv6(p.slice[3].value,p.slice[3])
-        return
-
-    def p_ipv6_addr_colon(self,p):
-        ''' ipv6_addr : ipv6_addr COLON
-        '''
-        p[0] = p[1]
-        p[0].append_ipv6_colon(p.slice[2])
-        p[1] = None
-        return
-
-    def p_ipv6_addr_text(self,p):
-        ''' ipv6_addr : TEXT 
-                | NUMBER
-        '''
-        p[0] = dhcpconf.IpAddress()
-        p[0].start_ipv6_address(p.slice[1].value,p.slice[1],p.slice[1])
-        return
+   	def p_error(self,p):
+   		raise Exception('get error %s'%(repr(p)))
 
     def build(self,**kwargs):
         return yacc.yacc(module=self,start='statements',**kwargs)
@@ -270,7 +125,7 @@ def main():
     args = parser.parse_command_line()
     set_logging(args)
     s = read_file(args.input)
-    dhcplex = testlex.DhcpConfLex()
+    dhcplex = dlex.DhcpConfLex()
     lexer = dhcplex.build()
     dhcpyacc = DhcpConfYacc(lexer)
     parser = dhcpyacc.build()
