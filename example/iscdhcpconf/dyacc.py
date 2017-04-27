@@ -2899,7 +2899,8 @@ class DhcpConfYacc(object):
     def p_empty(self,p):
         ''' empty :     
         '''
-        p[0] = dhcpconf.YaccDhcpObject('Empty',None,p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos),p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos))
+        startpos = dhcpconf.Location(p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos),p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos))
+        p[0] = dhcpconf.YaccDhcpObject('Empty',None,startpos,startpos)
         return
 
     def build(self,**kwargs):

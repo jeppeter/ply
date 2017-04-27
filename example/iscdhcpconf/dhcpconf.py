@@ -1024,3 +1024,26 @@ class ExprOpBase(YaccDhcpObject):
 
 
 
+class DefaultLeaseTime(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(self.__class__,self).__init__(typename,children,startelm,endelm)
+		self.value = ''
+		return
+
+	def value_format(self):
+		return self.value
+
+	def set_value(self,value):
+		if value not in ['ad-hoc','none','interim']:
+			return False
+		self.value = value
+		return True
+
+	def format_config(self,tabs=0):
+		s = ''
+		if len(self.value) > 0:
+			s += ' ' * tabs * 4
+			s += 'default-lease-time %s;\n'%(self.value)
+		return s

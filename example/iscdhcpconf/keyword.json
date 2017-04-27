@@ -4,7 +4,7 @@
         "prefix" : "option_statement",
         "yacc" : [{
                 "clause" : "DEFAULT_LEASE_TIME NONE SEMI;DEFAULT_LEASE_TIME AD_HOC SEMI;DEFAULT_LEASE_TIME INTERIM SEMI;",
-                "func" : "p[0] = dhcpconf.DefaultLeaseTime(None,None,p.slice[1],p.slice[3]);p[0].set_value(p.slice[2].value);return ;"
+                "func" : "p[0] = dhcpconf.DefaultLeaseTime(None,None,p.slice[1],p.slice[3]);bval = p[0].set_value(p.slice[2].value); if not bval : ;{raise Exception('[%s:%s-%s:%s] not valid value (%s)'%(p.slice[2].startline,p.slice[2].startpos,p.slice[2].endline,p.slice[2].endpos,p.slice[2].value));}return ;"
             }],
         "parse_format" : "T",
         "class" : "DefaultLeaseTime",

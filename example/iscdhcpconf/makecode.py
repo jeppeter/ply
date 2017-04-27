@@ -601,6 +601,9 @@ class ClauseYacc(object):
         p[0] = Clause(p.slice[1].value,p.slice[1],p.slice[2])
         return
 
+    def p_error(self,p):
+        raise Exception('can not handle %s'%(repr(p)))
+
 
     def build(self,**kwargs):
         return yacc.yacc(module=self,start='statements',**kwargs)
@@ -619,7 +622,7 @@ def make_code(s,tabs):
     lexinput = FunctionLex()
     lexer = lexinput.build()
     yacchandle = FunctionYacc(lexer,tabs)
-    parser = yacchandle.build()
+    parser = yacchandle.build(tabmodule='codeparse')
     parser.parse(s)
     rets = yacchandle.format_code()
     return rets
@@ -628,7 +631,7 @@ def make_clause(prefix,s,tabs):
     lexinput = FunctionLex()
     lexer = lexinput.build()
     yacchandle = ClauseYacc(lexer,prefix)
-    parser = yacchandle.build()
+    parser = yacchandle.build(tabmodule='clauseparse')
     parser.parse(s)
     rets = yacchandle.format_clause(tabs)
     return rets

@@ -128,7 +128,7 @@ def main():
     dhcplex = dlex.DhcpConfLex()
     lexer = dhcplex.build()
     dhcpyacc = DhcpConfYacc(lexer)
-    parser = dhcpyacc.build()
+    parser = dhcpyacc.build(tabmodule='testparse')
     parser.parse(s)
     s = dhcpyacc.format_config()
     sys.stdout.write('%s'%(s))
