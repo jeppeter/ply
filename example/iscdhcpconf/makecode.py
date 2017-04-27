@@ -256,6 +256,112 @@ class FunctionLex(object):
         return lexer
 
 
+class PythonLex(object):
+    tokens = ['SEMI','LBRACE','RBRACE','COMMENT','TEXT']
+    t_ignore = ''
+    t_comment_ignore = ''
+    t_newlinebegin_ignore = ''
+    states = (
+        ('comment','exclusive'),
+        ('newlinebegin','exclusive'),
+    )
+
+    def __init__(self,deftabs=4):
+        self.lineno = 1
+        self.column = 1
+        self.linepos = 0
+        self.braces = 0
+        self.doublequoted = 0
+        self.commented = 0
+        self.spaces = []
+        self.tabspace = deftabs
+        self.lastspace = None
+        return
+
+    @lex.TOKEN(r'\#')
+    def t_COMMENT(self,p):
+        self.commented = 1
+        p.lexer.push_state('comment')
+        return None
+
+    def t_comment_error(self,p):
+        raise Exception('comment error')
+        return
+
+    @lex.TOKEN('.')
+    def t_comment_TEXT(self,p):
+        curpos = p.lexer.lexpos
+        maxpos = len(p.lexer.lexdata)
+        neednewlinebegin = False
+        while curpos < maxpos:
+            curch = p.lexer.lexdata[curpos]
+            if curch == '\n':
+                curpos += 1
+                p.lexer.linepos = curpos
+                neednewlinebegin = True
+                break
+            elif curch == ';':
+                curpos += 1
+                p.type = 'SEMI'
+                p.value = ';'
+                p.startline = p.lexer.lineno
+                p.startpos = (curpos - p.lexer.linepos - len(p.value))
+                p.endline = p.lexer.lineno
+                p.endpos = (curpos - p.lexer.linepos)
+                p.lexer.pop_state()
+                p.lexer.lexpos = curpos
+                return p
+            curpos += 1
+        self.comment = 0
+        p.lexer.pop_state()
+        p.lexer.lexpos = curpos
+        if neednewlinebegin :
+            # we count the new line begin
+            p.lexer.push_state('newlinebegin')
+        return None
+
+    @lex.TOKEN(r'.')
+    def t_newlinebegin_TEXT(self,p):
+        curpos = p.lexer.lexpos
+        maxpos = len(p.lexer.lexdata)
+        curspace = 0
+        while curpos < maxpos:
+            curch = p.lexer.lexdata[curpos]
+            if curch == ' ':
+                curspace += 1
+            elif curch == '\t':
+                curspace += self.tabspace
+            elif curch == '\n':
+                p.lexer.linepos = curpos
+                p.lexer.lineno += 1
+                if len(self.spaces) == 0:
+                    self.spaces.append(curspace)
+                    curspace = 0
+                else:
+                    handled = False
+                    while len(self.spaces) > 0:
+                        if curspace == self.spaces[-1]:
+                            curspace = 0
+                            handled = True
+                            break
+                        elif curspace > self.spaces[-1]:
+                            self.lastspace = self.spaces[-1]
+                            self.spaces.append(curspace)
+                            curspace = 0
+                            handled= True
+                            break
+                        elif curspace < self.spaces[-1]:
+                            self.lastspace = self.spaces[-1]
+                            self.spaces.pop()
+                    if not handled :
+                        raise Exception('[%s:%d] not valid python code'%(p.lexer.lineno))
+                break
+
+
+
+        return None
+
+
 class Location(object):
     def __init__(self,startline=None,startpos=None,endline=None,endpos=None):
         self.startline = 1
