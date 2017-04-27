@@ -17,12 +17,13 @@ _insert_path(os.path.dirname(os.path.realpath(__file__)))
 _insert_path(os.path.dirname(os.path.realpath(__file__)),'..','..')
 
 import ply.yacc as yacc
-import dlex
+import testlex
 import dhcpconf
 
+class ConfigDhcpYacc(object):pass
 
-class DhcpConfYacc(object):
-    tokens = dlex.DhcpConfLex.tokens
+class DhcpConfYacc(ConfigDhcpYacc):
+    tokens = testlex.DhcpConfLex.tokens
     def __init__(self,lexer=None):
         self.lexer = lexer
         self.statements = None
@@ -269,7 +270,7 @@ def main():
     args = parser.parse_command_line()
     set_logging(args)
     s = read_file(args.input)
-    dhcplex = dlex.DhcpConfLex()
+    dhcplex = testlex.DhcpConfLex()
     lexer = dhcplex.build()
     dhcpyacc = DhcpConfYacc(lexer)
     parser = dhcpyacc.build()

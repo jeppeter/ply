@@ -1,12 +1,12 @@
 {
-    "default-lease-time" : {
+    "default-lease-time" : "DEFAULT_LEASE_TIME",
+    "option_default_lease_time" : {
         "prefix" : "option_statement",
         "yacc" : [{
                 "clause" : "DEFAULT_LEASE_TIME NONE SEMI;DEFAULT_LEASE_TIME AD_HOC SEMI;DEFAULT_LEASE_TIME NONE SEMI;",
                 "func" : "p[0] = dhcpconf.DefaultLeaseTime(None,None,p.slice[1],p.slice[3]);p[0].set_value(p.slice[2].value);return ;"
             }],
         "parse_format" : "T",
-        "lexvalue" : "DEFAULT_LEASE_TIME",
         "class" : "DefaultLeaseTime",
         "type" : "ServerUniverse"
     },

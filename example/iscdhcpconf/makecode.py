@@ -652,6 +652,23 @@ def read_file(infile=None):
     fin = None
     return s
 
+def write_file(s,outfile=None):
+    fout = sys.stdout
+    if outfile is not None:
+        fout = open(outfile,'wb')
+    bmode = False
+    if 'b' in fout.mode:
+        bmode = True
+    if sys.version[1] == '2' or not bmode:
+        fout.write('%s'%(s))
+    else:
+        fout.write(s.encode(encoding='UTF-8'))
+    if fout != sys.stdout:
+        fout.close()
+    fout = None
+    return
+
+
 def load_config(infile=None):
     retobj = dict()
     try:
@@ -754,7 +771,7 @@ def output_p(k,v,tabs):
                 if haskey(ya,'clause') and haskey(ya,'func') and haskey(v,'prefix'):
                     logging.info('')
                     prefix = normalize_name(v['prefix'])
-                    curfuncname = 'p_%s_%s_%s'%(normalize_name(k),prefix,funcidx)
+                    curfuncname = 'p_%s_%s'%(normalize_name(k),funcidx)
                     rets += format_tabs('def %s(self,p):'%(curfuncname),tabs)
                     rets += make_clause(prefix,ya['clause'],(tabs+1))
                     rets += make_code(ya['func'],(tabs+1))
@@ -774,10 +791,48 @@ def yclass_handler(args,parser):
     for k in okeys:
         v = odict[k]
         if isdict(v):
-            logging.info('get value (%s)'%(k))
             outs += output_p(k,v,1)
             outs += format_tabs('',1)
-    sys.stdout.write('%s'%(outs))
+    ins = read_file(args.subnargs[0])
+    if args.pattern is None:
+        args.pattern = 'class %s(object):pass'%(args.classname)
+    repls = ins.replace(args.pattern,outs)
+    write_file(repls,args.subnargs[1])    
+    sys.exit(0)
+    return
+
+def lclass_handler(args,parser):
+    set_logging(args)
+    odict = load_config(args.input)
+    okeys = sorted(odict.keys())
+    kv = dict()
+    for k in okeys:
+        v = odict[k]
+        if isdict(v):
+            if haskey(v,'value'):
+                kv[k] = v['value']
+        else:
+            kv[k] = v
+    outs = ''
+    outs += format_tabs('class %s(object):'%(args.classname),0)
+    outs += format_tabs('reserved = {',1)
+    idx = 0
+    klen = len(kv.keys())
+    for k in kv.keys():
+        curs = '\'%s\' : \'%s\''%(k,kv[k])
+        if idx < (klen - 1):
+            curs += ','
+        outs += format_tabs(curs,2)
+        idx += 1            
+    outs += format_tabs('}',1)
+    outs += format_tabs('def __init__(self):',1)
+    outs += format_tabs('return',2)
+    outs += format_tabs('',2)
+    ins = read_file(args.subnargs[0])
+    if args.pattern is None:
+        args.pattern = 'class %s(object):pass'%(args.classname)
+    repls = ins.replace(args.pattern,outs)
+    write_file(repls,args.subnargs[1])    
     sys.exit(0)
     return
 
@@ -790,6 +845,7 @@ def main():
         "tabs|t" : 0,
         "classname|c" : "ExtendedYacc",
         "prefix|p" : "statements",
+        "pattern|P"  : null,
         "lex<lex_handler>" : {
             "$" : 0
         },
@@ -799,8 +855,11 @@ def main():
         "clause<clause_handler>" : {
             "$" : 0
         },
-        "yclass<yclass_handler>" : {
-            "$" : 0
+        "yclass<yclass_handler>##input[0] templatefile input[1] outputfile##" : {
+            "$" : 2
+        },
+        "lclass<lclass_handler>##input[0] templatefile input[1] outputfile##" : {
+            "$" : 2
         }
     }
     '''
