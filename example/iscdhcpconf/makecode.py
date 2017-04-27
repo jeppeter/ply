@@ -787,7 +787,9 @@ def yclass_handler(args,parser):
     okeys = sorted(odict.keys())
     outs = ''
     outs += format_tabs('class %s(object):'%(args.classname),0)
-    outs += format_tabs('def __init__(self):',1)
+    outs += format_tabs('def __init__(self,lexer=None):',1)
+    outs += format_tabs('self.lexer = lexer',2)
+    outs += format_tabs('self.statements = None',2)
     outs += format_tabs('return',2)
     outs += format_tabs('',2)
     logging.info('okeys %s'%(repr(okeys)))

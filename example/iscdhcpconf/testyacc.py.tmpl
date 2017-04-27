@@ -25,9 +25,7 @@ class ConfigDhcpYacc(object):pass
 class DhcpConfYacc(ConfigDhcpYacc):
     tokens = dlex.DhcpConfLex.tokens
     def __init__(self,lexer=None):
-        super(DhcpConfYacc,self).__init__()
-        self.lexer = lexer
-        self.statements = None
+        super(DhcpConfYacc,self).__init__(lexer)
         return
 
     def format_config(self):
@@ -62,12 +60,15 @@ class DhcpConfYacc(ConfigDhcpYacc):
     def p_statement_multi(self,p):
         ''' statement :  option_statement
                   | execute_statement
+                  | subnet_statement
+                  | host_statement
         '''
         children = []
         children.append(p[1])
         p[0] = dhcpconf.Statement(None,children,p[1],p[1])
         p[1] = None
         return
+
 
     def p_empty(self,p):
         ''' empty :     

@@ -231,13 +231,19 @@ class YaccDhcpObject(object):
 		return
 
 	def if_need_quoted(self,s):
-		if ' ' in s or '\t' in s:
+		if ' ' in s or '/' in s or \
+			'\t' in s or '\\' in s: 
 			return True
 		return False
 
 	def quoted_string(self,s):
 		rets = '"%s"'%(s)
 		return rets
+
+	def safe_quote_string(self,s):
+		if self.if_need_quoted(s):
+			return self.quoted_string(s)
+		return s
 
 
 class MacAddress(YaccDhcpObject):
@@ -470,13 +476,13 @@ class SubnetStatement(YaccDhcpObject):
 	def __format_ipaddr(self):
 		s = '127.0.0.1'
 		if self.ipaddr is not None:
-			s = self.ipaddr
+			s = self.ipaddr.value_format()
 		return s
 
 	def __format_ipmask(self):
 		s = '255.255.255.0'
 		if self.ipmask is not None:
-			s = self.ipmask
+			s = self.ipmask.value_format()
 		return s
 
 
@@ -514,26 +520,6 @@ class SubNetworkDeclarations(YaccDhcpObject):
 		return s
 
 
-class InterfaceDeclaration(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
-		if typename is None:
-			typename = 'InterfaceDeclaration'
-		super(InterfaceDeclaration,self).__init__(typename,children,startelm,endelm)
-		self.interface = ''
-		return
-
-	def value_format(self):
-		return '%s'%(self.interface)
-
-	def set_interface(self,value):
-		self.interface = value
-		return
-
-	def format_config(self,tabs=0):
-		s = ''
-		s += ' ' * tabs * 4
-		s += 'interface %s ;\n'%(self.interface)
-		return s
 
 
 class IpAddress(YaccDhcpObject):
@@ -655,27 +641,6 @@ class DomainList(YaccDhcpObject):
 
 
 
-class InterfaceName(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
-		if typename is None:
-			typename = 'InterfaceName'
-		super(InterfaceName,self).__init__(typename,children,startelm,endelm)
-		self.interfacename = None
-		return
-
-	def value_format(self,tabs=0):
-		s = ''
-		if self.interfacename is not None:
-			s += self.interfacename
-		return s
-
-
-	def format_config(self,tabs=0):		
-		return self.value_format()
-
-	def start_interfacename(self,value):
-		self.interfacename = value
-		return
 
 class OptionStatement(YaccDhcpObject):
 	def __init__(self,typename=None,startelm=None,endelm=None):
@@ -1321,4 +1286,106 @@ class SyslogValues(ConstData):
 			valid_values.append('local%d'%(i))
 		if value not in valid_values:
 			raise Exception('%s [%s] not valid type %s'%(self.location(),value,repr(valid_values)))
+		return
+
+class OptionFileName(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(OptionFileName,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			idx = 0
+			for c in self.children:
+				if idx > 0:
+					s += ' '
+				s += c.value_format()
+				idx += 1
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		if len(self.value_format()) > 0:
+			s += ' ' * tabs * 4
+			s += 'filename %s;\n'%(self.value_format())
+		return s
+
+class InterfaceName(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(InterfaceName,self).__init__(typename,children,startelm,endelm)
+		self.interfacename = None
+		return
+
+	def value_format(self,tabs=0):
+		s = ''
+		if self.interfacename is not None:
+			s += self.safe_quote_string(self.interfacename)
+		return s
+
+
+	def format_config(self,tabs=0):		
+		return self.value_format()
+
+	def start_interfacename(self,value):
+		self.interfacename = value
+		return
+
+class InterfaceDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(InterfaceDeclaration,self).__init__(typename,children,startelm,endelm)
+		self.interface = ''
+		return
+
+	def value_format(self):
+		s = ''
+		s += self.safe_quote_string(self.interface)
+		return s
+
+	def set_interface(self,value):
+		self.interface = value
+		return
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += 'interface %s ;\n'%(self.interface)
+		return s
+
+class OptionNextServer(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(OptionNextServer,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			idx = 0
+			for c in self.children:
+				if idx > 0:
+					s += ' '
+				s += c.value_format()
+				idx += 1
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		if len(self.value_format()) > 0:
+			s += ' ' * tabs * 4
+			s += 'next-server %s;\n'%(self.value_format())
+		return s
+
+class SubnetDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(SubnetDeclaration,self).__init__(typename,children,startelm,endelm)
 		return
