@@ -86,6 +86,88 @@ class DhcpConfYacc(ConfigDhcpYacc):
         constdata = None
         return
 
+    def p_domain_list(self,p):
+        ''' domain_list : dns_name
+                 | ipaddr
+                 | domain_list COMMA dns_name
+                 | domain_list COMMA ipaddr
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.DomainList()
+            p[0].append_child_and_set_pos(p[1])
+            p[1] = None
+        else:
+            p[0] = p[1].append_child_and_set_pos(p[3])
+            p[1] = None
+            p[2] = None
+        return
+
+    def p_dns_name(self,p):
+        ''' dns_name : dns_name DOT TEXT
+                  | dns_name DOT NUMBER
+        '''
+        p[0] = p[1]
+        p[0].append_dot_name(p.slice[3].value,p.slice[3])
+        p[1] = None
+        return
+
+    def p_dns_name_text(self,p):
+        ''' dns_name : TEXT 
+                 | NUMBER
+        '''
+        p[0] = dhcpconf.DnsName(None,None,p.slice[1],p.slice[1])
+        p[0].start_dnsname(p.slice[1].value)
+        return
+
+    def p_ipaddr(self,p):
+        ''' ipaddr : ipv4_addr
+            | ipv6_addr
+        '''
+        p[1].check_valid_address()
+        p[0] = p[1]
+        p[1] = None
+        return
+
+    def p_ipv4_addr(self,p):
+        ''' ipv4_addr : NUMBER DOT NUMBER DOT NUMBER DOT NUMBER
+        '''
+        p[0] = dhcpconf.IpAddress(None,None,p.slice[1],p.slice[7])
+        value = ''
+        for i in range(4):
+            if len(value) > 0:
+                value += '.'
+            value += '%s'%(p.slice[2*i+1].value)
+        p[0].set_ipv4_address(value)
+        return
+
+    def p_ipv6_addr_colon_text(self,p):
+        ''' ipv6_addr :  ipv6_addr COLON TEXT
+             | ipv6_addr COLON NUMBER
+        '''
+        if len(p.slice[3].value) < 1 or len(p.slice[3].value) > 4:
+            raise Exception('can not parse [%s:%s-%s:%s] %s'%(p.slice[3].startline,
+                p.slice[3].startpos,p.slice[3].endline,p.slice[3].endpos,p.slice[3].value))
+        p[0] = p[1]
+        p[1] = None
+        p[0].append_ipv6(p.slice[3].value,p.slice[3])
+        return
+
+    def p_ipv6_addr_colon(self,p):
+        ''' ipv6_addr : ipv6_addr COLON
+        '''
+        p[0] = p[1]
+        p[0].append_ipv6_colon(p.slice[2])
+        p[1] = None
+        return
+
+    def p_ipv6_addr_text(self,p):
+        ''' ipv6_addr : TEXT 
+                | NUMBER
+        '''
+        p[0] = dhcpconf.IpAddress()
+        p[0].start_ipv6_address(p.slice[1].value,p.slice[1],p.slice[1])
+        return
+
     def p_error(self,p):
         raise Exception('get error %s'%(repr(p)))
 

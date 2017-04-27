@@ -230,6 +230,16 @@ class YaccDhcpObject(object):
 			self.endpos = endpos
 		return
 
+	def if_need_quoted(self,s):
+		if ' ' in s or '\t' in s:
+			return True
+		return False
+
+	def quoted_string(self,s):
+		rets = '"%s"'%(s)
+		return rets
+
+
 class MacAddress(YaccDhcpObject):
 	def __init__(self,macaddr='0',children=None,startelm=None,endelm=None):
 		super(MacAddress,self).__init__('MacAddress',children,startelm,endelm)
@@ -597,11 +607,9 @@ class DnsName(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = 'DnsName'
-		super(IpAddress,self).__init__(typename,children,startelm,endelm)
+		super(DnsName,self).__init__(typename,children,startelm,endelm)
 		self.dnsname = None
 		return
-
-
 
 	def value_format(self,tabs=0):
 		s = ''
@@ -623,6 +631,29 @@ class DnsName(YaccDhcpObject):
 		self.dnsname += '.%s'%(value)
 		self.set_endpos(endelm)
 		return
+
+class DomainList(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = 'DomainList'
+		super(DomainList,self).__init__(typename,children,startelm,endelm)
+		return
+
+
+	def value_format(self):
+		s = ''
+		idx = 0
+		for c in self.children:
+			if idx > 0:
+				s += ','
+			s += c.value_format()
+			idx += 1
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+
 
 class InterfaceName(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
@@ -1030,12 +1061,17 @@ class ConstData(YaccDhcpObject):
 		self.value = value
 		return
 
+
 	def set_value(self,value):
 		self.value = value
 		return
 
 	def value_format(self):
-		return self.value
+		s = ''
+		s = self.value
+		if self.if_need_quoted(self.value):
+			s = self.quoted_string(self.value)
+		return s
 
 
 class DDnsUpdateStyle(YaccDhcpObject):
@@ -1150,4 +1186,53 @@ class ExprOp(YaccDhcpObject):
 					s += ' '
 				s += c.value_format()
 				idx += 1
+		return s
+
+class DomainName(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(DomainName,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			idx = 0
+			for c in self.children:
+				if idx > 0:
+					s += ' '
+				s += c.value_format()
+				idx += 1
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		if len(self.value_format()) > 0:
+			s += ' ' * tabs * 4
+			s += 'option domain-name %s;\n'%(self.value_format())
+		return s
+
+class DomainNameServers(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = 'DomainNameServers'
+		super(DomainNameServers,self).__init__(typename,children,startelm,endelm)
+		return
+
+
+	def value_format(self):
+		s = ''
+		idx = 0
+		for c in self.children:
+			if idx > 0:
+				s += ','
+			s += c.value_format()
+			idx += 1
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += ' ' * tabs * 4
+		s += 'option domain-name-servers %s;\n'%(self.value_format())
 		return s

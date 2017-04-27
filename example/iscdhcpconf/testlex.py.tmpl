@@ -21,7 +21,7 @@ import ply.lex as lex
 class ConfigDhcpLex(object):pass
 
 class DhcpConfLex(ConfigDhcpLex):
-	tokens = ['TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER','SLASH','PLUS','MINUS','EQUAL']
+	tokens = ['TEXT','COLON','SEMI','LBRACE','RBRACE','DOUBLEQUOTE','COMMENT','DOT','NUMBER','SLASH','PLUS','MINUS','EQUAL','COMMA']
 	t_ignore = ' \t'
 	t_doublequoted_ignore = ''	
 	t_comment_ignore = ''
@@ -42,6 +42,14 @@ class DhcpConfLex(ConfigDhcpLex):
 
 	@lex.TOKEN(r'\.')
 	def t_DOT(self,p):
+		p.startline = p.lexer.lineno
+		p.startpos = p.lexer.lexpos - len(p.value) - p.lexer.linepos
+		p.endline = p.lexer.lineno
+		p.endpos = p.lexer.lexpos - p.lexer.linepos
+		return p
+
+	@lex.TOKEN(r'\,')
+	def t_COMMA(self,p):
 		p.startline = p.lexer.lineno
 		p.startpos = p.lexer.lexpos - len(p.value) - p.lexer.linepos
 		p.endline = p.lexer.lineno
@@ -202,6 +210,8 @@ class DhcpConfLex(ConfigDhcpLex):
 	@lex.TOKEN(r'[a-zA-Z_0-9][a-zA-Z_0-9]*')
 	def t_TEXT(self,p):
 		# now to check whether it is the value of next is -
+		selectval = None
+		selectpos = None
 		if p.lexer.lexpos < len(p.lexer.lexdata):
 			curpos = p.lexer.lexpos
 			curval = p.value
@@ -214,17 +224,20 @@ class DhcpConfLex(ConfigDhcpLex):
 					findre = re.compile('^([a-zA-Z_0-9]+)')
 					m = findre.findall(leftdata)
 					if m is not None and len(m) > 0:
+						breakone = False
 						totaldata = curval + '-'+ m[0]
 						newtype = self.__class__.reserved.get(totaldata,'TEXT')
 						if newtype != 'TEXT':
-							p.value = totaldata
-							p.lexer.lexpos = ( curpos + 1 +  len(m[0]))
-						else:
-							curpos += (1 + len(m[0]))
-							curval += '-' + m[0]
-							breakone = False
+							# we find the last most match ones
+							selectval = totaldata
+							selectpos = (curpos + 1 + len(m[0]))
+						curpos += (1 + len(m[0]))
+						curval += '-' + m[0]
 				if breakone:
 					break
+		if selectval is not None and selectpos is not None:
+			p.value = selectval
+			p.lexer.lexpos = selectpos
 		p.startline = p.lexer.lineno
 		p.startpos = (p.lexer.lexpos - p.lexer.linepos - len(p.value))
 		p.endpos = p.startpos + len(p.value)

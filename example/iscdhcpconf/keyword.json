@@ -24,9 +24,18 @@
     "option_domain_name" : {
         "prefix" : "option_statement",
         "yacc" : [{
-            "clause" : "DOMAIN_NAME data_expr_op SEMI;",
-            "func" : "p[0] = dhcpconf.DomainName(None,None,p.slice[1],p.slice[3]);p[0].append_child(p[2]);p[2] = None;return;"
+            "clause" : "OPTION DOMAIN_NAME data_expr_op SEMI;",
+            "func" : "p[0] = dhcpconf.DomainName(None,None,p.slice[1],p.slice[4]);p[0].append_child(p[3]);p[3] = None;return;"
+        },{
+            "clause" : "OPTION DOMAIN_NAME EQUAL data_expr_op SEMI;",
+            "func" : "p[0] = dhcpconf.DomainName(None,None,p.slice[1],p.slice[5]);equal = dhcpconf.ConstData('=',p.slice[3],p.slice[3]);p[0].append_child(equal);equal=None;p[0].append_child(p[4]);p[4] = None;return;"
         }]
+    },
+    "option_domain_name_servers" : {
+        "prefix" : "option_statement",
+        "yacc" : [{
+            "clause":"OPTION DOMAIN_NAME_SERVERS domain_list SEMI;",
+            "func" : "p[0]=dhcpconf.DomainNameServers(None,None,p.slice[1],p.slice[4]);p[0].extend_children(p[3].children);p[3]=None;return;"}]
     },
     "permit_execute_statement" : {
         "prefix" : "execute_statement",
@@ -56,5 +65,7 @@
     "allow" : "ALLOW",
     "deny" : "DENY",
     "ignore" : "IGNORE",
-    "domain-name" : "DOMAIN_NAME"
+    "domain-name" : "DOMAIN_NAME",
+    "option" : "OPTION",
+    "domain-name-servers" : "DOMAIN_NAME_SERVERS"
 }

@@ -353,7 +353,7 @@ class DhcpConfYacc(object):
             p[0].append_child_and_set_pos(p[1])
             p[1] = None
         else:
-            p[0] = p[1].append_child_and_set_pos(p[2])
+            p[0] = p[1].append_child_and_set_pos(p[3])
             p[1] = None
             p[2] = None
         return
@@ -572,6 +572,7 @@ class DhcpConfYacc(object):
 
     def p_dns_name(self,p):
         ''' dns_name : dns_name DOT TEXT
+                  | dns_name DOT NUMBER
         '''
         p[0] = p[1]
         p[0].append_dot_name(p.slice[3].value,p.slice[3])
