@@ -5,6 +5,7 @@ import os
 import importlib
 import extargsparse
 import logging
+import json
 
 def _insert_path(path,*args):
     _curdir = os.path.join(path,*args)
@@ -18,6 +19,46 @@ _insert_path(os.path.dirname(os.path.realpath(__file__)),'..','..')
 
 import ply.lex as lex
 import ply.yacc as yacc
+
+class Utf8Encode(object):
+    def __dict_utf8(self,val):
+        newdict =dict()
+        for k in val.keys():
+            newk = self.__encode_utf8(k)
+            newv = self.__encode_utf8(val[k])
+            newdict[newk] = newv
+        return newdict
+
+    def __list_utf8(self,val):
+        newlist = []
+        for k in val:
+            newk = self.__encode_utf8(k)
+            newlist.append(newk)
+        return newlist
+
+    def __encode_utf8(self,val):
+        retval = val
+
+        if sys.version[0]=='2' and isinstance(val,unicode):
+            retval = val.encode('utf8')
+        elif isinstance(val,dict):
+            retval = self.__dict_utf8(val)
+        elif isinstance(val,list):
+            retval = self.__list_utf8(val)
+        return retval
+
+    def __init__(self,val):
+        self.__val = self.__encode_utf8(val)
+        return
+
+    def __str__(self):
+        return self.__val
+
+    def __repr__(self):
+        return self.__val
+    def get_val(self):
+        return self.__val
+
 
 class FunctionLex(object):
     tokens = ['SEMI','LBRACE','RBRACE','COMMENT','TEXT']
@@ -441,6 +482,157 @@ class FunctionYacc(object):
         return self.statements.format_code()
 
 
+class Clause(object):
+    def __init__(self,s,startpos,endpos):
+        self.clause = s
+        self.startline = startpos.startline
+        self.startpos = startpos.startpos
+        self.endline = endpos.endline
+        self.endpos = endpos.endpos
+        return
+
+
+class Clauses(object):
+    def __init__(self,prefix,startpos=None,endpos=None):
+        self.prefix = prefix
+        self.clauses = []
+        self.startline = 1
+        self.startpos = 1
+        self.endline = 1
+        self.endpos = 1
+        if startpos is not None:
+            self.startline = startpos.startline
+            self.startpos = startpos.startpos
+        if endpos is not None:
+            self.endline = endpos.endline
+            self.endpos = endpos.endpos
+        return
+
+    def set_startpos(self,startpos=None):
+        if startpos is not None:
+            self.startline = startpos.startline
+            self.startpos = startpos.startpos
+        return
+
+    def set_endpos(self,endpos=None):
+        if endpos is not None:
+            self.endline = endpos.endline
+            self.endpos = endpos.endpos
+        return
+
+    def append_clause(self,cls):
+        self.clauses.append(cls.clause)
+        return
+
+    def __format_clause(self,s,tabs=0):
+        rets = ' ' * tabs * 4
+        rets += s
+        rets += '\n'
+        return rets
+
+    def format_clause(self,tabs=0):
+        idx = 0
+        s = ''
+        while idx < len(self.clauses):
+            #logging.info('tabs [%s]'%(self.codetabs[idx]))
+            curs = ''
+            if idx == 0:
+                curs += '\'\'\' %s : %s'%(self.prefix,self.clauses[idx])
+            else:
+                curs += '  | %s'%(self.clauses[idx])
+            s += self.__format_clause(curs,tabs)
+            idx += 1
+        s += self.__format_clause('\'\'\'',tabs)
+        return s
+
+    def location(self):
+        s = '[%s:%s-%s:%s]'%(self.startline,self.startpos,self.endline,self.endpos)
+        return s
+
+    def format_self(self):
+        s = ''
+        s += '%s[%s]%s('%(self.location(),id(self),self.__class__.__name__)
+        s += '\n'
+        s += self.format_clause(1)
+        s += ')'
+        return s
+
+    def __str__(self):
+        return self.format_self()
+
+    def __repr__(self):
+        return self.format_self()
+
+class ClauseYacc(object):
+    tokens = FunctionLex.tokens
+    def __init__(self,lexer,prefix):
+        self.prefix = prefix
+        self.lexer = lexer
+        self.statements = None
+        return
+
+    def set_statements(self,p):
+        self.statements = p
+        return
+
+
+    def p_statements_state(self,p):
+        ''' statements : statement
+                    | statements statement 
+        '''
+        if len(p) == 2:
+            p[0] = Clauses(self.prefix)
+            p[0].append_clause(p[1])
+            p[0].set_endpos(p[1])
+            p[0].set_startpos(p[1])
+            p[1] = None
+        else:
+            p[0] = p[1]
+            p[0].append_clause(p[2])
+            p[0].set_endpos(p[2])
+            p[1] = None
+            p[2] = None
+        self.set_statements(p[0])
+        return
+
+    def p_statement(self,p):
+        ''' statement : TEXT SEMI
+        '''
+        p[0] = Clause(p.slice[1].value,p.slice[1],p.slice[2])
+        return
+
+
+    def build(self,**kwargs):
+        return yacc.yacc(module=self,start='statements',**kwargs)
+
+
+    def format_clause(self,tabs):
+        if self.statements is None:
+            return ''
+        return self.statements.format_clause(tabs)
+
+
+
+
+
+def make_code(s,tabs):
+    lexinput = FunctionLex()
+    lexer = lexinput.build()
+    yacchandle = FunctionYacc(lexer,tabs)
+    parser = yacchandle.build()
+    parser.parse(s)
+    rets = yacchandle.format_code()
+    return rets
+
+def make_clause(prefix,s,tabs):
+    lexinput = FunctionLex()
+    lexer = lexinput.build()
+    yacchandle = ClauseYacc(lexer,prefix)
+    parser = yacchandle.build()
+    parser.parse(s)
+    rets = yacchandle.format_clause(tabs)
+    return rets
+
 def read_file(infile=None):
     fin = sys.stdin
     if infile is not None:
@@ -459,6 +651,20 @@ def read_file(infile=None):
         fin.close()
     fin = None
     return s
+
+def load_config(infile=None):
+    retobj = dict()
+    try:
+        fin = sys.stdin
+        if infile is not None:
+            fin = open(infile,'r')
+        retobj = json.load(fin)
+        retobj = Utf8Encode(retobj).get_val()
+    except:
+        logging.error('can not handle [%s] for json'%(infile))
+        retobj = dict()
+    return retobj
+
 
 
 def set_logging(args):
@@ -490,13 +696,88 @@ def lex_handler(args,parser):
 def yacc_handler(args,parser):
     set_logging(args)
     s = read_file(args.input)
-    lexinput = FunctionLex()
-    lexer = lexinput.build()
-    yacchandle = FunctionYacc(lexer,args.tabs)
-    parser = yacchandle.build()
-    parser.parse(s)
-    s = yacchandle.format_code()
-    sys.stdout.write('%s'%(s))
+    rets = make_code(s,args.tabs)
+    sys.stdout.write('%s'%(rets))
+    sys.exit(0)
+    return
+
+def clause_handler(args,parser):
+    set_logging(args)
+    s = read_file(args.input)
+    rets = make_clause(args.prefix,s,args.tabs)
+    sys.stdout.write('%s'%(rets))
+    sys.exit(0)
+    return
+
+def format_tabs(s,tabs=0):
+    rets = ' ' * tabs * 4
+    rets += s
+    rets += '\n'
+    return rets
+def isdict(v):
+    if v is not None and isinstance(v,dict):
+        return True
+    return False
+
+def haskey(v,k):
+    if not isdict(v):
+        return False
+    if k in v.keys():
+        return True
+    return False
+
+def islist(v):
+    if v is not None and (isinstance(v,list) or  isinstance(v,tuple)):
+        return True
+    return False
+
+def normalize_name(n):
+    retn = n
+    if not isinstance(n,str):
+        raise Exception('%s not string'%(n))
+    retn = retn.replace('-','_')
+    retn = retn.lower()
+    return retn
+
+def output_p(k,v,tabs):
+    rets = ''
+    logging.info('')
+    if haskey(v,'yacc'):
+        # this need to output
+        yv = v['yacc']
+        logging.info('')
+        if islist(yv):
+            logging.info('')
+            funcidx = 0
+            for ya in yv:
+                logging.info('')
+                if haskey(ya,'clause') and haskey(ya,'func') and haskey(v,'prefix'):
+                    logging.info('')
+                    prefix = normalize_name(v['prefix'])
+                    curfuncname = 'p_%s_%s_%s'%(normalize_name(k),prefix,funcidx)
+                    rets += format_tabs('def %s(self,p):'%(curfuncname),tabs)
+                    rets += make_clause(prefix,ya['clause'],(tabs+1))
+                    rets += make_code(ya['func'],(tabs+1))
+                funcidx += 1
+    return rets
+
+def yclass_handler(args,parser):
+    set_logging(args)
+    odict = load_config(args.input)
+    okeys = sorted(odict.keys())
+    outs = ''
+    outs += format_tabs('class %s(object):'%(args.classname),0)
+    outs += format_tabs('def __init__(self):',1)
+    outs += format_tabs('return',2)
+    outs += format_tabs('',2)
+    logging.info('okeys %s'%(repr(okeys)))
+    for k in okeys:
+        v = odict[k]
+        if isdict(v):
+            logging.info('get value (%s)'%(k))
+            outs += output_p(k,v,1)
+            outs += format_tabs('',1)
+    sys.stdout.write('%s'%(outs))
     sys.exit(0)
     return
 
@@ -507,10 +788,18 @@ def main():
         "verbose|v" : "+",
         "input|i" : null,
         "tabs|t" : 0,
+        "classname|c" : "ExtendedYacc",
+        "prefix|p" : "statements",
         "lex<lex_handler>" : {
             "$" : 0
         },
         "yacc<yacc_handler>" : {
+            "$" : 0
+        },
+        "clause<clause_handler>" : {
+            "$" : 0
+        },
+        "yclass<yclass_handler>" : {
             "$" : 0
         }
     }
