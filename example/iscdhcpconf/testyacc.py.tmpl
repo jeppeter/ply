@@ -89,17 +89,20 @@ class DhcpConfYacc(ConfigDhcpYacc):
         p[0].append_colone_text(p.slice[3].value,p.slice[3])
         return
 
-    def p_option_name(self,p):
-        ''' option_name : TEXT
-               | TEXT DOT TEXT
+    def p_option_name_0(self,p):
+        ''' option_name : spcial_identifier
+               | spcial_identifier DOT spcial_identifier
         '''
         if len(p) == 2:
-            p[0] = dhcpconf.OptionName(None,None,p.slice[1],p.slice[1])
-            p[0].set_name(p.slice[1].value)
+            p[0] = dhcpconf.OptionName(None,None,p[1],p[1])
+            p[0].set_name(p[1].value_format())
+            p[1] = None
         else:
-            p[0] = dhcpconf.OptionName(None,None,p.slice[1],p.slice[3])
-            value = '%s.%s'%(p.slice[1].value,p.slice[3].value)
+            p[0] = dhcpconf.OptionName(None,None,p[1],p[3])
+            value = '%s.%s'%(p[1].value_format(),p[3].value_format())
             p[0].set_name(value)
+            p[1] = None
+            p[3] = None
         return
 
     def p_error(self,p):
