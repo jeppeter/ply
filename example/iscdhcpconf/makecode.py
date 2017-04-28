@@ -293,6 +293,27 @@ def output_p(k,v,tabs):
                 funcidx += 1
     return rets
 
+def make_special_identifiers(odict,okeys,tabs):
+    s = ''
+
+    s += format_tabs('def p_special_identifiers_0(self,p):',tabs)
+    s += ' ' * (tabs+1) * 4
+    s += '\'\'\' special_identifiers : '
+    idx = 0
+    for k in okeys:
+        v = odict[k]
+        if isinstance(v,dict):
+            continue
+        if idx > 0:
+            s += format_tabs('  | %s'%(v),(tabs+1))
+        else:
+            s += '%s\n'%(v)
+        idx += 1
+    s += format_tabs('\'\'\'',tabs+1)
+    s += format_tabs('p[0] = dhcpconf.ConstData(p.slice[1].value,p.slice[1],p.slice[1])',(tabs+1))
+    s += format_tabs('return',(tabs+1))            
+    return s
+
 def yclass_handler(args,parser):
     set_logging(args)
     odict = load_config(args.input)
@@ -310,6 +331,8 @@ def yclass_handler(args,parser):
         if isdict(v):
             outs += output_p(k,v,1)
             outs += format_tabs('',1)
+    outs += make_special_identifiers(odict,okeys,1)
+
     ins = read_file(args.subnargs[0])
     if args.pattern is None:
         args.pattern = 'class %s(object):pass'%(args.classname)
