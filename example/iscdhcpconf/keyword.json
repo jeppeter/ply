@@ -229,7 +229,7 @@
     "host_declaration" : {
         "prefix" : "host_declaration",
         "yacc" :[{
-            "clause" : "dynamic_declaration;deleted_declaration;uid_statement;hardware_statement;fixed_address_declaration;host_group_declaration;statements;",
+            "clause" : "dynamic_declaration;deleted_declaration;uid_statement;host_identifier_declaration;hardware_statement;fixed_address_declaration;host_group_declaration;statements;",
             "func" : "p[0] = dhcpconf.HostDeclaration();p[0].append_child_and_set_pos(p[1]);p[1]=None;return;"
             }]
     },
@@ -252,6 +252,13 @@
         "yacc" : [{
             "clause" : "UID uid_data SEMI;",
             "func" : "bval = p[2].verify_uid_data();if not bval: ;{raise Exception('not valid uid [%s] %s'%(p[2].location(),p[2].value_format()));}p[0] = dhcpconf.UidStatement(None,None,p.slice[1],p.slice[3]);p[0].set_uid(p[2]);p[2] = None;return;"
+            }]
+    },
+    "host_identifier_declaration" : {
+        "prefix" : "host_identifier_declaration",
+        "yacc" : [{
+            "clause" : "HOST_IDENTIFIER OPTION option_name option_values SEMI;",
+            "func" : "p[0] = dhcpconf.HostIdentifierDeclaration(None,None,p.slice[1],p.slice[5]);p[0].set_key_value(p[3],p[4]);p[3] = None;p[4] = None;return;"
             }]
     },
     "hardware_statement" : {

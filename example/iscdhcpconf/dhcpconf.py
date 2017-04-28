@@ -1389,3 +1389,24 @@ class SubnetDeclaration(YaccDhcpObject):
 			typename = self.__class__.__name__
 		super(SubnetDeclaration,self).__init__(typename,children,startelm,endelm)
 		return
+
+class OptionBase(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(OptionBase,self).__init__(typename,children,startelm,endelm)
+		return
+
+	
+
+class OptionHandle(YaccDhcpObject):
+	clsmap = {
+		'deleted_declaration'
+	}
+	def __init__(self,typename=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(OptionHandle,self).__init__(typename,None,startelm,endelm)
+		return
+
+	def handle_option(self,clsname,)
