@@ -35,27 +35,6 @@ class DhcpConfYacc(ConfigDhcpYacc):
             s += self.statements.format_config()
         return s
 
-    def p_statements_empty(self,p):
-        ''' statements : empty
-        '''
-        p[0] = dhcpconf.Statements(None,None,p[1],p[1])
-        p[1] = None
-        if self.statements is not None:
-            self.statements = None
-        self.statements = p[0]
-        return
-
-    def p_statements_statement(self,p):
-        '''statements : statements statement
-        '''
-        p[1].append_child(p[2])
-        p[1].set_pos_by_children()
-        p[0] = p[1]
-        p[1] = None
-        if self.statements is not None:
-            self.statements = None
-        self.statements = p[0]
-        return
 
     def p_statement_multi(self,p):
         ''' statement :  option_statement

@@ -8,7 +8,7 @@
             "func" : "p[0] = dhcpconf.Statements(None,None,p[1],p[1]);p[1] = None;if self.statements is not None:;{self.statements = None;}self.statements = p[0];return;"
         },{
             "clause" : "statements statement",
-            "func" : "p[0]=p[1].append_child_and_set_pos(p[2]);p[1]=None;p[2]=None;if self.statements is not None:;{self.statements = None;}self.statements = p[0];return;"
+            "func" : "p[1].append_child(p[2]);p[1].set_pos_by_children();p[0] = p[1];p[1] = None;if self.statements is not None:;{self.statements = None;}self.statements = p[0];"
             }]
     },
     "statement" : {
@@ -36,7 +36,7 @@
         "prefix" : "domain_list",
         "yacc" : [{
             "clause" : "dns_name;ipaddr;domain_list COMMA dns_name;domain_list COMMA ipaddr;",
-            "func" : "ccs = \"\"\"\\n        \"\"\";ccc = '''\\n        ''' ;;{if len(p) == 2:;p[0] = dhcpconf.DomainList();p[0].append_child_and_set_pos(p[1]);}p[1] = None;{else:;p[0] = p[1].append_child_and_set_pos(p[3]);p[1] = None;}p[2] = None;return;"
+            "func" : "if len(p) == 2:;{p[0] = dhcpconf.DomainList();p[0].append_child_and_set_pos(p[1]);p[1] = None;}else:;{p[0] = p[1].append_child_and_set_pos(p[3]);p[1] = None;p[2] = None;}return;"
             }]
     },
     "dns_name" : {

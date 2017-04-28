@@ -16,6 +16,21 @@ class Location(object):
             self.endpos = endpos
         return
 
+    def set_startpos(self,startelm):
+    	if startelm is not None:
+    		self.startline = startelm.startline
+    		self.startpos = startelm.startpos
+    	return
+
+    def set_endpos(self,endelm):
+    	if endelm is not None:
+    		self.endline = endelm.endline
+    		self.endpos = endelm.endpos
+    	return
+
+    def location(self):
+    	return '[%s:%s-%s:%s]'%(self.startline,self.startpos,self.endline,self.endpos)
+
     def __format(self):
         s = '[%s:%s-%s:%s]'%(self.startline,self.startpos,self.endline,self.endpos)
         return s

@@ -24,6 +24,7 @@ import ply.yacc as yacc
 from funcgram import FunctionLex,make_code
 from clausegram import make_clause
 from pygram import PythonCodeLex,make_flat_code
+from pyclausegram import PyClauseLex,make_pyclause
 import location
 
 class Utf8Encode(object):
@@ -138,7 +139,22 @@ class debug_makecode_case(unittest.TestCase):
             self.assertEqual(insarr[idx],outsarr[idx])
         return
 
-
+    def pyclause_encode_test(self,instr,outstr,tabs=0):
+        outs = make_pyclause(instr,tabs)
+        outsarr = []
+        for l in re.split('\n',outs):
+            l = l.rstrip('\n\r')
+            outsarr.append(l)
+        valsarr = []
+        for l in re.split('\n',outstr):
+            l = l.rstrip('\r\n')
+            valsarr.append(l)
+        self.assertEqual(len(outsarr),len(valsarr))
+        idx = 0
+        while idx < len(valsarr):
+            self.assertEqual(outsarr[idx],valsarr[idx])
+            idx += 1
+        return
 
     def test_A001(self):
         instr='''        if len(p) == 2:
@@ -151,6 +167,15 @@ class debug_makecode_case(unittest.TestCase):
             p[2] = None
         return'''
         self.py_encode_test(instr,2,4)
+        return
+
+    def test_B001(self):
+        instr=''' statement :  option_statement
+                  | execute_statement
+                  | subnet_statement
+                  | host_statement
+        '''
+        self.pyclause_encode_test(instr,' option_statement; execute_statement; subnet_statement; host_statement;')
         return
 
 
@@ -350,6 +375,28 @@ def pyyacc_handler(args,parser):
     sys.exit(0)
     return
 
+def pyclauselex_handler(args,parser):
+    set_logging(args)
+    s = read_file(args.input)
+    lexinput = PyClauseLex()
+    lexer = lexinput.build()
+    lexer.input(s)
+    while True:
+        tok = lexer.token()
+        if tok is None:
+            break
+        sys.stdout.write('(%s,%r,%d,%d)\n' % (tok.type, tok.value, tok.startline, tok.startpos))   
+    sys.exit(0)
+    return
+
+def pyclauseyacc_handler(args,parser):
+    set_logging(args)
+    s = read_file(args.input)
+    rets = make_pyclause(s,args.tabs)
+    write_file(rets,args.output)
+    sys.exit(0)
+    return
+
 
 def test_handler(args,parser):
     set_logging(args)
@@ -390,6 +437,12 @@ def main():
             "$" : 0
         },
         "pyyacc<pyyacc_handler>" : {
+            "$" : 0
+        },
+        "pyclauselex<pyclauselex_handler>" : {
+            "$" : 0
+        },
+        "pyclauseyacc<pyclauseyacc_handler>" : {
             "$" : 0
         },
         "test<test_handler>" : {
