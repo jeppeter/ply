@@ -6,6 +6,8 @@ import importlib
 import extargsparse
 import logging
 import json
+import unittest
+import re
 
 def _insert_path(path,*args):
     _curdir = os.path.join(path,*args)
@@ -19,6 +21,8 @@ _insert_path(os.path.dirname(os.path.realpath(__file__)),'..','..')
 
 import ply.lex as lex
 import ply.yacc as yacc
+from funcgram import FunctionLex,make_code
+from clausegram import make_clause
 from pygram import PythonCodeLex,make_flat_code
 import location
 
@@ -62,559 +66,6 @@ class Utf8Encode(object):
         return self.__val
 
 
-class FunctionLex(object):
-    tokens = ['SEMI','LBRACE','RBRACE','COMMENT','TEXT']
-    t_ignore = ''
-    t_comment_ignore = ''
-    states = (
-        ('comment','exclusive'),
-    )
-    def __init__(self):
-        self.lineno = 1
-        self.column = 1
-        self.linepos = 0
-        self.braces = 0
-        self.doublequoted = 0
-        self.commented = 0
-        return
-
-    @lex.TOKEN(r'\#')
-    def t_COMMENT(self,p):
-        self.commented = 1
-        p.lexer.push_state('comment')
-        return None
-
-    def t_comment_error(self,p):
-        raise Exception('comment error')
-        return
-
-    @lex.TOKEN('.')
-    def t_comment_TEXT(self,p):
-        curpos = p.lexer.lexpos
-        maxpos = len(p.lexer.lexdata)
-        while curpos < maxpos:
-            curch = p.lexer.lexdata[curpos]
-            if curch == '\n':
-                curpos += 1
-                p.lexer.linepos = curpos
-                break
-            elif curch == ';':
-                curpos += 1
-                p.type = 'SEMI'
-                p.value = ';'
-                p.startline = p.lexer.lineno
-                p.startpos = (curpos - p.lexer.linepos - len(p.value))
-                p.endline = p.lexer.lineno
-                p.endpos = (curpos - p.lexer.linepos)
-                p.lexer.pop_state()
-                p.lexer.lexpos = curpos
-                return p
-            curpos += 1
-        self.comment = 0
-        p.lexer.pop_state()
-        p.lexer.lexpos = curpos
-        return None
-
-
-    def pass_double_quote(self,data,curpos,endpos):
-        # included first 
-        passed = 0
-        slashed = False
-        while curpos < endpos:
-            curch = data[curpos]
-            #logging.info('curch [%s]'%(curch))
-            if slashed :
-                slashed = False
-            elif curch == '"':
-                passed += 1
-                break
-            elif curch == '\\':
-                slashed = True
-            passed += 1
-            curpos += 1
-        #logging.info('passed %s'%(passed))
-        return passed
-
-    def pass_single_quote(self,data,curpos,endpos):
-        # included first 
-        passed = 0
-        slashed = False
-        while curpos < endpos:
-            curch = data[curpos]
-            #logging.info('curch [%s]'%(curch))
-            if slashed :
-                slashed = False
-            elif curch == '\'':
-                passed += 1
-                break
-            elif curch == '\\':
-                slashed = True
-            passed += 1
-            curpos += 1
-        #logging.info('passed %s'%(passed))
-        return passed
-
-    def set_text_value(self,p,passvalue,startline,endline,startpos,endpos,curpos):
-        p.lexer.lexpos = curpos
-        p.startline = startline
-        p.endline = endline
-        p.startpos = startpos
-        p.endpos = endpos
-        p.type = 'TEXT'
-        p.value = passvalue
-        return p
-
-
-    @lex.TOKEN(r'.')
-    def t_TEXT(self,p):
-        startpos = p.lexer.lexpos - len(p.value)
-        startline = p.lexer.lineno
-        curpos = startpos
-        endidx = len(p.lexer.lexdata)
-        doublequoted = False
-        singlequoted = False
-        passvalue = ''
-        startvalue = False
-        endline = startline
-        startpos = p.lexer.lineno - p.lexer.linepos - len(p.value)
-        endpos = startpos
-        while curpos < endidx:
-            endpos = curpos - p.lexer.linepos
-            curch = p.lexer.lexdata[curpos]
-            #logging.info('[%d]curch %s'%(curpos,curch))
-            if not startvalue:
-                curpos += 1
-                if curch == ' ' or curch =='\t':
-                    pass
-                elif curch == ';' or curch == '{' or curch == '}':
-                    p.lexer.lexpos = curpos
-                        #logging.info('curpos %s'%(curpos))
-                    if curch == ';':
-                        p.value = ';'
-                        p.type = 'SEMI'
-                    elif curch == '{':
-                        p.value = '{'
-                        p.type = 'LBRACE'
-                    elif curch == '}':
-                        p.value = '}'
-                        p.type = 'RBRACE'
-                    p.startline = p.lexer.lineno
-                    p.endline = p.lexer.lineno
-                    p.startpos = p.lexer.lexpos - p.lexer.linepos - len(p.value)
-                    p.endpos = p.lexer.lexpos - p.lexer.linepos
-                    #logging.info('p.lexer.lexpos [%s]'%(p.lexer.lexpos))
-                    return p
-                elif curch == '\#':
-                    p.lexer.lexpos = curpos
-                    p.lexer.push_state('comment')
-                    return None
-                else:
-                    startvalue = True
-                    passvalue = curch
-            elif curch == '\'':
-                curpos += 1
-                passed = self.pass_single_quote(p.lexer.lexdata,curpos,endidx)
-                passvalue += '\''
-                passvalue += p.lexer.lexdata[curpos:(curpos+passed)]
-                curpos += passed
-                #logging.info('curpos %s [%s]'%(curpos,p.lexer.lexdata[curpos:]))
-            elif curch == '"':
-                curpos += 1
-                passed = self.pass_double_quote(p.lexer.lexdata,curpos,endidx)
-                passvalue += '"'
-                passvalue += p.lexer.lexdata[curpos:(curpos + passed)]
-                curpos += passed
-            elif curch == '\n' :
-                p.lexer.lineno += 1
-                p.lexer.linepos = curpos
-                curpos += 1
-                return self.set_text_value(p,passvalue,startline,startpos,endline,endpos,curpos)
-            elif curch == '\r':
-                curpos += 1
-            elif startvalue and  (curch == ';' or curch == '{' or curch == '}' or curch == '\#'):
-                # we look for prev char
-                #logging.info('curpos %s [%s]'%(curpos,curch))
-                break
-            else:
-                passvalue += curch
-                curpos += 1
-        p.lexer.lexpos = curpos
-        p.type = 'TEXT'
-        p.value = passvalue
-        p.startline = startline
-        p.endline = p.lexer.lineno
-        p.startpos = startpos - p.lexer.linepos
-        p.endpos = curpos - p.lexer.linepos
-        return p
-
-    def t_error(self,p):
-        self.column = p.lexpos = (p.lexer.lexpos - p.lexer.linepos )
-        raise Exception('at [%s:%s] error [%s]'%(self.lineno,self.column,p.value))
-        return
-
-    def build(self,**kwargs):
-        lexer = lex.lex(module=self,**kwargs)
-        lexer.linepos = 0
-        return lexer
-
-
-
-
-
-
-class FunctionCode(object):
-    def __init__(self,s,startpos,endpos):
-        self.code= s
-        self.startline = startpos.startline
-        self.startpos = startpos.startpos
-        self.endline = endpos.endline
-        self.endpos = endpos.endpos
-        return
-
-    def location(self):
-        s = '[%s:%s-%s:%s]'%(self.startline,self.startpos,self.endline,self.endpos)
-        return s
-
-    def format_self(self):
-        s = ''
-        s += '%s[%s]%s('%(self.location(),id(self),self.__class__.__name__)
-        s += '%s'%(self.code)
-        s += ')'
-        return s
-
-    def __str__(self):
-        return self.format_self()
-
-    def __repr__(self):
-        return self.format_self()
-
-class FunctionCodes(object):
-    def __init__(self,tabs,startpos,endpos):
-        self.curtab = tabs
-        self.codes = []
-        self.codetabs = []
-        self.precodes = []
-        self.precodetabs = []
-        self.startline = startpos.startline
-        self.startpos = startpos.startpos
-        self.endline = endpos.endline
-        self.endpos = endpos.endpos
-        return
-
-    def set_endpos(self,endpos):
-        self.endline = endpos.endline
-        self.endpos = endpos.endpos
-        return
-
-    def set_startpos(self,startpos):
-        self.startline = startpos.startline
-        self.startpos = startpos.startpos
-        return
-
-    def append_code(self,s):
-        self.codes.append(s)
-        self.codetabs.append(self.curtab)
-        return
-
-    def extend_codes(self,other):
-        self.codes.extend(other.codes)
-        self.codetabs.extend(other.codetabs)
-        return
-
-
-    def brace_code(self):
-        idx = 0
-        while idx < len(self.codetabs):
-            self.codetabs[idx] += 1
-            idx += 1
-        return
-
-    def __format_code(self,s,tabs=0):
-        rets = ' ' * tabs * 4
-        rets += s
-        rets += '\n'
-        return rets
-
-    def format_code(self):
-        idx = 0
-        s = ''
-        assert(len(self.codes) == len(self.codetabs))
-        while idx < len(self.codes):
-            #logging.info('tabs [%s]'%(self.codetabs[idx]))
-            s += self.__format_code(self.codes[idx],self.codetabs[idx])
-            idx += 1
-        return s
-
-    def location(self):
-        s = '[%s:%s-%s:%s]'%(self.startline,self.startpos,self.endline,self.endpos)
-        return s
-
-    def format_self(self):
-        s = ''
-        s += '%s[%s]%s('%(self.location(),id(self),self.__class__.__name__)
-        idx = 0
-        while idx < len(self.codes):
-            if idx > 0:
-                s += ','
-            s += '[%d][%s]'%(self.codetabs[idx],repr(self.codes[idx]))
-            idx += 1
-        s += ')'
-        return s
-
-    def __str__(self):
-        return self.format_self()
-
-    def __repr__(self):
-        return self.format_self()
-
-
-class FunctionYacc(object):
-    tokens = FunctionLex.tokens
-    def __init__(self,lexer=None,tabs=0):
-        self.lexer = lexer
-        self.statements = None
-        self.tabs = tabs
-        return
-
-    def set_statements(self,p):
-        self.statements = p
-        return
-
-
-
-    def p_statements_brace(self,p):
-        ''' statements : statements lb_statements
-        '''
-        p[0] = p[1]
-        logging.info('p1 [%s] p0 [%s] p2 [%s]'%(repr(p[1]),repr(p[0]),repr(p[2])))
-        p[0].extend_codes(p[2])
-        p[0].set_endpos(p[2])
-        logging.info('extend_codes [%s] p2 [%s]'%(repr(p[0]),repr(p[2])))
-        p[1] = None
-        p[2] = None
-        self.set_statements(p[0])
-        return
-
-    def p_statements_one(self,p):
-        ''' statements : statements statement
-        '''
-        p[1].append_code(p[2].code)
-        p[1].set_endpos(p[2])
-        p[0] = p[1]
-        logging.info('[%s]append [%s]'%(p[0],p[2]))
-        p[1] = None
-        p[2] = None
-        self.set_statements(p[0])
-        return
-
-
-
-    def p_statements_empty(self,p):
-        ''' statements : 
-        '''
-        startpos = location.Location()
-        startpos.startline = p.lexer.lineno
-        startpos.startpos = (p.lexer.lexpos-p.lexer.linepos)
-        startpos.endline = startpos.startline
-        startpos.endpos = startpos.startpos
-        p[0] = FunctionCodes(self.tabs,startpos,startpos)
-        startpos = None
-        self.set_statements(p[0])
-        logging.info('p0 [%s]'%(repr(p[0])))
-        return
-
-    def p_lb_statements(self,p):
-        ''' lb_statements : LBRACE statements RBRACE
-        '''
-        p[0] = p[2]
-        p[0].brace_code()
-        p[0].set_startpos(p.slice[1])
-        p[0].set_endpos(p.slice[3])
-        logging.info('BRACE [%s]'%(repr(p[0])))
-        p[2] = None
-        return
-
-
-    def p_statement_emtpy(self,p):
-        ''' statement : SEMI
-        '''
-        p[0] = FunctionCode('')
-        logging.info('code [%s]'%(p[0].code))
-        return
-
-    def p_statement_text(self,p):
-        ''' statement : TEXT SEMI
-        '''
-        p[0] = FunctionCode(p.slice[1].value,p.slice[1],p.slice[2])
-        logging.info('code [%s]'%(p[0]))
-        return
-
-    def p_error(self,p):
-        raise Exception('can not handle %s'%(repr(p)))
-
-    def build(self,**kwargs):
-        return yacc.yacc(module=self,start='statements',**kwargs)
-
-
-    def format_code(self):
-        if self.statements is None:
-            return ''
-        return self.statements.format_code()
-
-
-class Clause(object):
-    def __init__(self,s,startpos,endpos):
-        self.clause = s
-        self.startline = startpos.startline
-        self.startpos = startpos.startpos
-        self.endline = endpos.endline
-        self.endpos = endpos.endpos
-        return
-
-
-class Clauses(object):
-    def __init__(self,prefix,startpos=None,endpos=None):
-        self.prefix = prefix
-        self.clauses = []
-        self.startline = 1
-        self.startpos = 1
-        self.endline = 1
-        self.endpos = 1
-        if startpos is not None:
-            self.startline = startpos.startline
-            self.startpos = startpos.startpos
-        if endpos is not None:
-            self.endline = endpos.endline
-            self.endpos = endpos.endpos
-        return
-
-    def set_startpos(self,startpos=None):
-        if startpos is not None:
-            self.startline = startpos.startline
-            self.startpos = startpos.startpos
-        return
-
-    def set_endpos(self,endpos=None):
-        if endpos is not None:
-            self.endline = endpos.endline
-            self.endpos = endpos.endpos
-        return
-
-    def append_clause(self,cls):
-        self.clauses.append(cls.clause)
-        return
-
-    def __format_clause(self,s,tabs=0):
-        rets = ' ' * tabs * 4
-        rets += s
-        rets += '\n'
-        return rets
-
-    def format_clause(self,tabs=0):
-        idx = 0
-        s = ''
-        while idx < len(self.clauses):
-            #logging.info('tabs [%s]'%(self.codetabs[idx]))
-            curs = ''
-            if idx == 0:
-                curs += '\'\'\' %s : %s'%(self.prefix,self.clauses[idx])
-            else:
-                curs += '  | %s'%(self.clauses[idx])
-            s += self.__format_clause(curs,tabs)
-            idx += 1
-        s += self.__format_clause('\'\'\'',tabs)
-        return s
-
-    def location(self):
-        s = '[%s:%s-%s:%s]'%(self.startline,self.startpos,self.endline,self.endpos)
-        return s
-
-    def format_self(self):
-        s = ''
-        s += '%s[%s]%s('%(self.location(),id(self),self.__class__.__name__)
-        s += '\n'
-        s += self.format_clause(1)
-        s += ')'
-        return s
-
-    def __str__(self):
-        return self.format_self()
-
-    def __repr__(self):
-        return self.format_self()
-
-class ClauseYacc(object):
-    tokens = FunctionLex.tokens
-    def __init__(self,lexer,prefix):
-        self.prefix = prefix
-        self.lexer = lexer
-        self.statements = None
-        return
-
-    def set_statements(self,p):
-        self.statements = p
-        return
-
-
-    def p_statements_state(self,p):
-        ''' statements : statement
-                    | statements statement 
-        '''
-        if len(p) == 2:
-            p[0] = Clauses(self.prefix)
-            p[0].append_clause(p[1])
-            p[0].set_endpos(p[1])
-            p[0].set_startpos(p[1])
-            p[1] = None
-        else:
-            p[0] = p[1]
-            p[0].append_clause(p[2])
-            p[0].set_endpos(p[2])
-            p[1] = None
-            p[2] = None
-        self.set_statements(p[0])
-        return
-
-    def p_statement(self,p):
-        ''' statement : TEXT SEMI
-        '''
-        p[0] = Clause(p.slice[1].value,p.slice[1],p.slice[2])
-        return
-
-    def p_error(self,p):
-        raise Exception('can not handle %s'%(repr(p)))
-
-
-    def build(self,**kwargs):
-        return yacc.yacc(module=self,start='statements',**kwargs)
-
-
-    def format_clause(self,tabs):
-        if self.statements is None:
-            return ''
-        return self.statements.format_clause(tabs)
-
-
-
-
-
-def make_code(s,tabs):
-    lexinput = FunctionLex()
-    lexer = lexinput.build()
-    yacchandle = FunctionYacc(lexer,tabs)
-    parser = yacchandle.build(tabmodule='codeparse')
-    parser.parse(s)
-    rets = yacchandle.format_code()
-    return rets
-
-def make_clause(prefix,s,tabs):
-    lexinput = FunctionLex()
-    lexer = lexinput.build()
-    yacchandle = ClauseYacc(lexer,prefix)
-    parser = yacchandle.build(tabmodule='clauseparse')
-    parser.parse(s)
-    rets = yacchandle.format_clause(tabs)
-    return rets
 
 def read_file(infile=None):
     fin = sys.stdin
@@ -650,6 +101,58 @@ def write_file(s,outfile=None):
         fout.close()
     fout = None
     return
+
+class debug_makecode_case(unittest.TestCase):
+    def setUp(self):
+        return
+
+    def tearDown(self):
+        return
+
+    @classmethod
+    def setupClass(cls):
+        return
+
+    @classmethod
+    def tearDownClass(cls):
+        return
+
+    def py_encode_test(self,instr,tabs=0,deftabwidth=4):
+        insarr = []
+        for l in re.split('\n',instr):
+            l = l.rstrip('\r\n')
+            if len(l) == 0:
+                continue
+            insarr.append(l.rstrip('\r\n'))
+        outc = make_flat_code(instr,deftabwidth,False)
+        outs = make_code(outc,tabs)
+        outsarr = []
+        for l in re.split('\n',outs):
+            l = l.rstrip('\r\n')
+            if len(l) == 0:
+                continue
+            outsarr.append(l)
+
+        self.assertEqual(len(insarr),len(outsarr))
+        for idx in range(len(outsarr)):
+            self.assertEqual(insarr[idx],outsarr[idx])
+        return
+
+
+
+    def test_A001(self):
+        instr='''        if len(p) == 2:
+            p[0] = dhcpconf.DomainList()
+            p[0].append_child_and_set_pos(p[1])
+            p[1] = None
+        else:
+            p[0] = p[1].append_child_and_set_pos(p[3])
+            p[1] = None
+            p[2] = None
+        return'''
+        self.py_encode_test(instr,2,4)
+        return
+
 
 
 def load_config(infile=None):
@@ -714,6 +217,7 @@ def format_tabs(s,tabs=0):
     rets += s
     rets += '\n'
     return rets
+
 def isdict(v):
     if v is not None and isinstance(v,dict):
         return True
@@ -841,11 +345,18 @@ def pylex_handler(args,parser):
 def pyyacc_handler(args,parser):
     set_logging(args)
     s = read_file(args.input)
-    rets = make_flat_code(s,args.tabwidth)
+    rets = make_flat_code(s,args.tabwidth,args.usequoted)
     write_file(rets,args.output)
     sys.exit(0)
     return
 
+
+def test_handler(args,parser):
+    set_logging(args)
+    sys.argv[1:]=args.subnargs
+    unittest.main(verbosity=args.verbose,failfast=args.failfast)
+    sys.exit(0)
+    return
 
 def main():
     command='''
@@ -858,6 +369,8 @@ def main():
         "classname|c" : "ExtendedYacc",
         "prefix|p" : "statements",
         "pattern|P"  : null,
+        "usequoted|u" : true,
+        "failfast|f" : true,
         "lex<lex_handler>" : {
             "$" : 0
         },
@@ -878,6 +391,9 @@ def main():
         },
         "pyyacc<pyyacc_handler>" : {
             "$" : 0
+        },
+        "test<test_handler>" : {
+            "$" : "*"
         }
     }
     '''

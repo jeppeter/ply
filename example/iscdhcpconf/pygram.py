@@ -82,6 +82,7 @@ class PythonCodeLex(object):
         p.startpos = curpos - p.lexer.linepos
         p.endline = p.lexer.lineno
         p.endpos = curpos - p.lexer.linepos
+        p.lastspace = self.lastspace
         return p
 
     @lex.TOKEN(r'.')
@@ -288,6 +289,7 @@ class PythonCodeLex(object):
         p.startline = startline
         p.startpos = startpos
         p.endline = p.lexer.lineno
+        p.lastspace = self.lastspace
         if curpos < maxpos:
             p.endpos = (curpos - 1 - p.lexer.linepos)
         else:
@@ -369,7 +371,7 @@ class PythonCodes(object):
                 rets += c
         return rets
 
-    def format_code(self):
+    def format_code(self,usequoted=True):
         s = ''
         assert(len(self.codes) == len(self.spaces))
         idx = 0
@@ -380,8 +382,9 @@ class PythonCodes(object):
                 beginspace = self.spaces[idx]
                 lastspace = self.spaces[idx]
             curspace = self.spaces[idx]
+            origspace = curspace
             if curspace < beginspace:
-                raise Exception('can not handle unindent space[%d] < [%d]'%(curspace,beginspace))
+                raise Exception('[%d]can not handle unindent space[%d] < [%d]'%(idx,curspace,beginspace))
             if curspace > lastspace:
                 while curspace > lastspace:
                     s += '{'
@@ -390,10 +393,18 @@ class PythonCodes(object):
                 while curspace < lastspace:
                     s += '}'
                     curspace += self.deftabs
-            s += self.quoted_string(self.codes[idx])
+            if usequoted:
+                s += self.quoted_string(self.codes[idx])
+            else:
+                s += self.codes[idx]
             s += ';'
             lastspace = self.spaces[idx]
             idx += 1
+            if idx == len(self.codes) and origspace > beginspace:
+                logging.info('curspace[%d] beginspace[%d]'%(origspace,beginspace))
+                while origspace > beginspace:
+                    s += '}'
+                    origspace -= self.deftabs
         return s
 
 
@@ -422,7 +433,7 @@ class PythonCodeYacc(object):
         ''' statement : TEXT
         '''
         p[0] = PythonCode(p.slice[1],p.slice[1])
-        p[0].set_code(p.slice[1].value,p.slice[1].lexer.lastspace)
+        p[0].set_code(p.slice[1].value,p.slice[1].lastspace)
         return
 
     def p_statements_empty(self,p):
@@ -446,17 +457,17 @@ class PythonCodeYacc(object):
     def build(self,**kwargs):
         return yacc.yacc(module=self,start='statements',**kwargs)
 
-    def format_code(self):
+    def format_code(self,usequoted=True):
         if self.statements is not None:
-            return self.statements.format_code()
+            return self.statements.format_code(usequoted)
         return ''
 
 
-def make_flat_code(s,tabwidth=4):
+def make_flat_code(s,tabwidth=4,usequoted=True):
     lexinput = PythonCodeLex()
     lexer = lexinput.build()
     yacchandle = PythonCodeYacc(tabwidth)
     parser = yacchandle.build(tabmodule='pycode')
     parser.parse(s)
-    rets = yacchandle.format_code()
+    rets = yacchandle.format_code(usequoted)
     return rets
