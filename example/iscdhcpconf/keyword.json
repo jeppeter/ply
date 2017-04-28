@@ -4,80 +4,80 @@
     "statements" : {
         "prefix" : "statements",
         "yacc" : [{
-            "clause" : "empty",
+            "clause" : "empty;",
             "func" : "p[0] = dhcpconf.Statements(None,None,p[1],p[1]);p[1] = None;if self.statements is not None:;{self.statements = None;}self.statements = p[0];return;"
         },{
-            "clause" : "statements statement",
+            "clause" : "statements statement;",
             "func" : "p[1].append_child(p[2]);p[1].set_pos_by_children();p[0] = p[1];p[1] = None;if self.statements is not None:;{self.statements = None;}self.statements = p[0];"
             }]
     },
     "statement" : {
         "prefix" : "statement",
         "yacc" : [{
-            "clause" : "option_statement;execute_statement;subnet_statement;host_statement;",
-            "func" : "p[0]=dhcpconf.Statement();p[0].append_child_and_set_pos(p[1]);p[1]=None;return;"
+            "clause" : " option_statement; execute_statement; subnet_statement; host_statement;",
+            "func" : "children = [];children.append(p[1]);p[0] = dhcpconf.Statement(None,children,p[1],p[1]);p[1] = None;"
             }]
     },
     "empty" : {
         "prefix" : "empty",
         "yacc" : [{
             "clause" : ";",
-            "func" : "startpos = dhcpconf.Location(p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos),p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos));p[0] = dhcpconf.YaccDhcpObject('Empty',None,startpos,startpos);"
+            "func" : "startpos = dhcpconf.Location(p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos),p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos));p[0] = dhcpconf.YaccDhcpObject('Empty',None,startpos,startpos);return;"
             }]
     },
     "data_expr_op" : {
         "prefix" : "data_expr_op",
         "yacc" : [{
-            "clause" : "NUMBER;TEXT;",
+            "clause" : " NUMBER; TEXT;",
             "func" : "p[0] = dhcpconf.ExprOp();constdata = dhcpconf.ConstData(p.slice[1].value,p.slice[1],p.slice[1]);p[0].append_child_and_set_pos(constdata);constdata = None;return;"
             }]
     },
     "domain_list" : {
         "prefix" : "domain_list",
         "yacc" : [{
-            "clause" : "dns_name;ipaddr;domain_list COMMA dns_name;domain_list COMMA ipaddr;",
+            "clause" : " dns_name; ipaddr; domain_list COMMA dns_name; domain_list COMMA ipaddr;",
             "func" : "if len(p) == 2:;{p[0] = dhcpconf.DomainList();p[0].append_child_and_set_pos(p[1]);p[1] = None;}else:;{p[0] = p[1].append_child_and_set_pos(p[3]);p[1] = None;p[2] = None;}return;"
             }]
     },
     "dns_name" : {
         "prefix" : "dns_name",
         "yacc" : [{
-            "clause" : "dns_name DOT TEXT;dns_name DOT NUMBER;",
+            "clause" : " dns_name DOT TEXT; dns_name DOT NUMBER;",
             "func" : "p[0] = p[1];p[0].append_dot_name(p.slice[3].value,p.slice[3]);p[1] = None;return;"
             },{
-            "clause" : "TEXT ;NUMBER;",
+            "clause" : " TEXT; NUMBER;",
             "func" : "p[0] = dhcpconf.DnsName(None,None,p.slice[1],p.slice[1]);p[0].start_dnsname(p.slice[1].value);return;"
             }]
     },
     "ipaddr" : {
         "prefix" : "ipaddr",
         "yacc" : [{
-            "clause" : "ipv4_addr;ipv6_addr;",
+            "clause" : " ipv4_addr; ipv6_addr;",
             "func" : "p[1].check_valid_address();p[0] = p[1];p[1] = None;return;"
         }]
     },
     "ipv4_addr" : {
         "prefix" : "ipv4_addr",
         "yacc" : [{
-            "clause" : "NUMBER DOT NUMBER DOT NUMBER DOT NUMBER;",
+            "clause" : " NUMBER DOT NUMBER DOT NUMBER DOT NUMBER;",
             "func" : "p[0] = dhcpconf.IpAddress(None,None,p.slice[1],p.slice[7]);value = '';for i in range(4):;{if len(value) > 0:;{value += '.';}value += '%s'%(p.slice[2*i+1].value);}p[0].set_ipv4_address(value);return;"
             }]
     },
     "ipv6_addr" : {
         "prefix" : "ipv6_addr",
         "yacc" :[{
-            "clause" : "ipv6_addr COLON TEXT;ipv6_addr COLON NUMBER;",
-            "func" : "p[0] = p[1];p[1] = None;p[0].append_ipv6(p.slice[3].value,p.slice[3]);return;"
+            "clause" : " ipv6_addr COLON TEXT; ipv6_addr COLON NUMBER;",
+            "func" : "if len(p.slice[3].value) < 1 or len(p.slice[3].value) > 4:;{raise Exception('can not parse [%s:%s-%s:%s] %s'%(p.slice[3].startline,;{p.slice[3].startpos,p.slice[3].endline,p.slice[3].endpos,p.slice[3].value));}}p[0] = p[1];p[1] = None;p[0].append_ipv6(p.slice[3].value,p.slice[3]);return;"
             },{
-                "clause" : "ipv6_addr COLON;",
+                "clause" : " ipv6_addr COLON;",
                 "func" : "p[0] = p[1];p[0].append_ipv6_colon(p.slice[2]);p[1] = None;return;"
             },{
-                "clause" : "TEXT ;NUMBER;",
+                "clause" : " TEXT; NUMBER;",
                 "func" : "p[0] = dhcpconf.IpAddress();p[0].start_ipv6_address(p.slice[1].value,p.slice[1],p.slice[1]);return;"
             }]
         },
     "option_default_lease_time" : {
-        "prefix" : "option_statement",
+        "prefix" : "option_default_lease_time",
         "yacc" : [{
                 "clause" : "DEFAULT_LEASE_TIME NUMBER SEMI;",
                 "func" : "p[0] = dhcpconf.DefaultLeaseTime(None,None,p.slice[1],p.slice[3]);number = dhcpconf.ConstData(p.slice[2].value,p.slice[2],p.slice[2]);p[0].append_child(number);number=None;return ;"
@@ -94,7 +94,7 @@
             }]
     },
     "option_ddns_update_style" : {
-        "prefix" : "option_statement",
+        "prefix" : "option_ddns_update_style",
         "yacc" : [{
                 "clause" : "DDNS_UPDATE_STYLE NONE SEMI;DDNS_UPDATE_STYLE AD_HOC SEMI;DDNS_UPDATE_STYLE INTERIM SEMI;",
                 "func" : "p[0] = dhcpconf.DDnsUpdateStyle(None,None,p.slice[1],p.slice[3]);typecls = dhcpconf.ConstData(p.slice[2].value,p.slice[2],p.slice[2]);p[0].append_child(typecls);return;"
@@ -112,7 +112,7 @@
         ]
     },
     "option_filename" : {
-        "prefix" : "option_statement",
+        "prefix" : "option_filename",
         "yacc" : [{
             "clause" : "FILENAME  TEXT SEMI;",
             "func" : "p[0]=dhcpconf.OptionFileName(None,None,p.slice[1],p.slice[3]);filename=dhcpconf.ConstData(p.slice[2].value,p.slice[2],p.slice[2]);p[0].append_child(filename);filename=None;return;"
@@ -122,7 +122,7 @@
             }]
     },
     "option_next_server" : {
-        "prefix" : "option_statement",
+        "prefix" : "option_next_server",
         "yacc" : [{
             "clause" : "NEXT_SERVER ipv4_addr SEMI;NEXT_SERVER dns_name SEMI;",
             "func" : "p[0]=dhcpconf.OptionNextServer(None,None,p.slice[1],p.slice[3]);p[0].append_child(p[2]);p[2]=None;return;"
@@ -143,7 +143,7 @@
         }]
     },
     "option_domain_name" : {
-        "prefix" : "option_statement",
+        "prefix" : "option_domain_name",
         "yacc" : [{
             "clause" : "OPTION DOMAIN_NAME data_expr_op SEMI;",
             "func" : "p[0] = dhcpconf.DomainName(None,None,p.slice[1],p.slice[4]);p[0].append_child(p[3]);p[3] = None;return;"
@@ -153,13 +153,13 @@
         }]
     },
     "option_domain_name_servers" : {
-        "prefix" : "option_statement",
+        "prefix" : "option_domain_name_servers",
         "yacc" : [{
             "clause":"OPTION DOMAIN_NAME_SERVERS domain_list SEMI;",
             "func" : "p[0]=dhcpconf.DomainNameServers(None,None,p.slice[1],p.slice[4]);p[0].extend_children(p[3].children);p[3]=None;return;"}]
     },
     "option_log_servers" : {
-        "prefix" : "option_statement",
+        "prefix" : "option_log_servers",
         "yacc" : [{
             "clause" : "OPTION LOG_SERVERS domain_list SEMI;",
             "func" : "p[0]=dhcpconf.LogServers(None,None,p.slice[1],p.slice[4]);p[0].extend_children(p[3].children);p[3]=None;return;"}]
@@ -185,7 +185,7 @@
             }]
     },
     "option_max_lease_time" : {
-        "prefix" : "option_statement",
+        "prefix" : "option_max_lease_time",
         "yacc" : [{
                 "clause" : "MAX_LEASE_TIME NUMBER SEMI;",
                 "func" : "p[0]=dhcpconf.MaxLeaseTime(None,None,p.slice[1],p.slice[3]);constdata = dhcpconf.ConstData(p.slice[2].value,p.slice[2],p.slice[2]);p[0].append_child(constdata);constdata=None;return;"
@@ -195,7 +195,7 @@
             }]
     },
     "option_log_facility" : {
-        "prefix" : "option_statement",
+        "prefix" : "option_log_facility",
         "yacc" : [{
             "clause" : "LOG_FACILITY syslog_values SEMI;",
             "func" : "p[0]=dhcpconf.LogFacility(None,None,p.slice[1],p.slice[3]);p[0].append_child(p[2]);p[2]=None;return;"
@@ -212,24 +212,24 @@
     "host_statement" : {
         "prefix" : "host_statement",
         "yacc" : [{
-            "clause" : "HOST host_name LBRACE host_declarations RBRACE",
+            "clause" : "HOST host_name LBRACE host_declarations RBRACE;",
             "func" : "children = [];children.append(p[4]);p[0] = dhcpconf.HostStatement(None,children,p.slice[1],p.slice[5]);p[0].set_hostname(p[2]);p[2] = None;p[4] = None;return;"
             }]
     },
     "host_declarations" : {
         "prefix" : "host_declarations",
         "yacc" : [{
-            "clause" : "empty",
+            "clause" : "empty;",
             "func" : "p[0] = dhcpconf.HostDeclarations();p[0].append_child_and_set_pos(p[1]);p[1]=None;return;"
             },{
-                "clause" : "host_declarations host_declaration",
+                "clause" : "host_declarations host_declaration;",
                 "func" : "p[0]=p[1].append_child_and_set_pos(p[2]);p[1]=None;p[2]=None;return;"
             }]
     },
     "host_declaration" : {
         "prefix" : "host_declaration",
         "yacc" :[{
-            "clause" : "dynamic_declaration;deleted_declaration;uid_statement;host_identifier_declaration;hardware_statement;fixed_address_declaration;host_group_declaration;statements;",
+            "clause" : "dynamic_declaration;deleted_declaration;uid_statement;hardware_statement;fixed_address_declaration;host_group_declaration;statements;",
             "func" : "p[0] = dhcpconf.HostDeclaration();p[0].append_child_and_set_pos(p[1]);p[1]=None;return;"
             }]
     },
@@ -254,18 +254,11 @@
             "func" : "bval = p[2].verify_uid_data();if not bval: ;{raise Exception('not valid uid [%s] %s'%(p[2].location(),p[2].value_format()));}p[0] = dhcpconf.UidStatement(None,None,p.slice[1],p.slice[3]);p[0].set_uid(p[2]);p[2] = None;return;"
             }]
     },
-    "host_identifier_declaration" : {
-        "prefix" : "host_identifier_declaration",
-        "yacc" : [{
-            "clause" : "HOST_IDENTIFIER OPTION option_name option_values SEMI;",
-            "func" : "p[0] = dhcpconf.HostIdentifierDeclaration(None,None,p.slice[1],p.slice[5]);p[0].set_key_value(p[3],p[4]);p[3] = None;p[4] = None;return;"
-            }]
-    },
     "hardware_statement" : {
         "prefix" : "hardware_statement",
         "yacc" : [{
             "clause" : "HARDWARE hardware_type SEMI;HARDWARE hardware_type hardware_addr SEMI;",
-            "func" : "if if len(p) == 3:;{p[0] = dhcpconf.HardwareStatement(None,None,p.slice[1],p.slice[3]);p[0].set_type(p[2]);}else:;{p[0] = dhcpconf.HardwareStatement(None,None,p.slice[1],p.slice[4]);p[0].set_type(p[2]);p[0].set_addr(p[3]);}return;"
+            "func" : "if len(p) == 3:;{p[0] = dhcpconf.HardwareStatement(None,None,p.slice[1],p.slice[3]);p[0].set_type(p[2]);}else:;{p[0] = dhcpconf.HardwareStatement(None,None,p.slice[1],p.slice[4]);p[0].set_type(p[2]);p[0].set_addr(p[3]);}return;"
         }]
     },
     "fixed_address_declaration" : {
@@ -307,5 +300,7 @@
     "next-server" : "NEXT_SERVER",
     "subnet" : "SUBNET",
     "netmask" : "NETMASK",
-    "interface" : "INTERFACE"
+    "interface" : "INTERFACE",
+    "fixed-address" : "FIXED_ADDRESS",
+    "uid" : "UID"
 }

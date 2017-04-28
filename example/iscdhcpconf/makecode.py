@@ -281,10 +281,13 @@ def output_p(k,v,tabs):
             for ya in yv:
                 logging.info('')
                 if haskey(ya,'clause') and haskey(ya,'func') and haskey(v,'prefix'):
+                    if k != v['prefix']:
+                        logging.error('%s not equal [%s]'%(k,v['prefix']))
                     logging.info('')
                     prefix = normalize_name(v['prefix'])
                     curfuncname = 'p_%s_%s'%(normalize_name(k),funcidx)
                     rets += format_tabs('def %s(self,p):'%(curfuncname),tabs)
+                    logging.info('make [%s] [%s]'%(k,ya['clause']))
                     rets += make_clause(prefix,ya['clause'],(tabs+1))
                     rets += make_code(ya['func'],(tabs+1))
                 funcidx += 1

@@ -312,7 +312,7 @@ class PyClauseYacc(object):
         startpos.startpos = (p.lexer.lexpos-p.lexer.linepos)
         startpos.endline = startpos.startline
         startpos.endpos = startpos.startpos
-        p[0] = PyClauseArgs(None,startpos,startpos)
+        p[0] = PyClauseArgs(startpos,startpos)
         startpos = None
         return
 
@@ -326,7 +326,7 @@ class PyClauseYacc(object):
         elif len(p) == 3:
             p[0] = p[1]
             p[0].append_args(p.slice[2].value)
-            p[0].set_endpos(p[2])
+            p[0].set_endpos(p.slice[2])
             p[1] = None
         return
 

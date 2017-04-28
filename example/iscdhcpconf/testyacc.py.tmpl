@@ -35,117 +35,71 @@ class DhcpConfYacc(ConfigDhcpYacc):
             s += self.statements.format_config()
         return s
 
-
-    def p_statement_multi(self,p):
-        ''' statement :  option_statement
-                  | execute_statement
-                  | subnet_statement
-                  | host_statement
-        '''
-        children = []
-        children.append(p[1])
-        p[0] = dhcpconf.Statement(None,children,p[1],p[1])
-        p[1] = None
-        return
-
-
-    def p_empty(self,p):
-        ''' empty :     
-        '''
-        startpos = dhcpconf.Location(p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos),p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos))
-        p[0] = dhcpconf.YaccDhcpObject('Empty',None,startpos,startpos)
-        return
-
-    def p_data_expr_op(self,p):
-        ''' data_expr_op : NUMBER
-               | TEXT
-        '''
-        p[0] = dhcpconf.ExprOp()
-        constdata = dhcpconf.ConstData(p.slice[1].value,p.slice[1],p.slice[1])
-        p[0].append_child_and_set_pos(constdata)
-        constdata = None
-        return
-
-    def p_domain_list(self,p):
-        ''' domain_list : dns_name
-                 | ipaddr
-                 | domain_list COMMA dns_name
-                 | domain_list COMMA ipaddr
-        '''
-        if len(p) == 2:
-            p[0] = dhcpconf.DomainList()
-            p[0].append_child_and_set_pos(p[1])
-            p[1] = None
-        else:
-            p[0] = p[1].append_child_and_set_pos(p[3])
-            p[1] = None
-            p[2] = None
-        return
-
-    def p_dns_name(self,p):
-        ''' dns_name : dns_name DOT TEXT
-                  | dns_name DOT NUMBER
+    def p_option_statement_1(self,p):
+        ''' option_statement : option_default_lease_time
+               | option_ddns_update_style
+               | option_filename
+               | option_next_server
+               | option_domain_name
+               | option_domain_name_servers
+               | option_log_servers
+               | option_log_facility
+               | option_max_lease_time
         '''
         p[0] = p[1]
-        p[0].append_dot_name(p.slice[3].value,p.slice[3])
         p[1] = None
         return
 
-    def p_dns_name_text(self,p):
-        ''' dns_name : TEXT 
-                 | NUMBER
+    def p_uid_data_0(self,p):
+        ''' uid_data : TEXT               
         '''
-        p[0] = dhcpconf.DnsName(None,None,p.slice[1],p.slice[1])
-        p[0].start_dnsname(p.slice[1].value)
+        p[0] = dhcpconf.UidData(None,None,p.slice[1],p.slice[1])
+        p[0].set_value(p.slice[1].value)
         return
 
-    def p_ipaddr(self,p):
-        ''' ipaddr : ipv4_addr
-            | ipv6_addr
+    def p_uid_data_1(self,p):
+        ''' uid_data : ipv6_addr
         '''
-        p[1].check_valid_address()
-        p[0] = p[1]
-        p[1] = None
+        p[0] = dhcpconf.UidData(None,None,p[1],p[1])
+        p[0].set_value(p[1].value_format())
         return
 
-    def p_ipv4_addr(self,p):
-        ''' ipv4_addr : NUMBER DOT NUMBER DOT NUMBER DOT NUMBER
-        '''
-        p[0] = dhcpconf.IpAddress(None,None,p.slice[1],p.slice[7])
-        value = ''
-        for i in range(4):
-            if len(value) > 0:
-                value += '.'
-            value += '%s'%(p.slice[2*i+1].value)
-        p[0].set_ipv4_address(value)
-        return
-
-    def p_ipv6_addr_colon_text(self,p):
-        ''' ipv6_addr :  ipv6_addr COLON TEXT
-             | ipv6_addr COLON NUMBER
-        '''
-        if len(p.slice[3].value) < 1 or len(p.slice[3].value) > 4:
-            raise Exception('can not parse [%s:%s-%s:%s] %s'%(p.slice[3].startline,
-                p.slice[3].startpos,p.slice[3].endline,p.slice[3].endpos,p.slice[3].value))
-        p[0] = p[1]
-        p[1] = None
-        p[0].append_ipv6(p.slice[3].value,p.slice[3])
-        return
-
-    def p_ipv6_addr_colon(self,p):
-        ''' ipv6_addr : ipv6_addr COLON
-        '''
-        p[0] = p[1]
-        p[0].append_ipv6_colon(p.slice[2])
-        p[1] = None
-        return
-
-    def p_ipv6_addr_text(self,p):
-        ''' ipv6_addr : TEXT 
+    def p_host_name_0(self,p):
+        ''' host_name : TEXT
                 | NUMBER
         '''
-        p[0] = dhcpconf.IpAddress()
-        p[0].start_ipv6_address(p.slice[1].value,p.slice[1],p.slice[1])
+        p[0] =dhcpconf.HostName(None,None,p.slice[1],p.slice[1])
+        p[0].start_hostname(p.slice[1].value)
+        return
+
+    def p_host_name_1(self,p):
+        ''' host_name : host_name DOT TEXT
+                | host_name DOT NUMBER
+        '''
+        p[0] = p[1]
+        p[0].append_dot_text(p.slice[3].value,p.slice[3])
+        p[1] = None
+        return
+
+    def p_host_name_3(self,p):
+        ''' host_name : host_name COLON TEXT
+              | host_name COLON NUMBER
+        '''
+        p[0] = p[1]
+        p[0].append_colone_text(p.slice[3].value,p.slice[3])
+        return
+
+    def p_option_name(self,p):
+        ''' option_name : TEXT
+               | TEXT DOT TEXT
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.OptionName(None,None,p.slice[1],p.slice[1])
+            p[0].set_name(p.slice[1].value)
+        else:
+            p[0] = dhcpconf.OptionName(None,None,p.slice[1],p.slice[3])
+            value = '%s.%s'%(p.slice[1].value,p.slice[3].value)
+            p[0].set_name(value)
         return
 
     def p_error(self,p):
