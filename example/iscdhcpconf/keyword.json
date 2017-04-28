@@ -36,7 +36,7 @@
         "prefix" : "domain_list",
         "yacc" : [{
             "clause" : "dns_name;ipaddr;domain_list COMMA dns_name;domain_list COMMA ipaddr;",
-            "func" : "if len(p) == 2:;{p[0] = dhcpconf.DomainList();p[0].append_child_and_set_pos(p[1]);p[1] = None;}else:;{p[0] = p[1].append_child_and_set_pos(p[3]);p[1] = None;p[2] = None;}return;"
+            "func" : "ccs = \"\"\"\\n        \"\"\";ccc = '''\\n        ''' ;;{if len(p) == 2:;p[0] = dhcpconf.DomainList();p[0].append_child_and_set_pos(p[1]);}p[1] = None;{else:;p[0] = p[1].append_child_and_set_pos(p[3]);p[1] = None;}p[2] = None;return;"
             }]
     },
     "dns_name" : {

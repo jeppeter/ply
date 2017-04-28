@@ -19,6 +19,8 @@ _insert_path(os.path.dirname(os.path.realpath(__file__)),'..','..')
 
 import ply.lex as lex
 import ply.yacc as yacc
+from pygram import PythonCodeLex,make_flat_code
+import location
 
 class Utf8Encode(object):
     def __dict_utf8(self,val):
@@ -256,137 +258,9 @@ class FunctionLex(object):
         return lexer
 
 
-class PythonLex(object):
-    tokens = ['SEMI','LBRACE','RBRACE','COMMENT','TEXT']
-    t_ignore = ''
-    t_comment_ignore = ''
-    t_newlinebegin_ignore = ''
-    states = (
-        ('comment','exclusive'),
-        ('newlinebegin','exclusive'),
-    )
-
-    def __init__(self,deftabs=4):
-        self.lineno = 1
-        self.column = 1
-        self.linepos = 0
-        self.braces = 0
-        self.doublequoted = 0
-        self.commented = 0
-        self.spaces = []
-        self.tabspace = deftabs
-        self.lastspace = None
-        return
-
-    @lex.TOKEN(r'\#')
-    def t_COMMENT(self,p):
-        self.commented = 1
-        p.lexer.push_state('comment')
-        return None
-
-    def t_comment_error(self,p):
-        raise Exception('comment error')
-        return
-
-    @lex.TOKEN('.')
-    def t_comment_TEXT(self,p):
-        curpos = p.lexer.lexpos
-        maxpos = len(p.lexer.lexdata)
-        neednewlinebegin = False
-        while curpos < maxpos:
-            curch = p.lexer.lexdata[curpos]
-            if curch == '\n':
-                curpos += 1
-                p.lexer.linepos = curpos
-                neednewlinebegin = True
-                break
-            elif curch == ';':
-                curpos += 1
-                p.type = 'SEMI'
-                p.value = ';'
-                p.startline = p.lexer.lineno
-                p.startpos = (curpos - p.lexer.linepos - len(p.value))
-                p.endline = p.lexer.lineno
-                p.endpos = (curpos - p.lexer.linepos)
-                p.lexer.pop_state()
-                p.lexer.lexpos = curpos
-                return p
-            curpos += 1
-        self.comment = 0
-        p.lexer.pop_state()
-        p.lexer.lexpos = curpos
-        if neednewlinebegin :
-            # we count the new line begin
-            p.lexer.push_state('newlinebegin')
-        return None
-
-    @lex.TOKEN(r'.')
-    def t_newlinebegin_TEXT(self,p):
-        curpos = p.lexer.lexpos
-        maxpos = len(p.lexer.lexdata)
-        curspace = 0
-        while curpos < maxpos:
-            curch = p.lexer.lexdata[curpos]
-            if curch == ' ':
-                curspace += 1
-            elif curch == '\t':
-                curspace += self.tabspace
-            elif curch == '\n':
-                p.lexer.linepos = curpos
-                p.lexer.lineno += 1
-                if len(self.spaces) == 0:
-                    self.spaces.append(curspace)
-                    curspace = 0
-                else:
-                    handled = False
-                    while len(self.spaces) > 0:
-                        if curspace == self.spaces[-1]:
-                            curspace = 0
-                            handled = True
-                            break
-                        elif curspace > self.spaces[-1]:
-                            self.lastspace = self.spaces[-1]
-                            self.spaces.append(curspace)
-                            curspace = 0
-                            handled= True
-                            break
-                        elif curspace < self.spaces[-1]:
-                            self.lastspace = self.spaces[-1]
-                            self.spaces.pop()
-                    if not handled :
-                        raise Exception('[%s:%d] not valid python code'%(p.lexer.lineno))
-                break
 
 
 
-        return None
-
-
-class Location(object):
-    def __init__(self,startline=None,startpos=None,endline=None,endpos=None):
-        self.startline = 1
-        self.startpos = 1
-        self.endline = 1
-        self.endpos = 1
-        if startline is not None:
-            self.startline = startline
-        if startpos is not None:
-            self.startpos = startpos
-        if endline is not None:
-            self.endline = endline
-        if endpos is not None:
-            self.endpos = endpos
-        return
-
-    def __format(self):
-        s = '[%s:%s-%s:%s]'%(self.startline,self.startpos,self.endline,self.endpos)
-        return s
-
-    def __str__(self):
-        return self.__format()
-
-    def __repr__(self):
-        return self.__format()
 
 class FunctionCode(object):
     def __init__(self,s,startpos,endpos):
@@ -538,7 +412,7 @@ class FunctionYacc(object):
     def p_statements_empty(self,p):
         ''' statements : 
         '''
-        startpos = Location()
+        startpos = location.Location()
         startpos.startline = p.lexer.lineno
         startpos.startpos = (p.lexer.lexpos-p.lexer.linepos)
         startpos.endline = startpos.startline
@@ -947,13 +821,40 @@ def lclass_handler(args,parser):
     sys.exit(0)
     return
 
+def pylex_handler(args,parser):
+    set_logging(args)
+    s = read_file(args.input)
+    lexinput = PythonCodeLex()
+    lexer = lexinput.build()
+    lexer.input(s)
+    while True:
+        tok = lexer.token()
+        if tok is None:
+            break
+        sys.stdout.write('[%d](%s,%r,%d,%d)\n' % (tok.lexer.lastspace,tok.type, tok.value, tok.startline, tok.startpos))
+    sys.exit(0)
+    return
+
+    sys.exit(0)
+    return
+
+def pyyacc_handler(args,parser):
+    set_logging(args)
+    s = read_file(args.input)
+    rets = make_flat_code(s,args.tabwidth)
+    write_file(rets,args.output)
+    sys.exit(0)
+    return
+
 
 def main():
     command='''
     {
         "verbose|v" : "+",
         "input|i" : null,
+        "output|o" : null,
         "tabs|t" : 0,
+        "tabwidth|w" : 4,
         "classname|c" : "ExtendedYacc",
         "prefix|p" : "statements",
         "pattern|P"  : null,
@@ -971,6 +872,12 @@ def main():
         },
         "lclass<lclass_handler>##input[0] templatefile input[1] outputfile##" : {
             "$" : 2
+        },
+        "pylex<pylex_handler>" : {
+            "$" : 0
+        },
+        "pyyacc<pyyacc_handler>" : {
+            "$" : 0
         }
     }
     '''
