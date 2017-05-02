@@ -242,6 +242,17 @@ class YaccDhcpObject(object):
 			return self.quoted_string(s)
 		return s
 
+	def get_child(self,clsname,recursive=False,root=None):
+		outsarr = []
+		if root is None:
+			root = self
+		for c in root.children:
+			if c.__class__.__name__ == clsname:
+				outsarr.append(c)
+			if recursive:
+				outsarr.extend(self.get_child(clsname,recursive,c))
+		return outsarr
+
 
 class MacAddress(YaccDhcpObject):
 	def __init__(self,macaddr='0',children=None,startelm=None,endelm=None):
@@ -427,6 +438,8 @@ class Statements(Statement):
 			typename = 'Statements'
 		super(Statements,self).__init__(typename,children,startelm,endelm)
 		return
+
+
 
 
 class SharedNetwork(YaccDhcpObject):

@@ -65,6 +65,23 @@ def read_file(infile=None):
     fin = None
     return s
 
+def write_file(s,outfile=None):
+    fout = sys.stdout
+    bmode = False
+    if outfile is not None:
+        fout = open(outfile,'wb')
+    if 'b' in fout.mode:
+        bmode = True
+
+    if sys.version[0] == '2' or not bmode:
+        fout.write('%s'%(s))
+    else:
+        fout.write(s.encode(encoding='UTF-8'))
+    if fout != sys.stdout:
+        fout.close()
+    fout = None
+    return
+
 def set_logging(args):
     loglvl= logging.ERROR
     if args.verbose >= 3:
@@ -76,17 +93,7 @@ def set_logging(args):
     logging.basicConfig(level=loglvl,format='%(asctime)s:%(filename)s:%(funcName)s:%(lineno)d\t%(message)s')
     return
 
-
-def main():
-    command='''
-    {
-        "verbose|v" : "+",
-        "input|i" : null
-    }
-    '''
-    parser = extargsparse.ExtArgsParse()
-    parser.load_command_line_string(command)
-    args = parser.parse_command_line()
+def config_handler(args,parser):
     set_logging(args)
     #if args.verbose >= 3:
     #    yacc.yaccdevel = True
@@ -98,6 +105,82 @@ def main():
     parser.parse(s)
     s = dhcpyacc.format_config()
     sys.stdout.write('%s'%(s))
+    sys.exit(0)
+    return
+
+def addhost_handler(args,parser):
+    set_logging(args)
+    if args.macaddr is None or \
+        args.ipaddr is None or \
+        args.hostname is None:
+        raise Exception('must specified macaddr[--macaddr|-m] hostname[--hostname|-H] ipaddr[--ipaddr|-I]')
+    s = read_file(args.input)
+    dhcplex = dlex.DhcpConfLex()
+    lexer = dhcplex.build()
+    dhcpyacc = DhcpConfYacc(lexer)
+    parser = dhcpyacc.build(tabmodule='testparse')
+    parser.parse(s)
+    statements = dhcpyacc.statements
+    if statements is None:
+        raise Exception('no statements adding')
+    children = statements.get_child('HostStatement',True)
+    findone = None
+    for c in children:
+        macs = c.get_child('HardwareDeclaration',True)
+        if len(macs) > 0:
+            for m in macs:
+                if m.hard_type.value_format() == 'ethernet' and \
+                    m.hard_addr.value_format() == args.macaddr:
+                    findone = c
+    if findone is not None:
+        ips = findone.get_child('FixedAddressDeclaration',True)
+        if len(ips) > 0:
+            ips[0].fixedaddress = args.ipaddr
+        else:
+            ipchild = dhcpconf.FixedAddressDeclaration(args.ipaddr)
+            findone.append_child(ipchild)
+    else:
+        appv = dhcpconf.HostStatement()
+        hostname = dhcpconf.HostName()
+        hostname.hostname = args.hostname
+        appv.set_hostname(hostname)
+        hostname = None
+        hardtype = dhcpconf.HardwareType('ethernet')
+        hardaddr = dhcpconf.HardwareAddr()
+        hardaddr.hardwareaddr = args.macaddr
+        decl = dhcpconf.HardwareStatement()
+        decl.set_type(hardtype)
+        decl.set_addr(hardaddr)
+        hostdecl = dhcpconf.HostDeclaration()
+        hostdecl.append_child(decl)
+        hostdecls = dhcpconf.HostDeclarations()
+        appv.append_child(hostdecls)
+        statements.append_child(appv)
+    s = statements.format_config(0)
+    write_file(s,args.output)
+    sys.exit(0)
+    return
+
+
+def main():
+    command='''
+    {
+        "verbose|v" : "+",
+        "input|i" : null,
+        "macaddr|m" : null,
+        "ipaddr|I" : null,
+        "hostname|H" : null,
+        "config<config_handler>" : {
+            "$" : 0
+        },
+        "addhost<addhost_handler>" : {
+            "$" : 0
+        }
+    }
+    '''
+    parser = extargsparse.ExtArgsParse()
+    parser.load_command_line_string(command)
+    args = parser.parse_command_line()
     return
 
 if __name__ == '__main__':
