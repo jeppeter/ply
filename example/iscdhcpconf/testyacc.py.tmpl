@@ -116,8 +116,10 @@ class DhcpConfYacc(ConfigDhcpYacc):
         '''
         logging.info('can get host_identifier_declaration')
         name = dhcpconf.OptionName('host-identifier',p.slice[1],p.slice[1])
-        p[0] = dhcpconf.OptionHandle(None,p.slice[1],p.slice[5]).handle_option(name,p.slice[1],p.slice[5],p[3],p[4])
+        handle = dhcpconf.OptionHandle(None,p.slice[1],p.slice[5])
+        p[0] = handle.handle_option(name,p.slice[1],p.slice[5],p[3],p[4])
         name = None
+        handle = None
         logging.info('host [%s]'%(p[0].format_config(0)))
         return
 
@@ -178,6 +180,12 @@ class DhcpConfYacc(ConfigDhcpYacc):
             p[0] = dhcpconf.OptionName(value,p[1],p[3])
             p[1] = None
             p[3] = None
+        if issubclass(p[0].__class__,dhcpconf.YaccDhcpObject):
+            logging.info('YaccDhcpObject object')
+        else:
+            logging.warn('not set class name')
+
+        logging.info('OptionName [%s] %s'%(p[0].value_format(),repr(p[0])))
         return
 
     def p_error(self,p):
@@ -231,8 +239,8 @@ def main():
     parser.load_command_line_string(command)
     args = parser.parse_command_line()
     set_logging(args)
-    if args.verbose >= 3:
-        yacc.yaccdevel = True
+    #if args.verbose >= 3:
+    #    yacc.yaccdevel = True
     s = read_file(args.input)
     dhcplex = dlex.DhcpConfLex()
     lexer = dhcplex.build()

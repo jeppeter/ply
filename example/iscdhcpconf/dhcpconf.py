@@ -1411,35 +1411,39 @@ class OptionBase(YaccDhcpObject):
 class HostIdentifierDeclaration(OptionBase):
 	def __init__(self,typename=None,startelm=None,endelm=None):
 		super(HostIdentifierDeclaration,self).__init__(typename,startelm,endelm)
-		self.optvalues = dict()
 		return
 
-	def append_child(self,*args):
-		if len(args) == 0:
-			return
-		if  (len(args) != 2) and (len(args) != 3):
-			raise Exception('must specified 2 args')
-		if not isinstance(args[0],object) or not issubclass(args[0].__class__,OptionName):
-			raise Exception('[%s] must be OptionBase Class'%(repr(args[0])))
-		self.optvalues[args[0].value_format()] = args[1:]
-		return
 
 	def value_format(self):
 		s = ''
-		if len(self.optvalues.keys()) == 1:
-			for k in self.optvalues.keys():
-				s += '%s'%(k)
-				for ck in self.optvalues[k]:
-					s += ' %s'%(ck.value_format())
+		if len(self.children) > 0:
+			for k in self.children:
+				if len(s) > 0:
+					s += ' '
+				logging.info('k %s'%(repr(k)))
+				s += '%s'%(k.value_format())
 		return s
+
+	def append_child(self,*args):
+		for c in args:
+			if isinstance(c,tuple) or isinstance(c,list):
+				for ck in c:
+					if isinstance(c,object) and getattr(c.__class__,'append_child',None) is not None:
+						self.append_child(ck)
+					else:
+						logging.error('ck %s not ok'%(repr(ck)))
+			elif isinstance(c,object) and issubclass(c.__class__,YaccDhcpObject):
+				self.children.append(c)
+			else:
+				logging.error('c %s not ok'%(repr(c)))
+		return
 
 	def format_config(self,tabs=0):
 		s = ''
-		if len(self.value_format()) > 0:
-			s += ' ' * tabs * 4
-			s += 'host-identifier option '
-			s += self.value_format()
-			s += ';\n'
+		s += ' ' * tabs * 4
+		s += 'host-identifier option '
+		s += self.value_format()
+		s += ';\n'
 		return s
 
 
@@ -1564,9 +1568,26 @@ class ArgSpaceList(YaccDhcpObject):
 			s += c.value_format()
 		return s
 
+	def value_format(self):
+		s = ''
+		for c in self.children:
+			if len(s) > 0:
+				s += ' '
+			s += c.value_format()
+		return s
+
 class OptionValue(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
 			typename = self.__class__.__name__
 		super(OptionValue,self).__init__(typename,children,startelm,endelm)
 		return
+
+	def value_format(self):
+		s = ''
+		for c in self.children:
+			if len(s) > 0:
+				s += ' '
+			s += c.value_format()
+		return s
+
