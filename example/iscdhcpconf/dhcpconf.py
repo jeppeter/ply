@@ -195,9 +195,6 @@ class YaccDhcpObject(object):
 		s = ''
 		idx = 0
 		for c in self.children:
-			if idx > 0 and splitline:
-				s += ' '* tabs * 4
-				s += '\n'
 			s += c.format_config(tabs)
 			idx += 1
 		return s
@@ -272,8 +269,8 @@ class MacAddress(YaccDhcpObject):
 
 
 class HardwareType(YaccDhcpObject):
-	def __init__(self,hardwaretype='',children=None,startelm=None,endelm=None):
-		super(HardwareType,self).__init__('HardwareType',children,startelm,endelm)
+	def __init__(self,hardwaretype='',startelm=None,endelm=None):
+		super(HardwareType,self).__init__('HardwareType',None,startelm,endelm)
 		self.hardwaretype = hardwaretype
 		return
 
@@ -1420,7 +1417,6 @@ class HostIdentifierDeclaration(OptionBase):
 			for k in self.children:
 				if len(s) > 0:
 					s += ' '
-				logging.info('k %s'%(repr(k)))
 				s += '%s'%(k.value_format())
 		return s
 

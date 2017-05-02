@@ -8,6 +8,7 @@ import logging
 import json
 import unittest
 import re
+import ast
 
 def _insert_path(path,*args):
     _curdir = os.path.join(path,*args)
@@ -431,6 +432,14 @@ def test_handler(args,parser):
     sys.exit(0)
     return
 
+def tojson_handler(args,parser):
+    set_logging(args)
+    s = read_file(args.input)
+    asttree = ast.parse(s)
+    print('visit %s'%(ast.dump(asttree)))
+    sys.exit(0)
+    return
+
 def main():
     command='''
     {
@@ -471,14 +480,17 @@ def main():
         "pyclauseyacc<pyclauseyacc_handler>" : {
             "$" : 0
         },
+        "tojson<tojson_handler>" : {
+            "$" : "+"
+        },
         "test<test_handler>" : {
             "$" : "*"
         }
     }
     '''
-    parser = extargsparse.ExtArgsParse()
-    parser.load_command_line_string(command)
-    args = parser.parse_command_line()
+    argparser = extargsparse.ExtArgsParse()
+    argparser.load_command_line_string(command)
+    args = argparser.parse_command_line()
     return
 
 if __name__ == '__main__':

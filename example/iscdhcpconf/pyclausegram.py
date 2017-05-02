@@ -155,6 +155,10 @@ class PyClauseLex(object):
         p.lexer.linepos = p.lexer.lexpos
         return None
 
+    @lex.TOKEN(r'\r')
+    def t_carriage(self,p):
+        return None
+
 
     @lex.TOKEN(r'[a-z0-9A-Z_]+')
     def t_TEXT(self,p):
