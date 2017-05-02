@@ -115,7 +115,10 @@ class DhcpConfYacc(ConfigDhcpYacc):
         ''' host_identifier_declaration : HOST_IDENTIFIER OPTION option_name option_value_part SEMI
         '''
         logging.info('can get host_identifier_declaration')
-        p[0] = dhcpconf.OptionHandle(None,p.slice[1],p.slice[5]).handle_option(p[3],p.slice[1],p.slice[5],p[4])
+        name = dhcpconf.OptionName('host-identifier',p.slice[1],p.slice[1])
+        p[0] = dhcpconf.OptionHandle(None,p.slice[1],p.slice[5]).handle_option(name,p.slice[1],p.slice[5],p[3],p[4])
+        name = None
+        logging.info('host [%s]'%(p[0].format_config(0)))
         return
 
     def p_option_value_part_0(self,p):

@@ -1439,13 +1439,14 @@ class HostIdentifierDeclaration(OptionBase):
 			s += ' ' * tabs * 4
 			s += 'host-identifier option '
 			s += self.value_format()
-			s += '\n'
+			s += ';\n'
 		return s
 
 
 class OptionHandle(YaccDhcpObject):
 	clsmap = {
-		'host_identifier_declaration': 'HostIdentifierDeclaration'
+		'host-identifier': 'HostIdentifierDeclaration',
+		'dhcp6.client-id' : 'Dhcp6ClientId'
 	}
 	def __init__(self,typename=None,startelm=None,endelm=None):
 		if typename is None:
@@ -1467,7 +1468,8 @@ class OptionHandle(YaccDhcpObject):
 		newcls = modcls(None,startelm,endelm)
 		if not issubclass(newcls.__class__,OptionBase):
 			raise Exception('[%s] not OptionBase subclass'%(self.__class__.clsmap[clsname.value_format()]))
-		return newcls.append_child(*args)
+		newcls.append_child(*args)
+		return newcls
 
 
 class HostDeclarations(YaccDhcpObject):
@@ -1568,4 +1570,3 @@ class OptionValue(YaccDhcpObject):
 			typename = self.__class__.__name__
 		super(OptionValue,self).__init__(typename,children,startelm,endelm)
 		return
-	
