@@ -8,7 +8,8 @@ import logging
 import json
 import unittest
 import re
-import ast
+import imp
+import inspect
 
 def _insert_path(path,*args):
     _curdir = os.path.join(path,*args)
@@ -432,11 +433,106 @@ def test_handler(args,parser):
     sys.exit(0)
     return
 
+class OutDict(object):
+    def __init__(self,m):
+        self.__mod = m
+        self.odict = dict()
+        return
+
+    def __get_class(self,name):
+        cls = getattr(self.__mod,name,None)
+        if cls is None:
+            raise Exception('%s not class'%(name))
+        if not inspect.isclass(cls):
+            raise Exception('%s not class'%(name))
+        return cls
+
+    def __get_meth(self,cls,funcname):
+        func = getattr(cls,funcname,None)
+        if func is None:
+            raise Exception('can not get %s'%(funcname))
+        if not inspect.ismethod(func):
+            raise Exception('not method %s'%(funcname))
+        return func
+
+
+    def add_odict(self,optname,docstr,codestr):
+        docjson = make_pyclause(docstr,0)
+        codejson = make_flat_code(codestr,4,False)
+        if optname in self.odict.keys():
+            v = self.odict[optname]
+        else:
+            v = dict()
+            v['prefix'] = optname
+            v['yacc'] = []
+        appv = dict()
+        appv['clause'] = docjson
+        appv['func'] = codejson
+        v['yacc'].append(appv)
+        self.odict[optname] = v
+        return
+
+    def add_class(self,name):
+        cls = self.__get_class(name)
+        nameexpr = re.compile('^p_([0-9a-zA-Z_]+)_([\d]+)$')
+        tripexpr = re.compile('^\s+\'\'\'.*')
+        for k in dir(cls):
+            m = nameexpr.findall(k)
+            if m is not None and len(m) > 0 and len(m[0]) >= 2:
+                optname = m[0][0]
+                optidx = m[0][1]                
+                func = getattr(cls,k,None)
+                if func is not None and inspect.isfunction(func):
+                    docstr = inspect.getdoc(func)
+                    codearr,_ = inspect.getsourcelines(func)
+                    codestr = ''
+                    idx = 0
+                    docstarted = False
+                    for l in codearr:
+                        if idx > 0:
+                            if docstarted:
+                                if tripexpr.match(l):
+                                    docstarted = False
+                                    logging.info('revert %s'%(l))
+                            else:
+                                if tripexpr.match(l):
+                                    docstarted = True
+                                    logging.info('l %s matched doc'%(l))
+                                if not docstarted:
+                                    codestr += l
+                        idx += 1
+                    logging.info('doc %s \ncodestr\n%s'%(docstr,codestr))
+                    self.add_odict(optname,docstr,codestr)
+        return
+
+    def format_json(self):
+        s = json.dumps(self.odict,indent=4)
+        logging.info('%s'%(s))
+        return s
+
+    def add_function(self,name):
+        sarr = re.split('\.',name)
+        if len(sarr) < 2:
+            raise Exception('%s not valid method'%(name))
+        cls = self.__get_class(sarr[0])
+        meth = self.__get_meth(cls,sarr[1])
+        return
+
+
 def tojson_handler(args,parser):
     set_logging(args)
-    s = read_file(args.input)
-    asttree = ast.parse(s)
-    print('visit %s'%(ast.dump(asttree)))
+    if args.input is None:
+        raise Exception('need -i|--input file')
+    m = imp.load_source('outer',args.input)
+    odict = OutDict(m)
+    for c in args.subnargs:
+        if '.' in c:
+            # now we should get
+            odict.add_function(c)
+        else:
+            odict.add_class(c)
+    s = odict.format_json()
+    write_file(s,args.output)
     sys.exit(0)
     return
 
