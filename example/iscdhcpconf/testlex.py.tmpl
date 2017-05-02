@@ -106,6 +106,7 @@ class DhcpConfLex(ConfigDhcpLex):
 			curch = p.lexer.lexdata[curpos]
 			if curch == '\n':
 				curpos += 1
+				p.lexer.lineno += 1
 				p.lexer.linepos = curpos
 				break
 			curpos += 1

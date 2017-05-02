@@ -17,6 +17,7 @@ _insert_path(os.path.dirname(os.path.realpath(__file__)))
 _insert_path(os.path.dirname(os.path.realpath(__file__)),'..','..')
 
 import ply.yacc as yacc
+import ply.lex as lex
 import testlex as dlex
 import dhcpconf
 
@@ -50,14 +51,8 @@ class DhcpConfYacc(ConfigDhcpYacc):
         p[1] = None
         return
 
-    def p_uid_data_0(self,p):
-        ''' uid_data : TEXT               
-        '''
-        p[0] = dhcpconf.UidData(None,None,p.slice[1],p.slice[1])
-        p[0].set_value(p.slice[1].value)
-        return
 
-    def p_uid_data_1(self,p):
+    def p_uid_data_0(self,p):
         ''' uid_data : ipv6_addr
         '''
         p[0] = dhcpconf.UidData(None,None,p[1],p[1])
@@ -68,9 +63,70 @@ class DhcpConfYacc(ConfigDhcpYacc):
         ''' host_name : TEXT
                 | NUMBER
         '''
-        p[0] =dhcpconf.HostName(None,None,p.slice[1],p.slice[1])
+        p[0] =dhcpconf.HostName(None,p.slice[1],p.slice[1])
         p[0].start_hostname(p.slice[1].value)
         return
+
+    def p_hardware_type_0(self,p):
+        ''' hardware_type : ETHERNET
+                   | TOKEN_RING
+                   | FDDI
+                   | INFINIBAND
+        '''
+        p[0] = dhcpconf.HardwareType(p.slice[1].value,p.slice[1],p.slice[1])
+        return
+
+    def p_hardware_addr_0(self,p):
+        ''' hardware_addr : NUMBER
+                  | TEXT
+                  | hardware_addr COLON NUMBER
+                  | hardware_addr COLON TEXT
+        '''
+        if len(p) == 2:
+            logging.info('hardware_addr init %s'%(p.slice[1].value))
+            p[0] = dhcpconf.HardwareAddr(None,None,p.slice[1],p.slice[1])
+            p[0].start_addr(p.slice[1].value)
+        else:
+            p[0] = p[1]
+            p[0].append_colone_text(p.slice[3].value)
+            p[0].set_endpos(p.slice[3])
+            p[1] = None
+        return
+
+    def p_host_identifier_declaration_0(self,p):
+        ''' host_identifier_declaration : HOST_IDENTIFIER OPTION option_name option_value_part SEMI
+        '''
+        logging.info('can get host_identifier_declaration')
+        p[0] = dhcpconf.OptionHandle(None,p.slice[1],p.slice[5]).handle_option(p[3],p.slice[1],p.slice[5],p[4])
+        return
+
+    def p_option_value_part_0(self,p):
+        ''' option_value_part : EQUAL data_expr_op
+                 | arg_space_list
+        '''
+        if len(p) == 3:
+            p[0] = dhcpconf.OptionValue(None,None,p.slice[1],p[2])
+            constdata = dhcpconf.ConstData(p.slice[1],p.slice[1],p.slice[1])
+            p[0].append_child(constdata)
+            p[0].append_child(p[2])
+            p[2] = None
+        else:
+            p[0] = dhcpconf.OptionValue(None,None,p[1],p[1])
+            p[0].append_child(p[1])
+            p[1] = None
+        return
+
+    def p_arg_space_list(self,p):
+        ''' arg_space_list : empty
+                    | arg_space_list data_expr_op
+        '''
+        if len(p) == 2:
+            p[0] = dhcpconf.ArgSpaceList(None,None,p[1],p[1])
+        elif len(p) == 3:
+            p[0] = p[1].append_child_and_set_pos(p[2])
+            p[1] = None
+        return
+
 
     def p_host_name_1(self,p):
         ''' host_name : host_name DOT TEXT
@@ -90,23 +146,23 @@ class DhcpConfYacc(ConfigDhcpYacc):
         return
 
     def p_option_name_0(self,p):
-        ''' option_name : spcial_identifier
-               | spcial_identifier DOT spcial_identifier
+        ''' option_name : special_identifier
+               | special_identifier DOT special_identifier
         '''
         if len(p) == 2:
-            p[0] = dhcpconf.OptionName(None,None,p[1],p[1])
-            p[0].set_name(p[1].value_format())
+            p[0] = dhcpconf.OptionName(p[1].value_format(),p[1],p[1])
             p[1] = None
         else:
-            p[0] = dhcpconf.OptionName(None,None,p[1],p[3])
             value = '%s.%s'%(p[1].value_format(),p[3].value_format())
-            p[0].set_name(value)
+            p[0] = dhcpconf.OptionName(value,p[1],p[3])
             p[1] = None
             p[3] = None
         return
 
     def p_error(self,p):
-        raise Exception('get error %s'%(repr(p)))
+        if isinstance(p,object) and isinstance(p,lex.LexToken):
+            pass
+        raise Exception('error handle %s'%(repr(p)))
 
     def build(self,**kwargs):
         return yacc.yacc(module=self,start='statements',**kwargs)
@@ -154,6 +210,8 @@ def main():
     parser.load_command_line_string(command)
     args = parser.parse_command_line()
     set_logging(args)
+    if args.verbose >= 3:
+        yacc.yaccdevel = True
     s = read_file(args.input)
     dhcplex = dlex.DhcpConfLex()
     lexer = dhcplex.build()

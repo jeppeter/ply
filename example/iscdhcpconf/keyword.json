@@ -254,13 +254,6 @@
             "func" : "bval = p[2].verify_uid_data();if not bval: ;{raise Exception('not valid uid [%s] %s'%(p[2].location(),p[2].value_format()));}p[0] = dhcpconf.UidStatement(None,None,p.slice[1],p.slice[3]);p[0].set_uid(p[2]);p[2] = None;return;"
             }]
     },
-    "host_identifier_declaration" : {
-        "prefix" : "host_identifier_declaration",
-        "yacc" : [{
-            "clause" : "HOST_IDENTIFIER OPTION option_name option_values SEMI;",
-            "func" : "p[0] = dhcpconf.HostIdentifierDeclaration(None,None,p.slice[1],p.slice[5]);p[0].set_key_value(p[3],p[4]);p[3] = None;p[4] = None;return;"
-            }]
-    },
     "hardware_statement" : {
         "prefix" : "hardware_statement",
         "yacc" : [{
@@ -309,5 +302,15 @@
     "netmask" : "NETMASK",
     "interface" : "INTERFACE",
     "fixed-address" : "FIXED_ADDRESS",
-    "uid" : "UID"
+    "uid" : "UID",
+    "deleted" : "DELETED",
+    "dynamic" : "DYNAMIC",
+    "hardware" : "HARDWARE",
+    "group" : "GROUP",
+    "host" : "HOST",
+    "ethernet" : "ETHERNET",
+    "token-ring" : "TOKEN_RING",
+    "fddi" : "FDDI",
+    "infiniband" : "INFINIBAND",
+    "host-identifier" : "HOST_IDENTIFIER"
 }

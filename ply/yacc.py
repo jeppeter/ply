@@ -1240,8 +1240,6 @@ class LRParser:
                     return result
 
             if t is None:
-
-
                 # We have some kind of parsing error here.  To handle
                 # this, we are going to push the current token onto
                 # the tokenstack and replace it with an 'error' token.

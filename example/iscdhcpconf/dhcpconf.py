@@ -316,7 +316,7 @@ class FixedAddressDeclaration(YaccDhcpObject):
 	def format_config(self,tabs=0):
 		s = ''
 		s += ' ' * tabs * 4
-		s += 'fixed-address %s;'%(self.fixedaddress)
+		s += 'fixed-address %s;\n'%(self.fixedaddress)
 		return s
 
 class Declaration(YaccDhcpObject):
@@ -1390,18 +1390,62 @@ class SubnetDeclaration(YaccDhcpObject):
 		super(SubnetDeclaration,self).__init__(typename,children,startelm,endelm)
 		return
 
-class OptionBase(YaccDhcpObject):
-	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
-		if typename is None:
-			typename = self.__class__.__name__
-		super(OptionBase,self).__init__(typename,children,startelm,endelm)
+class OptionName(YaccDhcpObject):
+	def __init__(self,name,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(OptionName,self).__init__(typename,None,startelm,endelm)
+		self.name = name
 		return
 
-	
+	def value_format():
+		return self.name
+
+class OptionBase(YaccDhcpObject):
+	def __init__(self,typename=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(OptionBase,self).__init__(typename,None,startelm,endelm)
+		return
+
+
+class HostIdentifierDeclaration(OptionBase):
+	def __init__(self,typename=None,startelm=None,endelm=None):
+		super(HostIdentifierDeclaration,self).__init__(typename,startelm,endelm)
+		self.optvalues = dict()
+		return
+
+	def append_child(self,*args):
+		if len(args) == 0:
+			return
+		if  (len(args) != 2) and (len(args) != 3):
+			raise Exception('must specified 2 args')
+		if not isinstance(args[0],object) or not issubclass(args[0].__class__,OptionName):
+			raise Exception('[%s] must be OptionBase Class'%(repr(args[0])))
+		self.optvalues[args[0].value_format()] = args[1:]
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.optvalues.keys()) == 1:
+			for k in self.optvalues.keys():
+				s += '%s'%(k)
+				for ck in self.optvalues[k]:
+					s += ' %s'%(ck.value_format())
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		if len(self.value_format()) > 0:
+			s += ' ' * tabs * 4
+			s += 'host-identifier option '
+			s += self.value_format()
+			s += '\n'
+		return s
+
 
 class OptionHandle(YaccDhcpObject):
 	clsmap = {
-		'deleted_declaration'
+		'host_identifier_declaration': 'HostIdentifierDeclaration'
 	}
 	def __init__(self,typename=None,startelm=None,endelm=None):
 		if typename is None:
@@ -1409,4 +1453,96 @@ class OptionHandle(YaccDhcpObject):
 		super(OptionHandle,self).__init__(typename,None,startelm,endelm)
 		return
 
-	def handle_option(self,clsname,)
+	def handle_option(self,clsname,startelm,endelm,*args):
+		if not isinstance(clsname,object) or not issubclass(clsname.__class__,OptionName):
+			raise Exception('not define option name baseclass [%s]'%(repr(clsname)))
+
+		if clsname.value_format() not in self.__class__.clsmap.keys():
+			raise Exception('[%s] not supported for Option Handle'%(clsname.value_format()))
+
+		m = sys.modules[__name__]
+		modcls = getattr(m,self.__class__.clsmap[clsname.value_format()],None)
+		if modcls is None:
+			raise Exception('can not find class [%s]'%(self.__class__.clsmap[clsname.value_format()]))
+		newcls = modcls(None,startelm,endelm)
+		if not issubclass(newcls.__class__,OptionBase):
+			raise Exception('[%s] not OptionBase subclass'%(self.__class__.clsmap[clsname.value_format()]))
+		return newcls.append_child(*args)
+
+
+class HostDeclarations(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(HostDeclarations,self).__init__(typename,children,startelm,endelm)
+		return
+
+
+class HardwareAddr(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(HardwareAddr,self).__init__(typename,children,startelm,endelm)
+		self.hardwareaddr = None
+		return
+
+	def value_format(self):
+		s = ''
+		if self.hardwareaddr is not None:
+			s = self.hardwareaddr
+		return s
+
+	def format_config(self,tabs=0):
+		s = ''
+		s += value_format()
+		return s
+
+	def start_addr(self,value):
+		self.hardwareaddr = value
+		return
+
+	def append_colone_text(self,value):
+		if self.hardwareaddr is None:
+			raise Exception('not set hardwareaddr yet')
+		self.hardwareaddr += ':'+value
+		return
+
+class HardwareStatement(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(HardwareStatement,self).__init__(typename,children,startelm,endelm)
+		self.hard_type = None
+		self.hard_addr = None
+		return
+
+	def value_format(self):
+		s = ''
+		if self.hard_type is not None:
+			s += self.hard_type.value_format()
+
+		if self.hard_addr is not None:
+			if len(s) > 0:
+				s += ' '
+			s += self.hard_addr.value_format()
+		return s
+
+	def set_type(self,t):
+		self.hard_type = t
+		return
+
+	def set_addr(self,v):
+		self.hard_addr = v
+		return
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'hardware %s ;\n'%(self.value_format())
+		return s
+
+class HostDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(HostDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
