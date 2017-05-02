@@ -1397,8 +1397,8 @@ class OptionName(YaccDhcpObject):
 		self.name = name
 		return
 
-	def value_format():
-		return self.name
+	def value_format(self):
+		return '%s'%(self.name)
 
 class OptionBase(YaccDhcpObject):
 	def __init__(self,typename=None,startelm=None,endelm=None):
@@ -1546,3 +1546,26 @@ class HostDeclaration(YaccDhcpObject):
 			typename = self.__class__.__name__
 		super(HostDeclaration,self).__init__(typename,children,startelm,endelm)
 		return
+
+class ArgSpaceList(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(ArgSpaceList,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def format_config(self,tabs=0):
+		s = ''
+		for c in self.children:
+			if len(s) > 0:
+				s += ' '
+			s += c.value_format()
+		return s
+
+class OptionValue(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(OptionValue,self).__init__(typename,children,startelm,endelm)
+		return
+	

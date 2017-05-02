@@ -51,6 +51,24 @@ class DhcpConfYacc(ConfigDhcpYacc):
         p[1] = None
         return
 
+    def p_data_expr_op_0(self,p):
+        ''' data_expr_op : NUMBER
+          | TEXT
+        '''
+        p[0] = dhcpconf.ExprOp()
+        constdata = dhcpconf.ConstData(p.slice[1].value,p.slice[1],p.slice[1])
+        p[0].append_child_and_set_pos(constdata)
+        constdata = None
+        return
+
+    def p_data_expr_op_1(self,p):
+        ''' data_expr_op : hardware_addr
+        '''
+        p[0] = dhcpconf.ExprOp()
+        p[0].append_child_and_set_pos(p[1])
+        p[1] = None
+        return
+
 
     def p_uid_data_0(self,p):
         ''' uid_data : ipv6_addr

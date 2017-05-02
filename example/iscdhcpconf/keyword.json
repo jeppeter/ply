@@ -25,13 +25,6 @@
             "func" : "startpos = dhcpconf.Location(p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos),p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos));p[0] = dhcpconf.YaccDhcpObject('Empty',None,startpos,startpos);return;"
             }]
     },
-    "data_expr_op" : {
-        "prefix" : "data_expr_op",
-        "yacc" : [{
-            "clause" : " NUMBER; TEXT;",
-            "func" : "p[0] = dhcpconf.ExprOp();constdata = dhcpconf.ConstData(p.slice[1].value,p.slice[1],p.slice[1]);p[0].append_child_and_set_pos(constdata);constdata = None;return;"
-            }]
-    },
     "domain_list" : {
         "prefix" : "domain_list",
         "yacc" : [{
@@ -312,5 +305,7 @@
     "token-ring" : "TOKEN_RING",
     "fddi" : "FDDI",
     "infiniband" : "INFINIBAND",
-    "host-identifier" : "HOST_IDENTIFIER"
+    "host-identifier" : "HOST_IDENTIFIER",
+    "dhcp6" : "DHCP6",
+    "client-id" : "CLIENT_ID"
 }
