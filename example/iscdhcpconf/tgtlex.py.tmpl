@@ -6,6 +6,7 @@ import importlib
 import extargsparse
 import logging
 import re
+import types
 
 def _insert_path(path,*args):
 	_curdir = os.path.join(path,*args)
@@ -19,7 +20,9 @@ _insert_path(os.path.dirname(os.path.realpath(__file__)),'..','..')
 import ply.lex as lex
 
 def tgtlex_input(self,s,filename='<string>'):
-	if getattr(self,'linepos',None):
+	if getattr(self,'linepos',None) is not None:
+		logging.info('push [%s:%s:%s]'%(self.filename,
+				self.lineno,(self.lexpos - self.linepos)))
 		self.oldlexpos.append(self.lexpos)
 		self.oldlexdata.append(self.lexdata)
 		self.oldlineno.append(self.lineno)
@@ -39,6 +42,7 @@ def tgtlex_input(self,s,filename='<string>'):
 	self.lineno = 1
 	self.lexlen = len(s)
 	self.filename = filename
+	logging.info('set [%s:%s]'%(self.filename,self.lexdata))
 	return
 	
 
@@ -55,6 +59,7 @@ def tgtlex_token(self):
 				self.linepos = self.oldlinepos.pop()
 				self.filename = self.oldfilename.pop()
 				self.lexlen = self.oldlexlen.pop()
+				logging.info('restore [%s:%s:%s]'%(self.filename,self.lineno,(self.lexpos - self.linepos)))
 			else:
 				# nothing to handle
 				break
@@ -64,7 +69,7 @@ def tgtlex_token(self):
 class TgtConfigLex(object):pass
 
 class TgtLex(TgtConfigLex):
-	tokens = ['COMMENT','TEXT','LBRACKET','RBRACKET','DQUOTE']
+	tokens = ['COMMENT','TEXT','LBRACKET','RBRACKET','DQUOTE','SLASH']
 	t_ignore = ' \t'
 	t_dquote_ignore = ''
 	t_comment_ignore = ''
@@ -75,10 +80,21 @@ class TgtLex(TgtConfigLex):
 	def __init__(self):
 		super(TgtLex,self).__init__()
 		self.__class__.tokens += list(self.__class__.reserved.values())
+		self.lineno = 1
+		self.column = 0
 		return
 
 	@lex.TOKEN(r'\<')
 	def t_LBRACKET(self,p):
+		p.startline = p.lexer.lineno
+		p.startpos = p.lexer.lexpos - len(p.value)
+		p.endline = p.startline
+		p.endpos = p.lexer.lexpos
+		p.filename = p.lexer.filename
+		return p
+
+	@lex.TOKEN(r'\/')
+	def t_SLASH(self,p):
 		p.startline = p.lexer.lineno
 		p.startpos = p.lexer.lexpos - len(p.value)
 		p.endline = p.startline
@@ -252,7 +268,8 @@ class TgtLex(TgtConfigLex):
 		return None
 
 	def t_error(self,p):
-		self.column = p.lexpos = (p.lexer.lexpos - p.lexer.linepos )
+		self.column = (p.lexer.lexpos - p.lexer.linepos )
+		self.lineno = p.lexer.lineno
 		raise Exception('at [%s:%s] error [%s]'%(self.lineno,self.column,p.value))
 		return
 
@@ -308,7 +325,7 @@ def main():
 	set_logging(args)
 	s = read_file(args.input)
 	tgtlex = TgtLex()
-	lexer = tgtlex.build()
+	lexer = tgtlex.build(lextab='tgtlex')
 	fname = '<stdin>'
 	if args.input is not None:
 		fname = args.input
