@@ -70,7 +70,7 @@ def tgtlex_token(self):
 class TgtConfigLex(object):pass
 
 class TgtLex(TgtConfigLex):
-	tokens = ['COMMENT','TEXT','LBRACKET','RBRACKET','DQUOTE','SLASH']
+	tokens = ['COMMENT','TEXT','LBRACKET','RBRACKET','DQUOTE','SLASH','NUMBER','DOT','COLON']
 	t_ignore = ' \t'
 	t_dquote_ignore = ''
 	t_comment_ignore = ''
@@ -87,6 +87,24 @@ class TgtLex(TgtConfigLex):
 
 	@lex.TOKEN(r'\<')
 	def t_LBRACKET(self,p):
+		p.startline = p.lexer.lineno
+		p.startpos = p.lexer.lexpos - len(p.value)
+		p.endline = p.startline
+		p.endpos = p.lexer.lexpos
+		p.filename = p.lexer.filename
+		return p
+
+	@lex.TOKEN(r'\.')
+	def t_DOT(self,p):
+		p.startline = p.lexer.lineno
+		p.startpos = p.lexer.lexpos - len(p.value)
+		p.endline = p.startline
+		p.endpos = p.lexer.lexpos
+		p.filename = p.lexer.filename
+		return p
+
+	@lex.TOKEN(r'\:')
+	def t_COLON(self,p):
 		p.startline = p.lexer.lineno
 		p.startpos = p.lexer.lexpos - len(p.value)
 		p.endline = p.startline

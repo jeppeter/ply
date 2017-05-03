@@ -1,4 +1,6 @@
 {
     "include" : "INCLUDE",
-    "target" : "TARGET"
+    "target" : "TARGET",
+    "direct-store" : "DIRECT_STORE",
+    "backing-store" : "BACKING_STORE"
 }

@@ -314,6 +314,105 @@ class IQNName(YaccDhcpObject):
 		return
 
 	def start_name(self,name):
+		self.name = name
+		return
+
+	def append_name(self,*args):
+		if self.name is None:
+			raise Exception('not set name')
+		for c in args:
+			self.name += c
+		return
+
+	def value_format(self):
+		s = ''
+		if self.name is not None:
+			s = self.quote_safe(self.name)
+		return s
 
 
+class TargetStatement(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(TargetStatement,self).__init__(typename,children,startelm,endelm)
+		self.targetname = None
+		return
 
+	def value_format(self):
+		s = ''
+		if self.targetname is not None:
+			s = self.targetname.value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s += ' ' * tabs * 4
+		s += '<target %s>\n'%(self.value_format())
+		s += self.format_children_config((tabs + 1))
+		s += ' ' * tabs * 4
+		s += '</target>\n'
+		return s
+
+	def set_name(self,n):
+		if not isinstance(n,object) or \
+			not issubclass(n.__class__,IQNName):
+			raise Exception('not valid IQNName')
+		self.targetname = n
+		return
+
+class TargetSuffix(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(TargetSuffix,self).__init__(typename,children,startelm,endelm)
+		return
+
+class TargetDeclarations(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(TargetDeclarations,self).__init__(typename,children,startelm,endelm)
+		return
+
+class BackingStoreDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(BackingStoreDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s = self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'backing-store'
+		if len(self.value_format()) > 0:
+			s += ' %s'%(self.value_format())
+		s += '\n'
+		return s
+
+class DirectStoreDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(DirectStoreDeclaration,self).__init__(typename,children,startelm,endelm)
+		self.targetname = None
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s = self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'direct-store'
+		if len(self.value_format()) > 0:
+			s += ' %s'%(self.value_format())
+		s += '\n'
+		return s
