@@ -66,6 +66,7 @@ class TgtYacc(TgtConfigYacc):
         p[0] = tgtconf.IncludeStatement(p[2].get_path(),p.slice[1],p[2])
         if self.lexer is not None:
             # we include the 
+            logging.info('include for %s self.lexer %s'%(repr(p.lexer),repr(self.lexer)))
             s = read_file(p[2].get_path())
             self.lexer.input(s,p[2].get_path())
         p[2] = None
@@ -80,6 +81,7 @@ class TgtYacc(TgtConfigYacc):
         p[1] = None
         p[2] = None
         p[3] = None
+        logging.info('get target %s'%(repr(p[0])))
         return
 
     def p_target_prefix_0(self,p):
@@ -142,6 +144,7 @@ class TgtYacc(TgtConfigYacc):
                    | BACKING_STORE
         '''
         if len(p) == 3:
+            logging.info('get 3 backing_store_declaration')
             p[0] = tgtconf.BackingStoreDeclaration(None,None,p.slice[1],p[2])
             p[0].append_child(p[2])
             p[2] = None
@@ -152,6 +155,7 @@ class TgtYacc(TgtConfigYacc):
     def p_path_0(self,p):
         ''' path : NUMBER
                 | TEXT
+                | SLASH
         '''
         p[0] = tgtconf.Path(None,None,p.slice[1],p.slice[1])
         p[0].start_path(p.slice[1].value)
@@ -195,16 +199,39 @@ class TgtYacc(TgtConfigYacc):
     def build(self,**kwargs):
         return yacc.yacc(module=self,start='statements',**kwargs)
 
+class Idx(object):
+    def __init__(self):
+        self.idx = 0
+        return
+
+def get_token_func(tokens):
+    scope = Idx()
+    def token_func():
+        rettok = None
+        if scope.idx < len(tokens):
+            rettok = tokens[scope.idx]
+        logging.info('[%d] %s'%(scope.idx,repr(rettok)))
+        scope.idx += 1
+        return rettok
+    return token_func
 
 
 def config_handler(args,parser):
     set_logging(args)
     tlex = tgtlex.TgtLex()
-    lexer = tlex.build(lextab='tgtlex')
+    s = read_file(args.input)
+    fname = '<stdin>'
+    if args.input is not None:
+        fname = args.input
+    alltokens,lexer = tlex.build_tokens(s,fname,lextab='tgtlex')
+    for c in alltokens:
+        logging.info('%s'%(repr(c)))
     tyacc = TgtYacc(lexer)
     parser = tyacc.build(tabmodule='tgtparse')
-    s = read_file(args.input)
-    parser.parse(s,lexer=lexer)
+    if args.verbose >= 3:
+        yacc.yaccdevel = True
+    logging.info('lexer %s'%(repr(lexer)))
+    parser.parse(input=None,lexer=lexer,debug=3,tokenfunc=get_token_func(alltokens))
     s = tyacc.format_config(0)
     sys.stdout.write('%s'%(s))
     sys.exit(0)

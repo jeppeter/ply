@@ -22,8 +22,8 @@ from cmnfile import set_logging,read_file
 
 def tgtlex_input(self,s,filename='<string>'):
 	if getattr(self,'linepos',None) is not None:
-		#logging.info('push [%s:%s:%s]'%(self.filename,
-		#		self.lineno,(self.lexpos - self.linepos)))
+		logging.info('push [%s:%s:%s]'%(self.filename,
+				self.lineno,(self.lexpos - self.linepos)))
 		self.oldlexpos.append(self.lexpos)
 		self.oldlexdata.append(self.lexdata)
 		self.oldlineno.append(self.lineno)
@@ -43,7 +43,7 @@ def tgtlex_input(self,s,filename='<string>'):
 	self.lineno = 1
 	self.lexlen = len(s)
 	self.filename = filename
-	#logging.info('set [%s:%s]'%(self.filename,self.lexdata))
+	logging.info('set [%s:%s]'%(self.filename,self.lexdata))
 	return
 	
 
@@ -60,12 +60,18 @@ def tgtlex_token(self):
 				self.linepos = self.oldlinepos.pop()
 				self.filename = self.oldfilename.pop()
 				self.lexlen = self.oldlexlen.pop()
-				#logging.info('restore [%s:%s:%s]'%(self.filename,self.lineno,(self.lexpos - self.linepos)))
+				logging.info('restore [%s:%s:%s]'%(self.filename,self.lineno,(self.lexpos - self.linepos)))
 			else:
 				# nothing to handle
 				break
 		retval = self.orig_token()
 	return retval
+
+def tgtlex_lasttoken(self,tok):
+	self.lexpos = tok.startpos
+	self.lineno = tok.startline
+	return
+
 
 class TgtConfigLex(object):pass
 
@@ -84,6 +90,33 @@ class TgtLex(TgtConfigLex):
 		self.lineno = 1
 		self.column = 0
 		return
+
+	@lex.TOKEN(r'\#')
+	def t_COMMENT(self,p):
+		self.commented = 1
+		p.lexer.push_state('comment')
+		return None
+
+	def t_comment_error(self,p):
+		raise Exception('comment error')
+		return
+
+	@lex.TOKEN('.')
+	def t_comment_TEXT(self,p):
+		curpos = p.lexer.lexpos
+		maxpos = len(p.lexer.lexdata)
+		while curpos < maxpos:
+			curch = p.lexer.lexdata[curpos]
+			if curch == '\n':
+				curpos += 1
+				p.lexer.lineno += 1
+				p.lexer.linepos = curpos
+				break
+			curpos += 1
+		self.comment = 0
+		p.lexer.pop_state()
+		p.lexer.lexpos = curpos
+		return None
 
 	@lex.TOKEN(r'\<')
 	def t_LBRACKET(self,p):
@@ -135,25 +168,6 @@ class TgtLex(TgtConfigLex):
 		p.lexer.push_state('dquote')
 		return None
 
-	@lex.TOKEN('.')
-	def t_comment_TEXT(self,p):
-		curpos = p.lexer.lexpos
-		maxpos = len(p.lexer.lexdata)
-		while curpos < maxpos:
-			curch = p.lexer.lexdata[curpos]
-			if curch == '\n':
-				curpos += 1
-				p.lexer.lineno += 1
-				p.lexer.linepos = curpos
-				break
-			curpos += 1
-		self.comment = 0
-		p.lexer.pop_state()
-		p.lexer.lexpos = curpos
-		return None
-
-	def t_comment_error(self,p):
-		raise Exception('can not make comment for (%s)'%(repr(p)))
 
 	@lex.TOKEN(r'.')
 	def t_dquote_TEXT(self,p):
@@ -260,6 +274,7 @@ class TgtLex(TgtConfigLex):
 		p.endline = p.startline
 		p.filename = p.lexer.filename
 		p.type = self.__class__.reserved.get(p.value,'TEXT')
+
 		decre = re.compile('^[0-9]+$',re.I)
 		hexre = re.compile('^[a-f0-9]+$',re.I)
 		if p.type == 'TEXT':
@@ -272,7 +287,6 @@ class TgtLex(TgtConfigLex):
 				if matchvalue is not None:
 					if hexre.match(matchvalue):
 						p.type = 'NUMBER'
-
 		#logging.info('TEXT lineno [%s] lexpos [%s]'%(p.lineno,p.lexpos))
 		return p
 
@@ -297,7 +311,39 @@ class TgtLex(TgtConfigLex):
 		lexer.input = types.MethodType(tgtlex_input,lexer)
 		lexer.orig_token = lexer.token
 		lexer.token = types.MethodType(tgtlex_token,lexer)
+		lexer.lasttoken = types.MethodType(tgtlex_lasttoken,lexer)
 		return lexer
+
+	def build_tokens(self,s,fname,**kwargs):
+		rettokens = []
+		lexer = self.build(**kwargs)
+		lexer.input(s,fname)
+		includefile = False
+		includepath = ''
+		while True:
+			tok = lexer.token()
+			if tok is None:
+				break
+			if includefile :
+				if tok.type == 'TEXT' or \
+					tok.type == 'SLASH' or \
+					tok.type == 'NUMBER':
+					includepath += tok.value
+				else:
+					if len(includepath) > 0:
+						lexer.lasttoken(tok)
+						s = read_file(includepath)
+						lexer.input(s,includepath)
+					includepath = ''
+					includefile = False					
+			else:
+				if tok.type == 'INCLUDE':
+					includefile = True
+					includepath = ''
+				else:
+					rettokens.append(tok)
+		return rettokens,lexer
+
 
 
 
@@ -315,24 +361,12 @@ def main():
 	args = parser.parse_command_line()
 	set_logging(args)
 	s = read_file(args.input)
-	tgtlex = TgtLex()
-	lexer = tgtlex.build(lextab='tgtlex')
 	fname = '<stdin>'
 	if args.input is not None:
 		fname = args.input
-	lexer.input(s,fname)
-	includetype = False
-	while True:
-		tok = lexer.token()
-		if tok is None:
-			break
-		if not includetype and tok.type == 'INCLUDE':
-			includetype = True
-		else:
-			if includetype and tok.type == 'TEXT':
-				s = read_file(tok.value)
-				lexer.input(s,tok.value)
-			includetype = False
+	tgtlex = TgtLex()
+	alltoken,lexer = tgtlex.build_tokens(s,fname,lextab='tgtlex')
+	for tok in alltoken:
 		sys.stdout.write('(%s,%r,%d,%d)[%s]\n' % (tok.type, tok.value, tok.startline, tok.startpos,tok.filename))
 	return
 

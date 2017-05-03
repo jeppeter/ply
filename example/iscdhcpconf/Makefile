@@ -23,7 +23,7 @@ tgtlex.py:tgtlex.py.tmpl tgtconf.json
 	$(call call_exec,${PYTHON} ${CURDIR}/makecode.py -i ${CURDIR}/tgtconf.json lclass -c TgtConfigLex $< $@,"GEN","$@")
 
 tgtyacc.py:tgtyacc.py.tmpl tgtconf.json
-	$(call call_exec,${PYTHON} ${CURDIR}/makecode.py -i ${CURDIR}/tgtconf.json yclass -c TgtConfigYacc $< $@,"GEN","$@")
+	$(call call_exec,${PYTHON} ${CURDIR}/makecode.py --no-special -i ${CURDIR}/tgtconf.json yclass -c TgtConfigYacc $< $@,"GEN","$@")
 
 clean:
 	$(call call_exec,${RM} -f testyacc.py testlex.py *.pyc,"RM","test")

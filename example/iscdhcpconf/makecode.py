@@ -285,7 +285,8 @@ def yclass_handler(args,parser):
         if isdict(v):
             outs += output_p(k,v,1)
             outs += format_tabs('',1)
-    outs += make_special_identifier(odict,okeys,1)
+    if args.special:
+        outs += make_special_identifier(odict,okeys,1)
 
     ins = read_file(args.subnargs[0])
     if args.pattern is None:
@@ -501,6 +502,7 @@ def main():
         "pattern|P"  : null,
         "usequoted|u" : true,
         "failfast|f" : true,
+        "special|s" : true,
         "lex<lex_handler>" : {
             "$" : 0
         },

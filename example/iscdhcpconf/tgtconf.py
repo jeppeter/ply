@@ -305,6 +305,12 @@ class Path(YaccDhcpObject):
 			raise Exception('path is not set')
 		return self.path
 
+	def value_format(self):
+		s = ''
+		if self.path is not None:
+			s = self.quote_safe(self.path)
+		return s
+
 class IQNName(YaccDhcpObject):
 	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
 		if typename is None:
@@ -346,6 +352,7 @@ class TargetStatement(YaccDhcpObject):
 		return s
 
 	def format_config(self,tabs=0):
+		s = ''
 		s += ' ' * tabs * 4
 		s += '<target %s>\n'%(self.value_format())
 		s += self.format_children_config((tabs + 1))
@@ -385,6 +392,7 @@ class BackingStoreDeclaration(YaccDhcpObject):
 		s = ''
 		if len(self.children) > 0:
 			s = self.children[0].value_format()
+		logging.info('s [%s] children %s'%(s,repr(self.children)))
 		return s
 
 	def format_config(self,tabs=0):
