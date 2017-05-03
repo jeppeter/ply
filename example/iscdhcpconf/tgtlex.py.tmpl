@@ -314,6 +314,14 @@ class TgtLex(TgtConfigLex):
 		lexer.lasttoken = types.MethodType(tgtlex_lasttoken,lexer)
 		return lexer
 
+	def append_file(self,lexer,file,lasttok=None):
+		if lasttok is not None:
+			lexer.lasttoken(lasttok)
+		if len(file) > 0:
+			s = read_file(file)
+			lexer.input(s,file)
+		return
+
 	def build_tokens(self,s,fname,**kwargs):
 		rettokens = []
 		lexer = self.build(**kwargs)
@@ -323,7 +331,12 @@ class TgtLex(TgtConfigLex):
 		while True:
 			tok = lexer.token()
 			if tok is None:
-				break
+				if not includefile:
+					break
+				self.append_file(lexer,includepath,tok)
+				includefile = False
+				includepath = ''
+				continue
 			if includefile :
 				if tok.type == 'TEXT' or \
 					tok.type == 'SLASH' or \
@@ -331,10 +344,7 @@ class TgtLex(TgtConfigLex):
 					includepath += tok.value
 					rettokens.append(tok)
 				else:
-					lexer.lasttoken(tok)
-					if len(includepath) > 0:
-						s = read_file(includepath)
-						lexer.input(s,includepath)
+					self.append_file(lexer,includepath,tok)
 					includepath = ''
 					includefile = False
 			else:
