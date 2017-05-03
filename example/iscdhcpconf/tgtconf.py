@@ -227,3 +227,93 @@ class YaccDhcpObject(object):
 			if recursive:
 				outsarr.extend(self.get_child(clsname,recursive,c))
 		return outsarr
+
+	def is_need_quoted(self,s):
+		for c in s:
+			if c >= 'a' and c <= 'z':
+				continue
+			if c >= 'A' and c <= 'Z':
+				continue
+			if c >= '0' and c <= '9':
+				continue
+			if c == '_' or c == '-' :
+				continue
+			return True
+		return False
+
+	def quote_safe(self,s):
+		rets = s
+		if self.is_need_quoted(s):
+			rets = ''
+			rets += '"'
+			for c in s:
+				if c == '"':
+					rets += '\\"'
+				elif c == '\\':
+					rets += '\\\\'
+				else:
+					rets += c
+			rets += '"'
+		return rets
+
+
+
+class Statements(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(Statements,self).__init__(typename,children,startelm,endelm)
+		return
+
+class IncludeStatement(YaccDhcpObject):
+	def __init__(self,includefile,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(IncludeStatement,self).__init__(typename,None,startelm,endelm)
+		self.includefile = includefile
+		return
+
+	def value_format(self):
+		return self.quote_safe(self.includefile)
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'include %s\n'%(self.value_format())
+		return s
+
+
+class Path(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(Path,self).__init__(typename,children,startelm,endelm)
+		self.path = None
+		return
+
+	def start_path(self,p):
+		self.path = p
+		return
+
+	def append_path(self,*args):
+		if self.path is None:
+			raise Exception('path is not set')
+		for c in args:
+			self.path += c
+		return
+
+	def get_path(self):
+		if self.path is None:
+			raise Exception('path is not set')
+		return self.path
+
+class IQNName(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(IQNName,self).__init__(typename,children,startelm,endelm)
+		self.name = None
+		return
+
+	def start_name(self,name):
+
+
+

@@ -60,13 +60,14 @@ class TgtYacc(TgtConfigYacc):
 		return
 
 	def p_include_statement_0(self,p):
-		''' include_statement : INCLUDE TEXT
+		''' include_statement : INCLUDE path
 		'''
-		p[0] = tgtconf.IncludeStatement(p.slice[2].value,p.slice[1],p.slice[2])
+		p[0] = tgtconf.IncludeStatement(p[2].get_path(),p.slice[1],p[2])
 		if self.lexer is not None:
 			# we include the 
-			s = read_file(p.slice[2].value)
-			self.lexer.input(s,p.slice[2].value)
+			s = read_file(p[2].get_path())
+			self.lexer.input(s,p[2].get_path())
+		p[2] = None
 		return
 
 	def p_target_statement_0(self,p):
@@ -93,7 +94,7 @@ class TgtYacc(TgtConfigYacc):
 		     | NUMBER
 		'''
 		p[0] = tgtconf.IQNName(None,None,p.slice[1],p.slice[1])
-		p[0].set_name(p.slice[1].value)
+		p[0].start_name(p.slice[1].value)
 		return
 
 	def p_iqn_name_1(self,p):
