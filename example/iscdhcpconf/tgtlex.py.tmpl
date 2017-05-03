@@ -21,8 +21,8 @@ import ply.lex as lex
 
 def tgtlex_input(self,s,filename='<string>'):
 	if getattr(self,'linepos',None) is not None:
-		logging.info('push [%s:%s:%s]'%(self.filename,
-				self.lineno,(self.lexpos - self.linepos)))
+		#logging.info('push [%s:%s:%s]'%(self.filename,
+		#		self.lineno,(self.lexpos - self.linepos)))
 		self.oldlexpos.append(self.lexpos)
 		self.oldlexdata.append(self.lexdata)
 		self.oldlineno.append(self.lineno)
@@ -42,14 +42,14 @@ def tgtlex_input(self,s,filename='<string>'):
 	self.lineno = 1
 	self.lexlen = len(s)
 	self.filename = filename
-	logging.info('set [%s:%s]'%(self.filename,self.lexdata))
+	#logging.info('set [%s:%s]'%(self.filename,self.lexdata))
 	return
 	
 
 def tgtlex_token(self):
 	retval = None
 	while retval is None:
-		if self.lexpos == len(self.lexdata) :
+		if self.lexpos >= len(self.lexdata) :
 			# ok we should search
 			if getattr(self,'oldlexpos',None) is not None and \
 				 len(self.oldlexpos) > 0:
@@ -59,7 +59,7 @@ def tgtlex_token(self):
 				self.linepos = self.oldlinepos.pop()
 				self.filename = self.oldfilename.pop()
 				self.lexlen = self.oldlexlen.pop()
-				logging.info('restore [%s:%s:%s]'%(self.filename,self.lineno,(self.lexpos - self.linepos)))
+				#logging.info('restore [%s:%s:%s]'%(self.filename,self.lineno,(self.lexpos - self.linepos)))
 			else:
 				# nothing to handle
 				break
@@ -335,7 +335,6 @@ def main():
 		tok = lexer.token()
 		if tok is None:
 			break
-
 		if not includetype and tok.type == 'INCLUDE':
 			includetype = True
 		else:
