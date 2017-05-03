@@ -15,10 +15,17 @@ class YaccDhcpObject(object):
 		self.startpos = 1
 		self.endline = 1
 		self.endpos = 1
+		self.filename = '<stdin>'
 		startline = getattr(startelm,'startline',None)
 		startpos = getattr(startelm,'startpos',None)
 		endline = getattr(endelm,'endline',None)
 		endpos = getattr(endelm,'endpos',None)
+		sfilename = getattr(startelm,'filename',None)
+		efilename = getattr(endelm,'filename',None)
+		if sfilename is not None :
+			self.filename = sfilename
+		if efilename is not None and self.filename == '<stdin>':
+			self.filename = efilename		
 		if startline is not None:
 			self.startline = startline
 		if startpos is not None:
@@ -37,6 +44,7 @@ class YaccDhcpObject(object):
 						logging.error('%s child not YaccDhcpObject'%(repr(c)))
 			else:
 				logging.error('not tuple or list for (%s)'%(repr(children)))
+
 		return
 
 	def __is_less(self,value,cmpvalue):

@@ -46,6 +46,7 @@ class TgtYacc(TgtConfigYacc):
             p[0] = tgtconf.Statements(None,None,p[1],p[1])
             p[1] = None
         elif len(p) == 3:
+            logging.info('p[2] filename %s'%(p[2].filename))
             p[0] = p[1].append_child_and_set_pos(p[2])
             p[1] = None
             p[2] = None
