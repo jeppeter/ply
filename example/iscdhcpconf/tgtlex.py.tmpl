@@ -329,17 +329,19 @@ class TgtLex(TgtConfigLex):
 					tok.type == 'SLASH' or \
 					tok.type == 'NUMBER':
 					includepath += tok.value
+					rettokens.append(tok)
 				else:
+					lexer.lasttoken(tok)
 					if len(includepath) > 0:
-						lexer.lasttoken(tok)
 						s = read_file(includepath)
 						lexer.input(s,includepath)
 					includepath = ''
-					includefile = False					
+					includefile = False
 			else:
 				if tok.type == 'INCLUDE':
 					includefile = True
 					includepath = ''
+					rettokens.append(tok)
 				else:
 					rettokens.append(tok)
 		return rettokens,lexer

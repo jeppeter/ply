@@ -65,11 +65,6 @@ class TgtYacc(TgtConfigYacc):
         ''' include_statement : INCLUDE path
         '''
         p[0] = tgtconf.IncludeStatement(p[2].get_path(),p.slice[1],p[2])
-        if self.lexer is not None:
-            # we include the 
-            logging.info('include for %s self.lexer %s'%(repr(p.lexer),repr(self.lexer)))
-            s = read_file(p[2].get_path())
-            self.lexer.input(s,p[2].get_path())
         p[2] = None
         return
 
