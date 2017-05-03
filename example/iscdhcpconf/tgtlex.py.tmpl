@@ -16,8 +16,9 @@ def _insert_path(path,*args):
 	return
 
 _insert_path(os.path.dirname(os.path.realpath(__file__)),'..','..')
-
+_insert_path(os.path.dirname(os.path.realpath(__file__)))
 import ply.lex as lex
+from cmnfile import set_logging,read_file
 
 def tgtlex_input(self,s,filename='<string>'):
 	if getattr(self,'linepos',None) is not None:
@@ -281,35 +282,7 @@ class TgtLex(TgtConfigLex):
 		return lexer
 
 
-def read_file(infile=None):
-	fin = sys.stdin
-	if infile is not None:
-		logging.info('infile %s'%(infile))
-		fin = open(infile,'r')
-	bmode = False
-	if 'b' in fin.mode:
-		bmode = True
-	s = ''
-	for l in fin:
-		if sys.version[0] == '2' or not bmode:
-			s += l
-		else:
-			s += l.decode(encoding='UTF-8')
-	if fin != sys.stdin:
-		fin.close()
-	fin = None
-	return s
 
-def set_logging(args):
-	loglvl= logging.ERROR
-	if args.verbose >= 3:
-		loglvl = logging.DEBUG
-	elif args.verbose >= 2:
-		loglvl = logging.INFO
-	if logging.root is not None and len(logging.root.handlers) > 0:
-		logging.root.handlers = []
-	logging.basicConfig(level=loglvl,format='%(asctime)s:%(filename)s:%(funcName)s:%(lineno)d\t%(message)s')
-	return
 
 
 def main():
