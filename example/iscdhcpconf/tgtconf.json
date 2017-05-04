@@ -280,6 +280,15 @@
             }
         ]
     },
+    "isns_access_control_statement": {
+        "prefix": "isns_access_control_statement",
+        "yacc": [
+            {
+                "clause": " ISNS_ACCESS_CONTROL ON; ISNS_ACCESS_CONTROL OFF;",
+                "func": "p[0] = tgtconf.iSNSAccessControl(p.slice[2].value,p.slice[1],p.slice[2]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -297,5 +306,8 @@
     "no" : "NO",
     "ignore-errors" : "IGNORE_ERRORS",
     "control-port" : "CONTROL_PORT",
-    "iSNSServerIP"  : "ISNS_SERVER_IP"
+    "iSNSServerIP"  : "ISNS_SERVER_IP",
+    "iSNSAccessControl" : "ISNS_ACCESS_CONTROL",
+    "on" : "ON",
+    "off" : "OFF"
 }

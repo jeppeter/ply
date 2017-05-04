@@ -775,3 +775,21 @@ class iSNSServerIP(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'iSNSServerIP %s\n'%(self.value_format())
 		return s
+
+class iSNSAccessControl(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(iSNSAccessControl,self).__init__(typename,None,startelm,endelm)
+		self.accesscontrol = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.accesscontrol is not None:
+			s += self.accesscontrol
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'iSNSAccessControl %s\n'%(self.value_format())
+		return s
