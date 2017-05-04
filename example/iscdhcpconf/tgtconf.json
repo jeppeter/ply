@@ -325,6 +325,51 @@
             }
         ]
     },
+    "backing_store_lun_prefix": {
+        "prefix": "backing_store_lun_prefix",
+        "yacc": [
+            {
+                "clause": " LBRACKET BACKING_STORE path RBRACKET;",
+                "func": "p[0] = tgtconf.BackingStoreLunPrefix(None,None,p.slice[1],p.slice[4]);p[0].set_path(p[3]);p[3] = None;return;"
+            }
+        ]
+    },
+    "backing_store_lun_statement": {
+        "prefix": "backing_store_lun_statement",
+        "yacc": [
+            {
+                "clause": " backing_store_lun_prefix lun_declarations backing_store_lun_suffix;",
+                "func": "p[0] = tgtconf.BackingStoreLunStatement(None,None,p[1],p[3]);p[0].set_name(p[1]);p[0].append_child(p[2]);p[1] = None;p[2] = None;p[3] = None;return;"
+            }
+        ]
+    },
+    "backing_store_lun_suffix": {
+        "prefix": "backing_store_lun_suffix",
+        "yacc": [
+            {
+                "clause": " LBRACKET SLASH BACKING_STORE RBRACKET;",
+                "func": "p[0] = tgtconf.BackingStoreLunSuffix(None,None,p.slice[1],p.slice[4]);return;"
+            }
+        ]
+    },
+    "lun_declarations": {
+        "prefix": "lun_declarations",
+        "yacc": [
+            {
+                "clause": " empty; lun_declarations lun_declaration;",
+                "func": "if len(p) == 2:;{p[0] = tgtconf.LunDeclarations(None,None,p[1],p[1]);p[1] = None;}elif len(p) == 3:;{p[0] = p[1].append_child_and_set_pos(p[2]);p[1] = None;p[2] = None;}return;"
+            }
+        ]
+    },
+    "write_cache_lun_declaration": {
+        "prefix": "write_cache_lun_declaration",
+        "yacc": [
+            {
+                "clause": " WRITE_CACHE ON; WRITE_CACHE OFF;",
+                "func": "p[0] = tgtconf.WriteCache(p.slice[2].value,p.slice[1],p.slice[2]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -349,5 +394,6 @@
     "iSNSServerPort" : "ISNS_SERVER_PORT",
     "iSNS" : "ISNS",
     "incomingdiscoveryuser" : "INCOMING_DISCOVERY_USER",
-    "outgoingdiscoveryuser" : "OUTGOING_DISCOVERY_USER"
+    "outgoingdiscoveryuser" : "OUTGOING_DISCOVERY_USER",
+    "write-cache" : "WRITE_CACHE"
 }

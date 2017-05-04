@@ -869,3 +869,91 @@ class OutGoingDiscoveryUser(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'outgoingdiscoveryuser %s\n'%(self.value_format())
 		return s
+
+class WriteCache(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(WriteCache,self).__init__(typename,None,startelm,endelm)
+		self.writecache = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.writecache is not None:
+			s += self.writecache
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'write-cache %s\n'%(self.value_format())
+		return s
+
+class LunDeclarations(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(LunDeclarations,self).__init__(typename,children,startelm,endelm)
+		return
+
+
+	def format_config(self,tabs=0):
+		return self.format_children_config(tabs)
+
+
+class BackingStoreLunSuffix(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(BackingStoreLunSuffix,self).__init__(typename,children,startelm,endelm)
+		return
+
+class BackingStoreLunPrefix(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(BackingStoreLunPrefix,self).__init__(typename,children,startelm,endelm)
+		self.path = None
+		return
+
+	def set_path(self,p):
+		if not isinstance(p,object) or not issubclass(p.__class__,Path):
+			raise Exception('p [%s] not path'%(repr(p)))
+		self.path = p
+		return
+
+	def value_format(self):
+		if self.path is None:
+			raise Exception('not set path yet')
+		return self.path.value_format()
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+
+class BackingStoreLunStatement(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(BackingStoreLunStatement,self).__init__(typename,children,startelm,endelm)
+		self.name = None
+		return
+
+	def set_name(self,p):
+		if not isinstance(p,object) or not issubclass(p.__class__,BackingStoreLunPrefix):
+			raise Exception('p [%s] not path'%(repr(p)))
+		self.name = p
+		return
+
+	def value_format(self):
+		return ''
+
+	def format_config(self,tabs=0):
+		if self.name is None:
+			raise Exception('not set name yet')
+		s = ''
+		s += ' ' * tabs * 4
+		s += '<backing-store %s>\n'%(self.name.value_format())
+		s += self.format_children_config((tabs + 1))
+		s += ' ' * tabs * 4
+		s += '</backing-store>\n'
+		return s

@@ -71,23 +71,15 @@ class TgtYacc(TgtConfigYacc):
         p[1] = None
         return
 
-    def p_backing_store_lun_statement_0(self,p):
-        ''' backing_store_lun_statement : backing_store_lun_prefix lun_declarations  backing_store_lun_suffix
-        '''
-        p[0] = tgtconf.BackingStoreLunStatement(None,None,p[1],p[3])
-        p[0].set_name(p[1])
-        p[0].append_child(p[2])
-        p[1] = None
-        p[2] = None
-        p[3] = None
-        return
 
-    def p_backing_store_lun_prefix_0(self,p):
-        ''' backing_store_lun_prefix : LBRACKET BACKING_STORE path RBRACKET
+
+
+
+    def p_lun_declaration_0(self,p):
+        ''' lun_declaration : write_cache_lun_declaration
         '''
-        p[0] = tgtconf.BackingStoreLunPrefix(None,None,p.slice[1],p.slice[4])
-        p[0].set_path(p[3])
-        p[3] = None
+        p[0] = p[1]
+        p[1] = None
         return
 
 
