@@ -1,4 +1,22 @@
 {
+    "allow_in_use_lun_declaration": {
+        "prefix": "allow_in_use_lun_declaration",
+        "yacc": [
+            {
+                "clause": " ALLOW_IN_USE allow_in_use_part;",
+                "func": "p[0] = tgtconf.AllowInUseLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "allow_in_use_part": {
+        "prefix": "allow_in_use_part",
+        "yacc": [
+            {
+                "clause": " YES; NO;",
+                "func": "p[0] = tgtconf.AllowInUse(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "backing_store_declaration": {
         "prefix": "backing_store_declaration",
         "yacc": [
@@ -35,6 +53,42 @@
             }
         ]
     },
+    "block_size_lun_declaration": {
+        "prefix": "block_size_lun_declaration",
+        "yacc": [
+            {
+                "clause": " BLOCK_SIZE block_size_part;",
+                "func": "p[0] = tgtconf.BlockSizeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "block_size_part": {
+        "prefix": "block_size_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.BlockSize(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "bs_type_lun_declaration": {
+        "prefix": "bs_type_lun_declaration",
+        "yacc": [
+            {
+                "clause": " BS_TYPE bs_type_part;",
+                "func": "p[0] = tgtconf.BsTypeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "bs_type_part": {
+        "prefix": "bs_type_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.BsType(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "control_port_statement": {
         "prefix": "control_port_statement",
         "yacc": [
@@ -62,12 +116,57 @@
             }
         ]
     },
+    "device_type_lun_declaration": {
+        "prefix": "device_type_lun_declaration",
+        "yacc": [
+            {
+                "clause": " DEVICE_TYPE device_type_part;",
+                "func": "p[0] = tgtconf.DeviceTypeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "device_type_part": {
+        "prefix": "device_type_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.DeviceType(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "direct_store_declaration": {
         "prefix": "direct_store_declaration",
         "yacc": [
             {
                 "clause": " DIRECT_STORE path_part;",
                 "func": "p[0] = tgtconf.DirectStoreDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "direct_store_lun_prefix": {
+        "prefix": "direct_store_lun_prefix",
+        "yacc": [
+            {
+                "clause": " LBRACKET DIRECT_STORE path_part RBRACKET;",
+                "func": "p[0] = tgtconf.DirectStoreLunPrefix(None,None,p.slice[1],p.slice[4]);p[0].set_path(p[3]);p[3] = None;return;"
+            }
+        ]
+    },
+    "direct_store_lun_statement": {
+        "prefix": "direct_store_lun_statement",
+        "yacc": [
+            {
+                "clause": " direct_store_lun_prefix lun_declarations direct_store_lun_suffix;",
+                "func": "p[0] = tgtconf.DirectStoreLunStatement(None,None,p[1],p[3]);p[0].set_name(p[1]);p[0].append_child(p[2]);p[1] = None;p[2] = None;p[3] = None;return;"
+            }
+        ]
+    },
+    "direct_store_lun_suffix": {
+        "prefix": "direct_store_lun_suffix",
+        "yacc": [
+            {
+                "clause": " LBRACKET SLASH DIRECT_STORE RBRACKET;",
+                "func": "p[0] = tgtconf.DirectStoreLunSuffix(None,None,p.slice[1],p.slice[4]);return;"
             }
         ]
     },
@@ -240,6 +339,24 @@
             }
         ]
     },
+    "la_lba_lun_declaration": {
+        "prefix": "la_lba_lun_declaration",
+        "yacc": [
+            {
+                "clause": " LA_LBA la_lba_part;",
+                "func": "p[0] = tgtconf.LaLbaLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "la_lba_part": {
+        "prefix": "la_lba_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.LaLba(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "lld_name": {
         "prefix": "lld_name",
         "yacc": [
@@ -249,12 +366,97 @@
             }
         ]
     },
+    "llppbe_lun_declaration": {
+        "prefix": "llppbe_lun_declaration",
+        "yacc": [
+            {
+                "clause": " LLPPBE llppbe_part;",
+                "func": "p[0] = tgtconf.LlppbeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "llppbe_part": {
+        "prefix": "llppbe_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.Llppbe(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "lun_declaration": {
+        "prefix": "lun_declaration",
+        "yacc": [
+            {
+                "clause": " write_cache_lun_declaration; scsi_id_lun_declaration; scsi_sn_lun_declaration; vendor_id_lun_declaration; product_id_lun_declaration; product_rev_lun_declaration; sense_format_lun_declaration; removable_lun_declaration; path_lun_declaration; mode_page_lun_declaration; readonly_lun_declaration; device_type_lun_declaration; bs_type_lun_declaration; allow_in_use_lun_declaration; block_size_lun_declaration; llppbe_lun_declaration; la_lba_lun_declaration; optimal_xfer_gran_lun_declaration; optimal_xfer_len_lun_declaration; params_lun_declaration;",
+                "func": "p[0] = p[1];p[1] = None;return;"
+            }
+        ]
+    },
     "lun_declarations": {
         "prefix": "lun_declarations",
         "yacc": [
             {
                 "clause": " empty; lun_declarations lun_declaration;",
                 "func": "if len(p) == 2:;{p[0] = tgtconf.LunDeclarations(None,None,p[1],p[1]);p[1] = None;}elif len(p) == 3:;{p[0] = p[1].append_child_and_set_pos(p[2]);p[1] = None;p[2] = None;}return;"
+            }
+        ]
+    },
+    "mode_page_lun_declaration": {
+        "prefix": "mode_page_lun_declaration",
+        "yacc": [
+            {
+                "clause": " MODE_PAGE mode_page_part;",
+                "func": "p[0] = tgtconf.ModePageLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "mode_page_part": {
+        "prefix": "mode_page_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.ModePage(None,None,p.slice[1],p.slice[1]);p[0].start_value(p.slice[1].value);return;"
+            },
+            {
+                "clause": " mode_page_part TEXT; mode_page_part NUMBER; mode_page_part COLON;",
+                "func": "p[0] = p[1];p[0].append_value(p.slice[2].value);p[0].set_endpos(p.slice[2]);p[1] = None;return;"
+            }
+        ]
+    },
+    "optimal_xfer_gran_lun_declaration": {
+        "prefix": "optimal_xfer_gran_lun_declaration",
+        "yacc": [
+            {
+                "clause": " OPTIMAL_XFER_GRAN optimal_xfer_gran_part;",
+                "func": "p[0] = tgtconf.OptimalXferGranLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "optimal_xfer_gran_part": {
+        "prefix": "optimal_xfer_gran_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.OptimalXferGran(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "optimal_xfer_len_lun_declaration": {
+        "prefix": "optimal_xfer_len_lun_declaration",
+        "yacc": [
+            {
+                "clause": " OPTIMAL_XFER_LEN optimal_xfer_len_part;",
+                "func": "p[0] = tgtconf.OptimalXferLenLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "optimal_xfer_len_part": {
+        "prefix": "optimal_xfer_len_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.OptimalXferLen(p.slice[1].value,p.slice[1],p.slice[1]);return;"
             }
         ]
     },
@@ -276,12 +478,39 @@
             }
         ]
     },
+    "params_lun_declaration": {
+        "prefix": "params_lun_declaration",
+        "yacc": [
+            {
+                "clause": " PARAMS params_part;",
+                "func": "p[0] = tgtconf.ParamsLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "params_part": {
+        "prefix": "params_part",
+        "yacc": [
+            {
+                "clause": " NUMBER; TEXT;",
+                "func": "p[0] = tgtconf.Params(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "password": {
         "prefix": "password",
         "yacc": [
             {
                 "clause": " TEXT;",
                 "func": "p[0] = tgtconf.Password(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "path_lun_declaration": {
+        "prefix": "path_lun_declaration",
+        "yacc": [
+            {
+                "clause": " PATH path_part;",
+                "func": "p[0] = tgtconf.PathLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
             }
         ]
     },
@@ -338,6 +567,42 @@
             }
         ]
     },
+    "readonly_lun_declaration": {
+        "prefix": "readonly_lun_declaration",
+        "yacc": [
+            {
+                "clause": " READONLY readonly_part;",
+                "func": "p[0] = tgtconf.ReadOnlyLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "readonly_part": {
+        "prefix": "readonly_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.ReadOnly(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "removable_lun_declaration": {
+        "prefix": "removable_lun_declaration",
+        "yacc": [
+            {
+                "clause": " REMOVABLE removable_part;",
+                "func": "p[0] = tgtconf.RemovableLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "removable_part": {
+        "prefix": "removable_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.Removable(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "scsi_id_lun_declaration": {
         "prefix": "scsi_id_lun_declaration",
         "yacc": [
@@ -389,6 +654,24 @@
             {
                 "clause": " TEXT; NUMBER;",
                 "func": "p[0] = tgtconf.SenseFormat(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "statement": {
+        "prefix": "statement",
+        "yacc": [
+            {
+                "clause": " include_statement; target_statement; default_driver_statement; ignore_errors_statement; control_port_statement; isns_server_ip_statement; isns_access_control_statement; isns_server_port_statement; isns_statement; incoming_discovery_user_statement; outgoing_discovery_user_statement; backing_store_lun_statement; direct_store_lun_statement;",
+                "func": "p[0] = p[1];p[1] = None;return;"
+            }
+        ]
+    },
+    "statements": {
+        "prefix": "statements",
+        "yacc": [
+            {
+                "clause": " empty; statements statement;",
+                "func": "if len(p) == 2:;{p[0] = tgtconf.Statements(None,None,p[1],p[1]);p[1] = None;}elif len(p) == 3:;{logging.info('p[2] filename %s'%(p[2].filename));p[0] = p[1].append_child_and_set_pos(p[2]);p[1] = None;p[2] = None;}self.set_statements(p[0]);return;"
             }
         ]
     },
@@ -479,289 +762,6 @@
             {
                 "clause": " WRITE_CACHE ON; WRITE_CACHE OFF;",
                 "func": "p[0] = tgtconf.WriteCache(p.slice[2].value,p.slice[1],p.slice[2]);return;"
-            }
-        ]
-    },
-    "path_lun_declaration": {
-        "prefix": "path_lun_declaration",
-        "yacc": [
-            {
-                "clause": " PATH path_part;",
-                "func": "p[0] = tgtconf.PathLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
-            }
-        ]
-    },
-    "removable_lun_declaration": {
-        "prefix": "removable_lun_declaration",
-        "yacc": [
-            {
-                "clause": " REMOVABLE removable_part;",
-                "func": "p[0] = tgtconf.RemovableLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
-            }
-        ]
-    },
-    "removable_part": {
-        "prefix": "removable_part",
-        "yacc": [
-            {
-                "clause": " NUMBER;",
-                "func": "p[0] = tgtconf.Removable(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "allow_in_use_lun_declaration": {
-        "prefix": "allow_in_use_lun_declaration",
-        "yacc": [
-            {
-                "clause": " ALLOW_IN_USE allow_in_use_part;",
-                "func": "p[0] = tgtconf.AllowInUseLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
-            }
-        ]
-    },
-    "allow_in_use_part": {
-        "prefix": "allow_in_use_part",
-        "yacc": [
-            {
-                "clause": " YES; NO;",
-                "func": "p[0] = tgtconf.AllowInUse(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "bs_type_lun_declaration": {
-        "prefix": "bs_type_lun_declaration",
-        "yacc": [
-            {
-                "clause": " BS_TYPE bs_type_part;",
-                "func": "p[0] = tgtconf.BsTypeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
-            }
-        ]
-    },
-    "bs_type_part": {
-        "prefix": "bs_type_part",
-        "yacc": [
-            {
-                "clause": " TEXT; NUMBER;",
-                "func": "p[0] = tgtconf.BsType(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "device_type_lun_declaration": {
-        "prefix": "device_type_lun_declaration",
-        "yacc": [
-            {
-                "clause": " DEVICE_TYPE device_type_part;",
-                "func": "p[0] = tgtconf.DeviceTypeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
-            }
-        ]
-    },
-    "device_type_part": {
-        "prefix": "device_type_part",
-        "yacc": [
-            {
-                "clause": " TEXT; NUMBER;",
-                "func": "p[0] = tgtconf.DeviceType(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "mode_page_lun_declaration": {
-        "prefix": "mode_page_lun_declaration",
-        "yacc": [
-            {
-                "clause": " MODE_PAGE mode_page_part;",
-                "func": "p[0] = tgtconf.ModePageLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
-            }
-        ]
-    },
-    "mode_page_part": {
-        "prefix": "mode_page_part",
-        "yacc": [
-            {
-                "clause": " TEXT; NUMBER;",
-                "func": "p[0] = tgtconf.ModePage(None,None,p.slice[1],p.slice[1]);p[0].start_value(p.slice[1].value);return;"
-            },
-            {
-                "clause": " mode_page_part TEXT; mode_page_part NUMBER; mode_page_part COLON;",
-                "func": "p[0] = p[1];p[0].append_value(p.slice[2].value);p[0].set_endpos(p.slice[2]);p[1] = None;return;"
-            }
-        ]
-    },
-    "readonly_lun_declaration": {
-        "prefix": "readonly_lun_declaration",
-        "yacc": [
-            {
-                "clause": " READONLY readonly_part;",
-                "func": "p[0] = tgtconf.ReadOnlyLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
-            }
-        ]
-    },
-    "readonly_part": {
-        "prefix": "readonly_part",
-        "yacc": [
-            {
-                "clause": " NUMBER;",
-                "func": "p[0] = tgtconf.ReadOnly(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "block_size_lun_declaration": {
-        "prefix": "block_size_lun_declaration",
-        "yacc": [
-            {
-                "clause": " BLOCK_SIZE block_size_part;",
-                "func": "p[0] = tgtconf.BlockSizeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
-            }
-        ]
-    },
-    "block_size_part": {
-        "prefix": "block_size_part",
-        "yacc": [
-            {
-                "clause": " NUMBER;",
-                "func": "p[0] = tgtconf.BlockSize(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "la_lba_lun_declaration": {
-        "prefix": "la_lba_lun_declaration",
-        "yacc": [
-            {
-                "clause": " LA_LBA la_lba_part;",
-                "func": "p[0] = tgtconf.LaLbaLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
-            }
-        ]
-    },
-    "la_lba_part": {
-        "prefix": "la_lba_part",
-        "yacc": [
-            {
-                "clause": " NUMBER;",
-                "func": "p[0] = tgtconf.LaLba(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "llppbe_lun_declaration": {
-        "prefix": "llppbe_lun_declaration",
-        "yacc": [
-            {
-                "clause": " LLPPBE llppbe_part;",
-                "func": "p[0] = tgtconf.LlppbeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
-            }
-        ]
-    },
-    "llppbe_part": {
-        "prefix": "llppbe_part",
-        "yacc": [
-            {
-                "clause": " NUMBER;",
-                "func": "p[0] = tgtconf.Llppbe(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "optimal_xfer_gran_lun_declaration": {
-        "prefix": "optimal_xfer_gran_lun_declaration",
-        "yacc": [
-            {
-                "clause": " OPTIMAL_XFER_GRAN optimal_xfer_gran_part;",
-                "func": "p[0] = tgtconf.OptimalXferGranLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
-            }
-        ]
-    },
-    "optimal_xfer_gran_part": {
-        "prefix": "optimal_xfer_gran_part",
-        "yacc": [
-            {
-                "clause": " NUMBER;",
-                "func": "p[0] = tgtconf.OptimalXferGran(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "optimal_xfer_len_lun_declaration": {
-        "prefix": "optimal_xfer_len_lun_declaration",
-        "yacc": [
-            {
-                "clause": " OPTIMAL_XFER_LEN optimal_xfer_len_part;",
-                "func": "p[0] = tgtconf.OptimalXferLenLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
-            }
-        ]
-    },
-    "optimal_xfer_len_part": {
-        "prefix": "optimal_xfer_len_part",
-        "yacc": [
-            {
-                "clause": " NUMBER;",
-                "func": "p[0] = tgtconf.OptimalXferLen(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "params_lun_declaration": {
-        "prefix": "params_lun_declaration",
-        "yacc": [
-            {
-                "clause": " PARAMS params_part;",
-                "func": "p[0] = tgtconf.ParamsLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
-            }
-        ]
-    },
-    "params_part": {
-        "prefix": "params_part",
-        "yacc": [
-            {
-                "clause": " NUMBER; TEXT;",
-                "func": "p[0] = tgtconf.Params(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "direct_store_lun_prefix": {
-        "prefix": "direct_store_lun_prefix",
-        "yacc": [
-            {
-                "clause": " LBRACKET DIRECT_STORE path_part RBRACKET;",
-                "func": "p[0] = tgtconf.DirectStoreLunPrefix(None,None,p.slice[1],p.slice[4]);p[0].set_path(p[3]);p[3] = None;return;"
-            }
-        ]
-    },
-    "direct_store_lun_statement": {
-        "prefix": "direct_store_lun_statement",
-        "yacc": [
-            {
-                "clause": " direct_store_lun_prefix lun_declarations direct_store_lun_suffix;",
-                "func": "p[0] = tgtconf.DirectStoreLunStatement(None,None,p[1],p[3]);p[0].set_name(p[1]);p[0].append_child(p[2]);p[1] = None;p[2] = None;p[3] = None;return;"
-            }
-        ]
-    },
-    "direct_store_lun_suffix": {
-        "prefix": "direct_store_lun_suffix",
-        "yacc": [
-            {
-                "clause": " LBRACKET SLASH DIRECT_STORE RBRACKET;",
-                "func": "p[0] = tgtconf.DirectStoreLunSuffix(None,None,p.slice[1],p.slice[4]);return;"
-            }
-        ]
-    },
-    "lun_declaration": {
-        "prefix": "lun_declaration",
-        "yacc": [
-            {
-                "clause": " write_cache_lun_declaration; scsi_id_lun_declaration; scsi_sn_lun_declaration; vendor_id_lun_declaration; product_id_lun_declaration; product_rev_lun_declaration; sense_format_lun_declaration; removable_lun_declaration; path_lun_declaration; mode_page_lun_declaration; readonly_lun_declaration; device_type_lun_declaration; bs_type_lun_declaration; allow_in_use_lun_declaration; block_size_lun_declaration; llppbe_lun_declaration; la_lba_lun_declaration; optimal_xfer_gran_lun_declaration; optimal_xfer_len_lun_declaration; params_lun_declaration;",
-                "func": "p[0] = p[1];p[1] = None;return;"
-            }
-        ]
-    },
-    "statement": {
-        "prefix": "statement",
-        "yacc": [
-            {
-                "clause": " include_statement; target_statement; default_driver_statement; ignore_errors_statement; control_port_statement; isns_server_ip_statement; isns_access_control_statement; isns_server_port_statement; isns_statement; incoming_discovery_user_statement; outgoing_discovery_user_statement; backing_store_lun_statement; direct_store_lun_statement;",
-                "func": "p[0] = p[1];p[1] = None;return;"
-            }
-        ]
-    },
-    "statements": {
-        "prefix": "statements",
-        "yacc": [
-            {
-                "clause": " empty; statements statement;",
-                "func": "if len(p) == 2:;{p[0] = tgtconf.Statements(None,None,p[1],p[1]);p[1] = None;}elif len(p) == 3:;{logging.info('p[2] filename %s'%(p[2].filename));p[0] = p[1].append_child_and_set_pos(p[2]);p[1] = None;p[2] = None;}self.set_statements(p[0]);return;"
             }
         ]
     },
