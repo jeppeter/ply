@@ -3,8 +3,62 @@
         "prefix": "backing_store_declaration",
         "yacc": [
             {
-                "clause": " BACKING_STORE path; BACKING_STORE;",
+                "clause": " BACKING_STORE path_part; BACKING_STORE;",
                 "func": "if len(p) == 3:;{logging.info('get 3 backing_store_declaration');p[0] = tgtconf.BackingStoreDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;}elif len(p) == 2:;{p[0] = tgtconf.BackingStoreDeclaration(None,None,p.slice[1],p.slice[1]);}return;"
+            }
+        ]
+    },
+    "backing_store_lun_prefix": {
+        "prefix": "backing_store_lun_prefix",
+        "yacc": [
+            {
+                "clause": " LBRACKET BACKING_STORE path_part RBRACKET;",
+                "func": "p[0] = tgtconf.BackingStoreLunPrefix(None,None,p.slice[1],p.slice[4]);p[0].set_path(p[3]);p[3] = None;return;"
+            }
+        ]
+    },
+    "backing_store_lun_statement": {
+        "prefix": "backing_store_lun_statement",
+        "yacc": [
+            {
+                "clause": " backing_store_lun_prefix lun_declarations backing_store_lun_suffix;",
+                "func": "p[0] = tgtconf.BackingStoreLunStatement(None,None,p[1],p[3]);p[0].set_name(p[1]);p[0].append_child(p[2]);p[1] = None;p[2] = None;p[3] = None;return;"
+            }
+        ]
+    },
+    "backing_store_lun_suffix": {
+        "prefix": "backing_store_lun_suffix",
+        "yacc": [
+            {
+                "clause": " LBRACKET SLASH BACKING_STORE RBRACKET;",
+                "func": "p[0] = tgtconf.BackingStoreLunSuffix(None,None,p.slice[1],p.slice[4]);return;"
+            }
+        ]
+    },
+    "control_port_statement": {
+        "prefix": "control_port_statement",
+        "yacc": [
+            {
+                "clause": " CONTROL_PORT NUMBER;",
+                "func": "p[0] = tgtconf.ControlPort(p.slice[2].value,p.slice[1],p.slice[2]);return;"
+            }
+        ]
+    },
+    "controller_tid_declaration": {
+        "prefix": "controller_tid_declaration",
+        "yacc": [
+            {
+                "clause": " CONTROLLER_TID tid;",
+                "func": "p[0] = tgtconf.ControllerTid(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[1] = None;return;"
+            }
+        ]
+    },
+    "default_driver_statement": {
+        "prefix": "default_driver_statement",
+        "yacc": [
+            {
+                "clause": " DEFAULT_DRIVER lld_name;",
+                "func": "p[0] = tgtconf.DefaultDriver(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
             }
         ]
     },
@@ -12,7 +66,7 @@
         "prefix": "direct_store_declaration",
         "yacc": [
             {
-                "clause": " DIRECT_STORE path;",
+                "clause": " DIRECT_STORE path_part;",
                 "func": "p[0] = tgtconf.DirectStoreDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
             }
         ]
@@ -35,83 +89,52 @@
             }
         ]
     },
+    "host_name": {
+        "prefix": "host_name",
+        "yacc": [
+            {
+                "clause": " NUMBER; TEXT;",
+                "func": "p[0] = tgtconf.HostName(None,None,p.slice[1],p.slice[1]);p[0].start_value(p.slice[1].value);return;"
+            },
+            {
+                "clause": " host_name DOT; host_name NUMBER; host_name TEXT; host_name COLON;",
+                "func": "p[0] = p[1];p[0].append_value(p.slice[2].value);p[0].set_endpos(p.slice[2]);p[1] = None;return;"
+            }
+        ]
+    },
+    "ignore_errors_statement": {
+        "prefix": "ignore_errors_statement",
+        "yacc": [
+            {
+                "clause": " IGNORE_ERRORS YES; IGNORE_ERRORS NO;",
+                "func": "p[0] = tgtconf.IgnoreErrors(p.slice[2].value,p.slice[1],p.slice[2]);return;"
+            }
+        ]
+    },
     "include_statement": {
         "prefix": "include_statement",
         "yacc": [
             {
-                "clause": " INCLUDE path;",
+                "clause": " INCLUDE path_part;",
                 "func": "p[0] = tgtconf.IncludeStatement(p[2].get_path(),p.slice[1],p[2]);p[2] = None;return;"
             }
         ]
     },
-    "iqn_name": {
-        "prefix": "iqn_name",
+    "incoming_discovery_user_statement": {
+        "prefix": "incoming_discovery_user_statement",
         "yacc": [
             {
-                "clause": " TEXT; NUMBER;",
-                "func": "p[0] = tgtconf.IQNName(None,None,p.slice[1],p.slice[1]);p[0].start_name(p.slice[1].value);return;"
-            },
-            {
-                "clause": " iqn_name DOT TEXT; iqn_name DOT NUMBER; iqn_name COLON TEXT; iqn_name COLON NUMBER;",
-                "func": "p[0] = p[1];p[0].append_name(p.slice[2].value,p.slice[3].value);p[1] = None;return;"
+                "clause": " INCOMING_DISCOVERY_USER user password;",
+                "func": "p[0] = tgtconf.InComingDiscoveryUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);return;"
             }
         ]
     },
-    "lld_name": {
-        "prefix": "lld_name",
+    "incominguser_declaration": {
+        "prefix": "incominguser_declaration",
         "yacc": [
             {
-                "clause": " ISCSI; ISER;",
-                "func": "p[0] = tgtconf.LLDName(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "path": {
-        "prefix": "path",
-        "yacc": [
-            {
-                "clause": " NUMBER; TEXT; SLASH; STAR; DOT;",
-                "func": "p[0] = tgtconf.Path(None,None,p.slice[1],p.slice[1]);p[0].start_path(p.slice[1].value);return;"
-            },
-            {
-                "clause": " path SLASH; path NUMBER; path TEXT; path STAR; path DOT;",
-                "func": "p[0] = p[1];p[0].set_endpos(p.slice[2]);p[0].append_path(p.slice[2].value);p[1] = None;return;"
-            }
-        ]
-    },
-    "target_declarations": {
-        "prefix": "target_declarations",
-        "yacc": [
-            {
-                "clause": " empty; target_declarations target_declaration;",
-                "func": "if len(p) == 2:;{p[0] = tgtconf.TargetDeclarations(None,None,p[1],p[1]);p[1] = None;}elif len(p) == 3:;{p[0] = p[1].append_child_and_set_pos(p[2]);p[1] = None;p[2] = None;}return;"
-            }
-        ]
-    },
-    "target_prefix": {
-        "prefix": "target_prefix",
-        "yacc": [
-            {
-                "clause": " LBRACKET TARGET iqn_name RBRACKET;",
-                "func": "p[0] = p[3];p[0].set_startpos(p.slice[1]);p[0].set_endpos(p.slice[4]);p[3] = None;return;"
-            }
-        ]
-    },
-    "target_statement": {
-        "prefix": "target_statement",
-        "yacc": [
-            {
-                "clause": " target_prefix target_declarations target_suffix;",
-                "func": "p[0] = tgtconf.TargetStatement(None,None,p[1],p[3]);p[0].set_name(p[1]);p[0].append_child(p[2]);p[1] = None;p[2] = None;p[3] = None;logging.info('get target %s'%(repr(p[0])));return;"
-            }
-        ]
-    },
-    "target_suffix": {
-        "prefix": "target_suffix",
-        "yacc": [
-            {
-                "clause": " LBRACKET SLASH TARGET RBRACKET;",
-                "func": "p[0] = tgtconf.TargetSuffix(None,None,p.slice[1],p.slice[4]);return;"
+                "clause": " INCOMINGUSER user password;",
+                "func": "p[0] = tgtconf.IncomingUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);p[2] = None;p[3] = None;return;"
             }
         ]
     },
@@ -121,6 +144,15 @@
             {
                 "clause": " INITIATOR_ADDRESS ipaddr;",
                 "func": "p[0] = tgtconf.InitiatorAddress(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "initiator_name_declaration": {
+        "prefix": "initiator_name_declaration",
+        "yacc": [
+            {
+                "clause": " INITIATOR_NAME host_name;",
+                "func": "p[0] = tgtconf.InitiatorName(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
             }
         ]
     },
@@ -159,124 +191,16 @@
             }
         ]
     },
-    "host_name": {
-        "prefix": "host_name",
+    "iqn_name": {
+        "prefix": "iqn_name",
         "yacc": [
             {
-                "clause": " NUMBER; TEXT;",
-                "func": "p[0] = tgtconf.HostName(None,None,p.slice[1],p.slice[1]);p[0].start_value(p.slice[1].value);return;"
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.IQNName(None,None,p.slice[1],p.slice[1]);p[0].start_name(p.slice[1].value);return;"
             },
             {
-                "clause": " host_name DOT; host_name NUMBER; host_name TEXT; host_name COLON;",
-                "func": "p[0] = p[1];p[0].append_value(p.slice[2].value);p[0].set_endpos(p.slice[2]);p[1] = None;return;"
-            }
-        ]
-    },
-    "initiator_name_declaration": {
-        "prefix": "initiator_name_declaration",
-        "yacc": [
-            {
-                "clause": " INITIATOR_NAME host_name;",
-                "func": "p[0] = tgtconf.InitiatorName(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
-            }
-        ]
-    },
-    "incominguser_declaration": {
-        "prefix": "incominguser_declaration",
-        "yacc": [
-            {
-                "clause": " INCOMINGUSER user password;",
-                "func": "p[0] = tgtconf.IncomingUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);p[2] = None;p[3] = None;return;"
-            }
-        ]
-    },
-    "password": {
-        "prefix": "password",
-        "yacc": [
-            {
-                "clause": " TEXT;",
-                "func": "p[0] = tgtconf.Password(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "user": {
-        "prefix": "user",
-        "yacc": [
-            {
-                "clause": " TEXT;",
-                "func": "p[0] = tgtconf.User(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "outgoinguser_declaration": {
-        "prefix": "outgoinguser_declaration",
-        "yacc": [
-            {
-                "clause": " OUTGOINGUSER user password;",
-                "func": "p[0] = tgtconf.OutGoingUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);p[2] = None;p[3] = None;return;"
-            }
-        ]
-    },
-    "controller_tid_declaration": {
-        "prefix": "controller_tid_declaration",
-        "yacc": [
-            {
-                "clause": " CONTROLLER_TID tid;",
-                "func": "p[0] = tgtconf.ControllerTid(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[1] = None;return;"
-            }
-        ]
-    },
-    "tid": {
-        "prefix": "tid",
-        "yacc": [
-            {
-                "clause": " NUMBER;",
-                "func": "p[0] = tgtconf.Tid(None,None,p.slice[1],p.slice[1]);p[0].set_value(p.slice[1].value);return;"
-            }
-        ]
-    },
-    "default_driver_statement": {
-        "prefix": "default_driver_statement",
-        "yacc": [
-            {
-                "clause": " DEFAULT_DRIVER lld_name;",
-                "func": "p[0] = tgtconf.DefaultDriver(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
-            }
-        ]
-    },
-    "target_declaration": {
-        "prefix": "target_declaration",
-        "yacc": [
-            {
-                "clause": " backing_store_declaration; direct_store_declaration; driver_declaration; initiator_address_declaration; initiator_name_declaration; incominguser_declaration; outgoinguser_declaration; controller_tid_declaration;",
-                "func": "p[0] = p[1];p[1] = None;return;"
-            }
-        ]
-    },
-    "ignore_errors_statement": {
-        "prefix": "ignore_errors_statement",
-        "yacc": [
-            {
-                "clause": " IGNORE_ERRORS YES; IGNORE_ERRORS NO;",
-                "func": "p[0] = tgtconf.IgnoreErrors(p.slice[2].value,p.slice[1],p.slice[2]);return;"
-            }
-        ]
-    },
-    "control_port_statement": {
-        "prefix": "control_port_statement",
-        "yacc": [
-            {
-                "clause": " CONTROL_PORT NUMBER;",
-                "func": "p[0] = tgtconf.ControlPort(p.slice[2].value,p.slice[1],p.slice[2]);return;"
-            }
-        ]
-    },
-    "isns_server_ip_statement": {
-        "prefix": "isns_server_ip_statement",
-        "yacc": [
-            {
-                "clause": " ISNS_SERVER_IP ipaddr;",
-                "func": "p[0] = tgtconf.iSNSServerIP(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+                "clause": " iqn_name DOT TEXT; iqn_name DOT NUMBER; iqn_name COLON TEXT; iqn_name COLON NUMBER;",
+                "func": "p[0] = p[1];p[0].append_name(p.slice[2].value,p.slice[3].value);p[1] = None;return;"
             }
         ]
     },
@@ -286,6 +210,15 @@
             {
                 "clause": " ISNS_ACCESS_CONTROL ON; ISNS_ACCESS_CONTROL OFF;",
                 "func": "p[0] = tgtconf.iSNSAccessControl(p.slice[2].value,p.slice[1],p.slice[2]);return;"
+            }
+        ]
+    },
+    "isns_server_ip_statement": {
+        "prefix": "isns_server_ip_statement",
+        "yacc": [
+            {
+                "clause": " ISNS_SERVER_IP ipaddr;",
+                "func": "p[0] = tgtconf.iSNSServerIP(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
             }
         ]
     },
@@ -307,48 +240,12 @@
             }
         ]
     },
-    "incoming_discovery_user_statement": {
-        "prefix": "incoming_discovery_user_statement",
+    "lld_name": {
+        "prefix": "lld_name",
         "yacc": [
             {
-                "clause": " INCOMING_DISCOVERY_USER user password;",
-                "func": "p[0] = tgtconf.InComingDiscoveryUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);return;"
-            }
-        ]
-    },
-    "outgoing_discovery_user_statement": {
-        "prefix": "outgoing_discovery_user_statement",
-        "yacc": [
-            {
-                "clause": " OUTGOING_DISCOVERY_USER user password;",
-                "func": "p[0] = tgtconf.OutGoingDiscoveryUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);return;"
-            }
-        ]
-    },
-    "backing_store_lun_prefix": {
-        "prefix": "backing_store_lun_prefix",
-        "yacc": [
-            {
-                "clause": " LBRACKET BACKING_STORE path RBRACKET;",
-                "func": "p[0] = tgtconf.BackingStoreLunPrefix(None,None,p.slice[1],p.slice[4]);p[0].set_path(p[3]);p[3] = None;return;"
-            }
-        ]
-    },
-    "backing_store_lun_statement": {
-        "prefix": "backing_store_lun_statement",
-        "yacc": [
-            {
-                "clause": " backing_store_lun_prefix lun_declarations backing_store_lun_suffix;",
-                "func": "p[0] = tgtconf.BackingStoreLunStatement(None,None,p[1],p[3]);p[0].set_name(p[1]);p[0].append_child(p[2]);p[1] = None;p[2] = None;p[3] = None;return;"
-            }
-        ]
-    },
-    "backing_store_lun_suffix": {
-        "prefix": "backing_store_lun_suffix",
-        "yacc": [
-            {
-                "clause": " LBRACKET SLASH BACKING_STORE RBRACKET;",
-                "func": "p[0] = tgtconf.BackingStoreLunSuffix(None,None,p.slice[1],p.slice[4]);return;"
+                "clause": " ISCSI; ISER;",
+                "func": "p[0] = tgtconf.LLDName(p.slice[1].value,p.slice[1],p.slice[1]);return;"
             }
         ]
     },
@@ -361,66 +258,43 @@
             }
         ]
     },
-    "write_cache_lun_declaration": {
-        "prefix": "write_cache_lun_declaration",
+    "outgoing_discovery_user_statement": {
+        "prefix": "outgoing_discovery_user_statement",
         "yacc": [
             {
-                "clause": " WRITE_CACHE ON; WRITE_CACHE OFF;",
-                "func": "p[0] = tgtconf.WriteCache(p.slice[2].value,p.slice[1],p.slice[2]);return;"
+                "clause": " OUTGOING_DISCOVERY_USER user password;",
+                "func": "p[0] = tgtconf.OutGoingDiscoveryUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);return;"
             }
         ]
     },
-    "scsi_id_lun_declaration": {
-        "prefix": "scsi_id_lun_declaration",
+    "outgoinguser_declaration": {
+        "prefix": "outgoinguser_declaration",
         "yacc": [
             {
-                "clause": " SCSI_ID scsi_id_part;",
-                "func": "p[0] = tgtconf.ScsiIdLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+                "clause": " OUTGOINGUSER user password;",
+                "func": "p[0] = tgtconf.OutGoingUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);p[2] = None;p[3] = None;return;"
             }
         ]
     },
-    "scsi_id_part": {
-        "prefix": "scsi_id_part",
+    "password": {
+        "prefix": "password",
         "yacc": [
             {
-                "clause": " TEXT; NUMBER;",
-                "func": "p[0] = tgtconf.ScsiId(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+                "clause": " TEXT;",
+                "func": "p[0] = tgtconf.Password(p.slice[1].value,p.slice[1],p.slice[1]);return;"
             }
         ]
     },
-    "scsi_sn_lun_declaration": {
-        "prefix": "scsi_sn_lun_declaration",
+    "path_part": {
+        "prefix": "path_part",
         "yacc": [
             {
-                "clause": " SCSI_SN scsi_sn_part;",
-                "func": "p[0] = tgtconf.ScsiSnLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
-            }
-        ]
-    },
-    "scsi_sn_part": {
-        "prefix": "scsi_sn_part",
-        "yacc": [
+                "clause": " NUMBER; TEXT; SLASH; STAR; DOT;",
+                "func": "p[0] = tgtconf.Path(None,None,p.slice[1],p.slice[1]);p[0].start_path(p.slice[1].value);return;"
+            },
             {
-                "clause": " TEXT; NUMBER;",
-                "func": "p[0] = tgtconf.ScsiSn(p.slice[1].value,p.slice[1],p.slice[1]);return;"
-            }
-        ]
-    },
-    "vendor_id_lun_declaration": {
-        "prefix": "vendor_id_lun_declaration",
-        "yacc": [
-            {
-                "clause": " VENDOR_ID vendor_id_part;",
-                "func": "p[0] = tgtconf.VendorIdLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
-            }
-        ]
-    },
-    "vendor_id_part": {
-        "prefix": "vendor_id_part",
-        "yacc": [
-            {
-                "clause": " TEXT; NUMBER;",
-                "func": "p[0] = tgtconf.VendorId(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+                "clause": " path_part SLASH; path_part NUMBER; path_part TEXT; path_part STAR; path_part DOT;",
+                "func": "p[0] = p[1];p[0].set_endpos(p.slice[2]);p[0].append_path(p.slice[2].value);p[1] = None;return;"
             }
         ]
     },
@@ -464,6 +338,42 @@
             }
         ]
     },
+    "scsi_id_lun_declaration": {
+        "prefix": "scsi_id_lun_declaration",
+        "yacc": [
+            {
+                "clause": " SCSI_ID scsi_id_part;",
+                "func": "p[0] = tgtconf.ScsiIdLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "scsi_id_part": {
+        "prefix": "scsi_id_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.ScsiId(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "scsi_sn_lun_declaration": {
+        "prefix": "scsi_sn_lun_declaration",
+        "yacc": [
+            {
+                "clause": " SCSI_SN scsi_sn_part;",
+                "func": "p[0] = tgtconf.ScsiSnLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "scsi_sn_part": {
+        "prefix": "scsi_sn_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.ScsiSn(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "sense_format_lun_declaration": {
         "prefix": "sense_format_lun_declaration",
         "yacc": [
@@ -479,6 +389,123 @@
             {
                 "clause": " TEXT; NUMBER;",
                 "func": "p[0] = tgtconf.SenseFormat(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "target_declaration": {
+        "prefix": "target_declaration",
+        "yacc": [
+            {
+                "clause": " backing_store_declaration; direct_store_declaration; driver_declaration; initiator_address_declaration; initiator_name_declaration; incominguser_declaration; outgoinguser_declaration; controller_tid_declaration;",
+                "func": "p[0] = p[1];p[1] = None;return;"
+            }
+        ]
+    },
+    "target_declarations": {
+        "prefix": "target_declarations",
+        "yacc": [
+            {
+                "clause": " empty; target_declarations target_declaration;",
+                "func": "if len(p) == 2:;{p[0] = tgtconf.TargetDeclarations(None,None,p[1],p[1]);p[1] = None;}elif len(p) == 3:;{p[0] = p[1].append_child_and_set_pos(p[2]);p[1] = None;p[2] = None;}return;"
+            }
+        ]
+    },
+    "target_prefix": {
+        "prefix": "target_prefix",
+        "yacc": [
+            {
+                "clause": " LBRACKET TARGET iqn_name RBRACKET;",
+                "func": "p[0] = p[3];p[0].set_startpos(p.slice[1]);p[0].set_endpos(p.slice[4]);p[3] = None;return;"
+            }
+        ]
+    },
+    "target_statement": {
+        "prefix": "target_statement",
+        "yacc": [
+            {
+                "clause": " target_prefix target_declarations target_suffix;",
+                "func": "p[0] = tgtconf.TargetStatement(None,None,p[1],p[3]);p[0].set_name(p[1]);p[0].append_child(p[2]);p[1] = None;p[2] = None;p[3] = None;logging.info('get target %s'%(repr(p[0])));return;"
+            }
+        ]
+    },
+    "target_suffix": {
+        "prefix": "target_suffix",
+        "yacc": [
+            {
+                "clause": " LBRACKET SLASH TARGET RBRACKET;",
+                "func": "p[0] = tgtconf.TargetSuffix(None,None,p.slice[1],p.slice[4]);return;"
+            }
+        ]
+    },
+    "tid": {
+        "prefix": "tid",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.Tid(None,None,p.slice[1],p.slice[1]);p[0].set_value(p.slice[1].value);return;"
+            }
+        ]
+    },
+    "user": {
+        "prefix": "user",
+        "yacc": [
+            {
+                "clause": " TEXT;",
+                "func": "p[0] = tgtconf.User(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "vendor_id_lun_declaration": {
+        "prefix": "vendor_id_lun_declaration",
+        "yacc": [
+            {
+                "clause": " VENDOR_ID vendor_id_part;",
+                "func": "p[0] = tgtconf.VendorIdLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "vendor_id_part": {
+        "prefix": "vendor_id_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.VendorId(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "write_cache_lun_declaration": {
+        "prefix": "write_cache_lun_declaration",
+        "yacc": [
+            {
+                "clause": " WRITE_CACHE ON; WRITE_CACHE OFF;",
+                "func": "p[0] = tgtconf.WriteCache(p.slice[2].value,p.slice[1],p.slice[2]);return;"
+            }
+        ]
+    },
+    "path_lun_declaration": {
+        "prefix": "path_lun_declaration",
+        "yacc": [
+            {
+                "clause": " PATH path_part;",
+                "func": "p[0] = tgtconf.PathLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "removable_lun_declaration": {
+        "prefix": "removable_lun_declaration",
+        "yacc": [
+            {
+                "clause": " REMOVABLE removable_part;",
+                "func": "p[0] = tgtconf.RemovableLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "removable_part": {
+        "prefix": "removable_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.Removable(p.slice[1].value,p.slice[1],p.slice[1]);return;"
             }
         ]
     },
@@ -513,5 +540,7 @@
     "vendor_id" : "VENDOR_ID",
     "product_id" : "PRODUCT_ID",
     "product_rev" : "PRODUCT_REV" ,
-    "sense_format" : "SENSE_FORMAT"
+    "sense_format" : "SENSE_FORMAT",
+    "removable" : "REMOVABLE",
+    "path" : "PATH"
 }
