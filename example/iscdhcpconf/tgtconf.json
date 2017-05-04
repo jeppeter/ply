@@ -271,6 +271,15 @@
             }
         ]
     },
+    "isns_server_ip_statement": {
+        "prefix": "isns_server_ip_statement",
+        "yacc": [
+            {
+                "clause": " ISNS_SERVER_IP ipaddr;",
+                "func": "p[0] = tgtconf.iSNSServerIP(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -287,5 +296,6 @@
     "yes" : "YES",
     "no" : "NO",
     "ignore-errors" : "IGNORE_ERRORS",
-    "control-port" : "CONTROL_PORT"
+    "control-port" : "CONTROL_PORT",
+    "iSNSServerIP"  : "ISNS_SERVER_IP"
 }
