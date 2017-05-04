@@ -1061,3 +1061,117 @@ class VendorIdLunDeclaration(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'vendor_id %s\n'%(self.value_format())
 		return s
+
+class ProductId(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(ProductId,self).__init__(typename,None,startelm,endelm)
+		self.productid = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.productid is not None:
+			s += self.quote_safe(self.productid)
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class ProductIdLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(ProductIdLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'product_id %s\n'%(self.value_format())
+		return s
+
+class ProductRev(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(ProductRev,self).__init__(typename,children,startelm,endelm)
+		self.rev = None
+		return
+
+	def start_rev(self,value):
+		self.rev = value
+		return
+
+	def append_rev(self,value):
+		if self.rev is None:
+			raise Exception('not set rev yet')
+		self.rev += value
+		return
+
+	def value_format(self):
+		if self.rev is None:
+			raise Exception('not set rev yet')
+		return self.quote_safe(self.rev)
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class ProductRevLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(ProductRevLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		self.rev = None
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'product_rev %s\n'%(self.value_format())
+		return s
+
+
+class SenseFormat(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(SenseFormat,self).__init__(typename,None,startelm,endelm)
+		self.senseformat = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.senseformat is not None:
+			s += self.quote_safe(self.senseformat)
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class SenseFormatLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(SenseFormatLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'sense_format %s\n'%(self.value_format())
+		return s

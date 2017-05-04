@@ -424,6 +424,64 @@
             }
         ]
     },
+    "product_id_lun_declaration": {
+        "prefix": "product_id_lun_declaration",
+        "yacc": [
+            {
+                "clause": " PRODUCT_ID product_id_part;",
+                "func": "p[0] = tgtconf.ProductIdLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "product_id_part": {
+        "prefix": "product_id_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.ProductId(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "product_rev_lun_declaration": {
+        "prefix": "product_rev_lun_declaration",
+        "yacc": [
+            {
+                "clause": " PRODUCT_REV product_rev_part;",
+                "func": "p[0] = tgtconf.ProductRevLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "product_rev_part": {
+        "prefix": "product_rev_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.ProductRev(None,None,p.slice[1],p.slice[1]);p[0].start_rev(p.slice[1].value);return;"
+            },
+            {
+                "clause": " product_rev_part DOT; product_rev_part NUMBER; product_rev_part TEXT;",
+                "func": "p[0] = p[1];p[0].append_rev(p.slice[2].value);p[0].set_endpos(p.slice[2]);p[1] = None;return;"
+            }
+        ]
+    },
+    "sense_format_lun_declaration": {
+        "prefix": "sense_format_lun_declaration",
+        "yacc": [
+            {
+                "clause": " SENSE_FORMAT sense_format_part;",
+                "func": "p[0] = tgtconf.SenseFormatLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "sense_format_part": {
+        "prefix": "sense_format_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.SenseFormat(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -452,5 +510,8 @@
     "write-cache" : "WRITE_CACHE",
     "scsi_id" : "SCSI_ID",
     "scsi_sn" : "SCSI_SN" ,
-    "vendor_id" : "VENDOR_ID"
+    "vendor_id" : "VENDOR_ID",
+    "product_id" : "PRODUCT_ID",
+    "product_rev" : "PRODUCT_REV" ,
+    "sense_format" : "SENSE_FORMAT"
 }

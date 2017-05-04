@@ -80,10 +80,14 @@ class TgtYacc(TgtConfigYacc):
                    | scsi_id_lun_declaration
                    | scsi_sn_lun_declaration
                    | vendor_id_lun_declaration
+                   | product_id_lun_declaration
+                   | product_rev_lun_declaration
+                   | sense_format_lun_declaration
         '''
         p[0] = p[1]
         p[1] = None
         return
+
 
     def format_config(self,tabs=0):
         s = ''
