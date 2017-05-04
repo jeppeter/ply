@@ -3,6 +3,7 @@
 
 import sys
 import logging
+import subprocess
 
 def read_file(infile=None):
 	fin = sys.stdin
@@ -50,3 +51,26 @@ def write_file(s,outfile=None):
         fout.close()
     fout = None
     return
+
+def expand_files(c):
+	cmds = 'ls -a %s'%(c)
+	p = subprocess.Popen('/bin/bash',shell=False,stdout=subprocess.PIPE,stdin=subprocess.PIPE)
+	retfiles = []
+	boutmod = False
+	binmod = False
+	if 'b' in p.stdout.mode:
+		boutmod = True
+	if 'b' in p.stdin.mode:
+		binmod = True
+	if binmod and sys.version[0] != '2':
+		cmds = cmds.encode(encoding='UTF-8')
+	p.stdin.write(cmds)
+	p.stdin.close()
+	for l in p.stdout:
+		if sys.version[0] != '2' and boutmod:
+			l = l.decode(encoding='UTF-8')
+		l = l.rstrip('\r\n')
+		retfiles.append(l)
+	p.stdout.close()
+	p = None
+	return retfiles

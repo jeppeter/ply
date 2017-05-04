@@ -19,7 +19,7 @@ _insert_path(os.path.dirname(os.path.realpath(__file__)),'..','..')
 _insert_path(os.path.dirname(os.path.realpath(__file__)))
 import ply.yacc as yacc
 import tgtlex as tgtlex
-from cmnfile import read_file,set_logging
+from cmnfile import read_file,set_logging,expand_files
 import tgtconf
 import location
 
@@ -152,6 +152,8 @@ class TgtYacc(TgtConfigYacc):
         ''' path : NUMBER
                 | TEXT
                 | SLASH
+                | STAR
+                | DOT
         '''
         p[0] = tgtconf.Path(None,None,p.slice[1],p.slice[1])
         p[0].start_path(p.slice[1].value)
@@ -161,6 +163,8 @@ class TgtYacc(TgtConfigYacc):
         ''' path : path SLASH
                 | path NUMBER
                 | path TEXT
+                | path STAR
+                | path DOT
         '''
         p[0] = p[1]
         p[0].set_endpos(p.slice[2])

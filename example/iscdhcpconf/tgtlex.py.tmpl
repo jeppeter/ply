@@ -18,7 +18,9 @@ def _insert_path(path,*args):
 _insert_path(os.path.dirname(os.path.realpath(__file__)),'..','..')
 _insert_path(os.path.dirname(os.path.realpath(__file__)))
 import ply.lex as lex
-from cmnfile import set_logging,read_file
+from cmnfile import set_logging,read_file,expand_files
+
+
 
 def tgtlex_input(self,s,filename='<string>'):
 	if getattr(self,'linepos',None) is not None:
@@ -76,13 +78,11 @@ def tgtlex_lasttoken(self,tok):
 class TgtConfigLex(object):pass
 
 class TgtLex(TgtConfigLex):
-	tokens = ['COMMENT','TEXT','LBRACKET','RBRACKET','DQUOTE','SLASH','NUMBER','DOT','COLON']
+	tokens = ['COMMENT','TEXT','LBRACKET','RBRACKET','DQUOTE','SLASH','NUMBER','DOT','COLON','STAR']
 	t_ignore = ' \t'
 	t_dquote_ignore = ''
-	t_comment_ignore = ''
 	states = (
 		('dquote','exclusive'),
-		('comment','exclusive'),
 	)
 	def __init__(self):
 		super(TgtLex,self).__init__()
@@ -93,30 +93,22 @@ class TgtLex(TgtConfigLex):
 
 	@lex.TOKEN(r'\#')
 	def t_COMMENT(self,p):
-		self.commented = 1
-		p.lexer.push_state('comment')
-		return None
-
-	def t_comment_error(self,p):
-		raise Exception('comment error')
-		return
-
-	@lex.TOKEN('.')
-	def t_comment_TEXT(self,p):
 		curpos = p.lexer.lexpos
 		maxpos = len(p.lexer.lexdata)
+		logging.info('curpos %d maxpos %d'%(curpos,maxpos))
 		while curpos < maxpos:
 			curch = p.lexer.lexdata[curpos]
+			logging.info('[%s:%s] %s'%(p.lexer.lineno,(curpos - p.lexer.linepos),repr(curch)))
 			if curch == '\n':
 				curpos += 1
 				p.lexer.lineno += 1
 				p.lexer.linepos = curpos
 				break
 			curpos += 1
-		self.comment = 0
-		p.lexer.pop_state()
 		p.lexer.lexpos = curpos
 		return None
+
+
 
 	@lex.TOKEN(r'\<')
 	def t_LBRACKET(self,p):
@@ -129,6 +121,15 @@ class TgtLex(TgtConfigLex):
 
 	@lex.TOKEN(r'\.')
 	def t_DOT(self,p):
+		p.startline = p.lexer.lineno
+		p.startpos = p.lexer.lexpos - len(p.value)
+		p.endline = p.startline
+		p.endpos = p.lexer.lexpos
+		p.filename = p.lexer.filename
+		return p
+
+	@lex.TOKEN(r'\*')
+	def t_STAR(self,p):
 		p.startline = p.lexer.lineno
 		p.startpos = p.lexer.lexpos - len(p.value)
 		p.endline = p.startline
@@ -231,7 +232,7 @@ class TgtLex(TgtConfigLex):
 	def t_dquote_error(self,p):
 		raise Exception('could make dquote (%s)'%(repr(p)))
 
-	@lex.TOKEN(r'[a-zA-Z_0-9][a-zA-Z_0-9]*')
+	@lex.TOKEN(r'[a-zA-Z_0-9]+')
 	def t_TEXT(self,p):
 		# now to check whether it is the value of next is -
 		selectval = None
@@ -318,8 +319,10 @@ class TgtLex(TgtConfigLex):
 		if lasttok is not None:
 			lexer.lasttoken(lasttok)
 		if len(file) > 0:
-			s = read_file(file)
-			lexer.input(s,file)
+			retfiles = expand_files(file)
+			for f in retfiles:
+				s = read_file(f)
+				lexer.input(s,f)
 		return
 
 	def build_tokens(self,s,fname,**kwargs):
@@ -340,7 +343,9 @@ class TgtLex(TgtConfigLex):
 			if includefile :
 				if tok.type == 'TEXT' or \
 					tok.type == 'SLASH' or \
-					tok.type == 'NUMBER':
+					tok.type == 'NUMBER' or \
+					tok.type == 'STAR' or \
+					tok.type == 'DOT' :
 					includepath += tok.value
 					rettokens.append(tok)
 				else:
