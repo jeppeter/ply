@@ -235,6 +235,24 @@
             }
         ]
     },
+    "default_driver_statement": {
+        "prefix": "default_driver_statement",
+        "yacc": [
+            {
+                "clause": " DEFAULT_DRIVER lld_name;",
+                "func": "p[0] = tgtconf.DefaultDriver(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "target_declaration": {
+        "prefix": "target_declaration",
+        "yacc": [
+            {
+                "clause": " backing_store_declaration; direct_store_declaration; driver_declaration; initiator_address_declaration; initiator_name_declaration; incominguser_declaration; outgoinguser_declaration; controller_tid_declaration;",
+                "func": "p[0] = p[1];p[1] = None;return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -246,5 +264,6 @@
     "initiator-name" : "INITIATOR_NAME",
     "incominguser" : "INCOMINGUSER",
     "outgoinguser" : "OUTGOINGUSER",
-    "controller_tid" : "CONTROLLER_TID"
+    "controller_tid" : "CONTROLLER_TID",
+    "default-driver" : "DEFAULT_DRIVER"
 }

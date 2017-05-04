@@ -56,21 +56,7 @@ class TgtYacc(TgtConfigYacc):
     def p_statement_0(self,p):
         ''' statement : include_statement
                 | target_statement
-        '''
-        p[0] = p[1]
-        p[1] = None
-        return
-
-
-    def p_target_declaration_0(self,p):
-        ''' target_declaration : backing_store_declaration
-                  | direct_store_declaration
-                  | driver_declaration
-                  | initiator_address_declaration
-                  | initiator_name_declaration
-                  | incominguser_declaration
-                  | outgoinguser_declaration
-                  | controller_tid_declaration
+                | default_driver_statement
         '''
         p[0] = p[1]
         p[1] = None
