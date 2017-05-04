@@ -166,5 +166,6 @@
     "iscsi" : "ISCSI",
     "iser" : "ISER" ,
     "driver" : "DRIVER",
-    "initiator-address" : "INITIATOR_ADDRESS"
+    "initiator-address" : "INITIATOR_ADDRESS",
+    "initiator-name" : "INITIATOR_NAME"
 }

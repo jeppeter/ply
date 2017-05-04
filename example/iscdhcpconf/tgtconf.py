@@ -542,3 +542,49 @@ class InitiatorAddress(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'initiator-address %s\n'%(self.value_format())
 		return s
+
+
+class HostName(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(HostName,self).__init__(typename,children,startelm,endelm)
+		self.hostname = None
+		return
+
+	def start_value(self,value):
+		self.hostname = value
+		return
+
+	def append_value(self,value):
+		if self.hostname is None:
+			raise Exception('not set hostname yet')
+		self.hostname += value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.hostname is not None:
+			s = self.hostname
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class InitiatorName(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(InitiatorName,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'initiator-name %s\n'%(self.value_format())
+		return s

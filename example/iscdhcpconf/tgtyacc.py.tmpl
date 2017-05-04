@@ -67,8 +67,37 @@ class TgtYacc(TgtConfigYacc):
                   | direct_store_declaration
                   | driver_declaration
                   | initiator_address_declaration
+                  | initiator_name_declaration
         '''
         p[0] = p[1]
+        p[1] = None
+        return
+
+    def p_initiator_name_declaration_0(self,p):
+        ''' initiator_name_declaration : INITIATOR_NAME host_name
+        '''
+        p[0] = tgtconf.InitiatorName(None,None,p.slice[1],p[2])
+        p[0].append_child(p[2])
+        p[2] = None
+        return
+
+    def p_host_name_0(self,p):
+        ''' host_name : NUMBER 
+                 | TEXT
+        '''
+        p[0] = tgtconf.HostName(None,None,p.slice[1],p.slice[1])
+        p[0].start_value(p.slice[1].value)
+        return
+
+    def p_host_name_1(self,p):
+        ''' host_name : host_name DOT
+                 | host_name NUMBER
+                 | host_name TEXT
+                 | host_name COLON
+        '''
+        p[0] = p[1]
+        p[0].append_value(p.slice[2].value)
+        p[0].set_endpos(p.slice[2])
         p[1] = None
         return
 
