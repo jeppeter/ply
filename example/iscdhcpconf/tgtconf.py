@@ -588,3 +588,57 @@ class InitiatorName(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'initiator-name %s\n'%(self.value_format())
 		return s
+
+
+class User(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(User,self).__init__(typename,None,startelm,endelm)
+		self.user = value
+		return
+
+	def value_format(self):
+		s = '""'
+		if self.user is not None:
+			s = self.quoted_string(self.user)
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class Password(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(Password,self).__init__(typename,None,startelm,endelm)
+		self.password = value
+		return
+
+	def value_format(self):
+		s = '""'
+		if self.password is not None:
+			s = self.quoted_string(self.password)
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+
+class IncomingUser(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(IncomingUser,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 1:
+			s += self.children[0].value_format()
+			s += ' '
+			s += self.children[1].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'incominguser %s\n'%(self.value_format())
+		return s

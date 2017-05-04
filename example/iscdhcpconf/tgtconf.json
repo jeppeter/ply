@@ -159,6 +159,55 @@
             }
         ]
     },
+    "host_name": {
+        "prefix": "host_name",
+        "yacc": [
+            {
+                "clause": " NUMBER; TEXT;",
+                "func": "p[0] = tgtconf.HostName(None,None,p.slice[1],p.slice[1]);p[0].start_value(p.slice[1].value);return;"
+            },
+            {
+                "clause": " host_name DOT; host_name NUMBER; host_name TEXT; host_name COLON;",
+                "func": "p[0] = p[1];p[0].append_value(p.slice[2].value);p[0].set_endpos(p.slice[2]);p[1] = None;return;"
+            }
+        ]
+    },
+    "initiator_name_declaration": {
+        "prefix": "initiator_name_declaration",
+        "yacc": [
+            {
+                "clause": " INITIATOR_NAME host_name;",
+                "func": "p[0] = tgtconf.InitiatorName(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "incominguser_declaration": {
+        "prefix": "incominguser_declaration",
+        "yacc": [
+            {
+                "clause": " INCOMINGUSER user password;",
+                "func": "p[0] = tgtconf.IncomingUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);p[2] = None;p[3] = None;return;"
+            }
+        ]
+    },
+    "password": {
+        "prefix": "password",
+        "yacc": [
+            {
+                "clause": " TEXT;",
+                "func": "p[0] = tgtconf.Password(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "user": {
+        "prefix": "user",
+        "yacc": [
+            {
+                "clause": " TEXT;",
+                "func": "p[0] = tgtconf.User(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -167,5 +216,6 @@
     "iser" : "ISER" ,
     "driver" : "DRIVER",
     "initiator-address" : "INITIATOR_ADDRESS",
-    "initiator-name" : "INITIATOR_NAME"
+    "initiator-name" : "INITIATOR_NAME",
+    "incominguser" : "INCOMINGUSER"
 }
