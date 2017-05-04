@@ -509,6 +509,100 @@
             }
         ]
     },
+    "allow_in_use_lun_declaration": {
+        "prefix": "allow_in_use_lun_declaration",
+        "yacc": [
+            {
+                "clause": " ALLOW_IN_USE allow_in_use_part;",
+                "func": "p[0] = tgtconf.AllowInUseLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "allow_in_use_part": {
+        "prefix": "allow_in_use_part",
+        "yacc": [
+            {
+                "clause": " YES; NO;",
+                "func": "p[0] = tgtconf.AllowInUse(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "bs_type_lun_declaration": {
+        "prefix": "bs_type_lun_declaration",
+        "yacc": [
+            {
+                "clause": " BS_TYPE bs_type_part;",
+                "func": "p[0] = tgtconf.BsTypeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "bs_type_part": {
+        "prefix": "bs_type_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.BsType(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "device_type_lun_declaration": {
+        "prefix": "device_type_lun_declaration",
+        "yacc": [
+            {
+                "clause": " DEVICE_TYPE device_type_part;",
+                "func": "p[0] = tgtconf.DeviceTypeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "device_type_part": {
+        "prefix": "device_type_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.DeviceType(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "mode_page_lun_declaration": {
+        "prefix": "mode_page_lun_declaration",
+        "yacc": [
+            {
+                "clause": " MODE_PAGE mode_page_part;",
+                "func": "p[0] = tgtconf.ModePageLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "mode_page_part": {
+        "prefix": "mode_page_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.ModePage(None,None,p.slice[1],p.slice[1]);p[0].start_value(p.slice[1].value);return;"
+            },
+            {
+                "clause": " mode_page_part TEXT; mode_page_part NUMBER; mode_page_part COLON;",
+                "func": "p[0] = p[1];p[0].append_value(p.slice[2].value);p[0].set_endpos(p.slice[2]);p[1] = None;return;"
+            }
+        ]
+    },
+    "readonly_lun_declaration": {
+        "prefix": "readonly_lun_declaration",
+        "yacc": [
+            {
+                "clause": " READONLY readonly_part;",
+                "func": "p[0] = tgtconf.ReadOnlyLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "readonly_part": {
+        "prefix": "readonly_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.ReadOnly(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -542,5 +636,10 @@
     "product_rev" : "PRODUCT_REV" ,
     "sense_format" : "SENSE_FORMAT",
     "removable" : "REMOVABLE",
-    "path" : "PATH"
+    "path" : "PATH",
+    "mode_page" : "MODE_PAGE",
+    "readonly" : "READONLY" ,
+    "device-type" : "DEVICE_TYPE",
+    "bs-type" : "BS_TYPE",
+    "allow-in-use" : "ALLOW_IN_USE"
 }

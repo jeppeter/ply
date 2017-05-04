@@ -1228,3 +1228,191 @@ class PathLunDeclaration(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'path %s\n'%(self.value_format())
 		return s
+
+class ModePage(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(ModePage,self).__init__(typename,None,startelm,endelm)
+		self.modepage = None
+		return
+
+	def start_value(self,value):
+		self.modepage = value
+		return
+
+	def append_value(self,value):
+		if self.modepage is None:
+			raise Exception('not set modepage yet')
+		self.modepage += value
+		return
+
+
+	def value_format(self):
+		if self.modepage is None:
+			raise Exception('not set modepage yet')
+		s = ''
+		if self.modepage is not None:
+			s += self.modepage
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class ModePageLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(ModePageLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'mode_page %s\n'%(self.value_format())
+		return s
+
+class ReadOnly(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(ReadOnly,self).__init__(typename,None,startelm,endelm)
+		self.readonly = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.readonly is not None:
+			s += self.quote_safe(self.readonly)
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class ReadOnlyLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(ReadOnlyLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'readonly %s\n'%(self.value_format())
+		return s
+
+
+class DeviceType(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(DeviceType,self).__init__(typename,None,startelm,endelm)
+		self.devicetype = value
+		return
+
+
+	def value_format(self):
+		if self.devicetype is None:
+			raise Exception('not set devicetype yet')
+		s = ''
+		if self.devicetype is not None:
+			s += self.devicetype
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class DeviceTypeLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(DeviceTypeLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'device-type %s\n'%(self.value_format())
+		return s
+
+class BsType(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(BsType,self).__init__(typename,None,startelm,endelm)
+		self.bstype = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.bstype is not None:
+			s += self.bstype
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class BsTypeLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(BsTypeLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'bs-type %s\n'%(self.value_format())
+		return s
+
+class AllowInUse(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(AllowInUse,self).__init__(typename,None,startelm,endelm)
+		self.allowinuse = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.allowinuse is not None:
+			s += self.allowinuse
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class AllowInUseLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(AllowInUseLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'allow-in-use %s\n'%(self.value_format())
+		return s
