@@ -62,6 +62,7 @@ class TgtYacc(TgtConfigYacc):
                 | isns_server_ip_statement
                 | isns_access_control_statement
                 | isns_server_port_statement
+                | isns_statement
         '''
         p[0] = p[1]
         p[1] = None

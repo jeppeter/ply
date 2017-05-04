@@ -811,3 +811,21 @@ class iSNSServerPort(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'iSNSServerPort %s\n'%(self.value_format())
 		return s
+
+class iSNS(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(iSNS,self).__init__(typename,None,startelm,endelm)
+		self.mode = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.mode is not None:
+			s += self.mode
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'iSNS %s\n'%(self.value_format())
+		return s

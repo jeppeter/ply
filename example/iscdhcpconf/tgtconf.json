@@ -298,6 +298,15 @@
             }
         ]
     },
+    "isns_statement": {
+        "prefix": "isns_statement",
+        "yacc": [
+            {
+                "clause": " ISNS ON; ISNS OFF;",
+                "func": "p[0] = tgtconf.iSNS(p.slice[2].value,p.slice[1],p.slice[2]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -319,5 +328,6 @@
     "iSNSAccessControl" : "ISNS_ACCESS_CONTROL",
     "on" : "ON",
     "off" : "OFF",
-    "iSNSServerPort" : "ISNS_SERVER_PORT"
+    "iSNSServerPort" : "ISNS_SERVER_PORT",
+    "iSNS" : "ISNS"
 }
