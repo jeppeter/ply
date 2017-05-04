@@ -262,6 +262,15 @@
             }
         ]
     },
+    "control_port_statement": {
+        "prefix": "control_port_statement",
+        "yacc": [
+            {
+                "clause": " CONTROL_PORT NUMBER;",
+                "func": "p[0] = tgtconf.ControlPort(p.slice[2].value,p.slice[1],p.slice[2]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -277,5 +286,6 @@
     "default-driver" : "DEFAULT_DRIVER",
     "yes" : "YES",
     "no" : "NO",
-    "ignore-errors" : "IGNORE_ERRORS"
+    "ignore-errors" : "IGNORE_ERRORS",
+    "control-port" : "CONTROL_PORT"
 }

@@ -739,3 +739,21 @@ class IgnoreErrors(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'ignore-errors %s\n'%(self.value_format())
 		return s
+
+class ControlPort(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(ControlPort,self).__init__(typename,None,startelm,endelm)
+		self.controlport = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.controlport is not None:
+			s += self.controlport
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'control-port %s\n'%(self.value_format())
+		return s
