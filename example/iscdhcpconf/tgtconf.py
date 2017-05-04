@@ -1621,3 +1621,61 @@ class ParamsLunDeclaration(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'params %s\n'%(self.value_format())
 		return s
+
+class DirectStoreLunSuffix(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(DirectStoreLunSuffix,self).__init__(typename,children,startelm,endelm)
+		return
+
+class DirectStoreLunPrefix(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(DirectStoreLunPrefix,self).__init__(typename,children,startelm,endelm)
+		self.path = None
+		return
+
+	def set_path(self,p):
+		if not isinstance(p,object) or not issubclass(p.__class__,Path):
+			raise Exception('p [%s] not path'%(repr(p)))
+		self.path = p
+		return
+
+	def value_format(self):
+		if self.path is None:
+			raise Exception('not set path yet')
+		return self.path.value_format()
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+
+class DirectStoreLunStatement(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(DirectStoreLunStatement,self).__init__(typename,children,startelm,endelm)
+		self.name = None
+		return
+
+	def set_name(self,p):
+		if not isinstance(p,object) or not issubclass(p.__class__,DirectStoreLunPrefix):
+			raise Exception('p [%s] not path'%(repr(p)))
+		self.name = p
+		return
+
+	def value_format(self):
+		return ''
+
+	def format_config(self,tabs=0):
+		if self.name is None:
+			raise Exception('not set name yet')
+		s = ''
+		s += ' ' * tabs * 4
+		s += '<direct-store %s>\n'%(self.name.value_format())
+		s += self.format_children_config((tabs + 1))
+		s += ' ' * tabs * 4
+		s += '</direct-store>\n'
+		return s

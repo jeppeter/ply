@@ -711,6 +711,60 @@
             }
         ]
     },
+    "direct_store_lun_prefix": {
+        "prefix": "direct_store_lun_prefix",
+        "yacc": [
+            {
+                "clause": " LBRACKET DIRECT_STORE path_part RBRACKET;",
+                "func": "p[0] = tgtconf.DirectStoreLunPrefix(None,None,p.slice[1],p.slice[4]);p[0].set_path(p[3]);p[3] = None;return;"
+            }
+        ]
+    },
+    "direct_store_lun_statement": {
+        "prefix": "direct_store_lun_statement",
+        "yacc": [
+            {
+                "clause": " direct_store_lun_prefix lun_declarations direct_store_lun_suffix;",
+                "func": "p[0] = tgtconf.DirectStoreLunStatement(None,None,p[1],p[3]);p[0].set_name(p[1]);p[0].append_child(p[2]);p[1] = None;p[2] = None;p[3] = None;return;"
+            }
+        ]
+    },
+    "direct_store_lun_suffix": {
+        "prefix": "direct_store_lun_suffix",
+        "yacc": [
+            {
+                "clause": " LBRACKET SLASH DIRECT_STORE RBRACKET;",
+                "func": "p[0] = tgtconf.DirectStoreLunSuffix(None,None,p.slice[1],p.slice[4]);return;"
+            }
+        ]
+    },
+    "lun_declaration": {
+        "prefix": "lun_declaration",
+        "yacc": [
+            {
+                "clause": " write_cache_lun_declaration; scsi_id_lun_declaration; scsi_sn_lun_declaration; vendor_id_lun_declaration; product_id_lun_declaration; product_rev_lun_declaration; sense_format_lun_declaration; removable_lun_declaration; path_lun_declaration; mode_page_lun_declaration; readonly_lun_declaration; device_type_lun_declaration; bs_type_lun_declaration; allow_in_use_lun_declaration; block_size_lun_declaration; llppbe_lun_declaration; la_lba_lun_declaration; optimal_xfer_gran_lun_declaration; optimal_xfer_len_lun_declaration; params_lun_declaration;",
+                "func": "p[0] = p[1];p[1] = None;return;"
+            }
+        ]
+    },
+    "statement": {
+        "prefix": "statement",
+        "yacc": [
+            {
+                "clause": " include_statement; target_statement; default_driver_statement; ignore_errors_statement; control_port_statement; isns_server_ip_statement; isns_access_control_statement; isns_server_port_statement; isns_statement; incoming_discovery_user_statement; outgoing_discovery_user_statement; backing_store_lun_statement; direct_store_lun_statement;",
+                "func": "p[0] = p[1];p[1] = None;return;"
+            }
+        ]
+    },
+    "statements": {
+        "prefix": "statements",
+        "yacc": [
+            {
+                "clause": " empty; statements statement;",
+                "func": "if len(p) == 2:;{p[0] = tgtconf.Statements(None,None,p[1],p[1]);p[1] = None;}elif len(p) == 3:;{logging.info('p[2] filename %s'%(p[2].filename));p[0] = p[1].append_child_and_set_pos(p[2]);p[1] = None;p[2] = None;}self.set_statements(p[0]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",

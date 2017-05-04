@@ -38,66 +38,6 @@ class TgtYacc(TgtConfigYacc):
         self.statements = p
         return
 
-    def p_statements_0(self,p):
-        ''' statements : empty
-                  | statements statement
-        '''
-        if len(p) == 2:
-            p[0] = tgtconf.Statements(None,None,p[1],p[1])
-            p[1] = None
-        elif len(p) == 3:
-            logging.info('p[2] filename %s'%(p[2].filename))
-            p[0] = p[1].append_child_and_set_pos(p[2])
-            p[1] = None
-            p[2] = None
-        self.set_statements(p[0])
-        return
-
-    def p_statement_0(self,p):
-        ''' statement : include_statement
-                | target_statement
-                | default_driver_statement
-                | ignore_errors_statement
-                | control_port_statement
-                | isns_server_ip_statement
-                | isns_access_control_statement
-                | isns_server_port_statement
-                | isns_statement
-                | incoming_discovery_user_statement
-                | outgoing_discovery_user_statement
-                | backing_store_lun_statement
-        '''
-        p[0] = p[1]
-        p[1] = None
-        return
-
-
-    def p_lun_declaration_0(self,p):
-        ''' lun_declaration : write_cache_lun_declaration
-                   | scsi_id_lun_declaration
-                   | scsi_sn_lun_declaration
-                   | vendor_id_lun_declaration
-                   | product_id_lun_declaration
-                   | product_rev_lun_declaration
-                   | sense_format_lun_declaration
-                   | removable_lun_declaration
-                   | path_lun_declaration
-                   | mode_page_lun_declaration
-                   | readonly_lun_declaration
-                   | device_type_lun_declaration
-                   | bs_type_lun_declaration
-                   | allow_in_use_lun_declaration
-                   | block_size_lun_declaration
-                   | llppbe_lun_declaration
-                   | la_lba_lun_declaration
-                   | optimal_xfer_gran_lun_declaration
-                   | optimal_xfer_len_lun_declaration
-                   | params_lun_declaration
-        '''
-        p[0] = p[1]
-        p[1] = None
-        return
-
 
     def format_config(self,tabs=0):
         s = ''
