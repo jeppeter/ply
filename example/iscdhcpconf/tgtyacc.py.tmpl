@@ -61,131 +61,17 @@ class TgtYacc(TgtConfigYacc):
         p[1] = None
         return
 
-    def p_include_statement_0(self,p):
-        ''' include_statement : INCLUDE path
-        '''
-        p[0] = tgtconf.IncludeStatement(p[2].get_path(),p.slice[1],p[2])
-        p[2] = None
-        return
-
-    def p_target_statement_0(self,p):
-        ''' target_statement : target_prefix target_declarations target_suffix
-        '''
-        p[0] = tgtconf.TargetStatement(None,None,p[1],p[3])
-        p[0].set_name(p[1])
-        p[0].append_child(p[2])
-        p[1] = None
-        p[2] = None
-        p[3] = None
-        logging.info('get target %s'%(repr(p[0])))
-        return
-
-    def p_target_prefix_0(self,p):
-        ''' target_prefix : LBRACKET TARGET iqn_name RBRACKET
-        '''
-        p[0] = p[3]
-        p[0].set_startpos(p.slice[1])
-        p[0].set_endpos(p.slice[4])
-        p[3] = None
-        return
-
-    def p_iqn_name_0(self,p):
-        ''' iqn_name : TEXT
-             | NUMBER
-        '''
-        p[0] = tgtconf.IQNName(None,None,p.slice[1],p.slice[1])
-        p[0].start_name(p.slice[1].value)
-        return
-
-    def p_iqn_name_1(self,p):
-        ''' iqn_name : iqn_name DOT TEXT
-                 | iqn_name DOT NUMBER
-                 | iqn_name COLON TEXT
-                 | iqn_name COLON NUMBER
-        '''
-        p[0] = p[1]
-        p[0].append_name(p.slice[2].value,p.slice[3].value)
-        p[1] = None
-        return
-
-    def p_target_suffix_0(self,p):
-        ''' target_suffix : LBRACKET SLASH TARGET RBRACKET
-        '''
-        p[0] = tgtconf.TargetSuffix(None,None,p.slice[1],p.slice[4])
-        return
-
-    def p_target_declarations_0(self,p):
-        ''' target_declarations : empty
-                  | target_declarations target_declaration
-        '''
-        if len(p) == 2:
-            p[0] = tgtconf.TargetDeclarations(None,None,p[1],p[1])
-            p[1] = None
-        elif len(p) == 3:
-            p[0] = p[1].append_child_and_set_pos(p[2])
-            p[1] = None
-            p[2] = None
-        return
 
     def p_target_declaration_0(self,p):
         ''' target_declaration : backing_store_declaration
                   | direct_store_declaration
+                  | driver_declaration
         '''
         p[0] = p[1]
         p[1] = None
         return
 
-    def p_backing_store_declaration_0(self,p):
-        ''' backing_store_declaration : BACKING_STORE path
-                   | BACKING_STORE
-        '''
-        if len(p) == 3:
-            logging.info('get 3 backing_store_declaration')
-            p[0] = tgtconf.BackingStoreDeclaration(None,None,p.slice[1],p[2])
-            p[0].append_child(p[2])
-            p[2] = None
-        elif len(p) == 2:
-            p[0] = tgtconf.BackingStoreDeclaration(None,None,p.slice[1],p.slice[1])
-        return
 
-    def p_path_0(self,p):
-        ''' path : NUMBER
-                | TEXT
-                | SLASH
-                | STAR
-                | DOT
-        '''
-        p[0] = tgtconf.Path(None,None,p.slice[1],p.slice[1])
-        p[0].start_path(p.slice[1].value)
-        return
-
-    def p_path_1(self,p):
-        ''' path : path SLASH
-                | path NUMBER
-                | path TEXT
-                | path STAR
-                | path DOT
-        '''
-        p[0] = p[1]
-        p[0].set_endpos(p.slice[2])
-        p[0].append_path(p.slice[2].value)
-        p[1] = None
-        return
-
-    def p_direct_store_declaration_0(self,p):
-        ''' direct_store_declaration : DIRECT_STORE path
-        '''
-        p[0] = tgtconf.DirectStoreDeclaration(None,None,p.slice[1],p[2])
-        p[0].append_child(p[2])
-        p[2] = None
-        return
-
-    def p_empty_0(self,p):
-        ''' empty :
-        '''
-        startpos = location.Location(p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos),p.lexer.lineno,(p.lexer.lexpos-p.lexer.linepos))
-        p[0] = tgtconf.YaccDhcpObject('Empty',None,startpos,startpos)
-        return
 
     def format_config(self,tabs=0):
         s = ''

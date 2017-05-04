@@ -432,3 +432,36 @@ class DirectStoreDeclaration(YaccDhcpObject):
 			s += ' %s'%(self.value_format())
 		s += '\n'
 		return s
+
+class LLDName(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(LLDName,self).__init__(typename,None,startelm,endelm)
+		self.lldname =value
+		return
+
+	def value_format(self):
+		s = ''
+		s += self.quote_safe(self.lldname)
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class DriverDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(DriverDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'driver %s\n'%(self.value_format())
+		return s
