@@ -57,6 +57,7 @@ class TgtYacc(TgtConfigYacc):
         ''' statement : include_statement
                 | target_statement
                 | default_driver_statement
+                | ignore_errors_statement
         '''
         p[0] = p[1]
         p[1] = None

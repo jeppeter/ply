@@ -253,6 +253,15 @@
             }
         ]
     },
+    "ignore_errors_statement": {
+        "prefix": "ignore_errors_statement",
+        "yacc": [
+            {
+                "clause": " IGNORE_ERRORS YES; IGNORE_ERRORS NO;",
+                "func": "p[0] = tgtconf.IgnoreErrors(p.slice[2].value,p.slice[1],p.slice[2]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -265,5 +274,8 @@
     "incominguser" : "INCOMINGUSER",
     "outgoinguser" : "OUTGOINGUSER",
     "controller_tid" : "CONTROLLER_TID",
-    "default-driver" : "DEFAULT_DRIVER"
+    "default-driver" : "DEFAULT_DRIVER",
+    "yes" : "YES",
+    "no" : "NO",
+    "ignore-errors" : "IGNORE_ERRORS"
 }

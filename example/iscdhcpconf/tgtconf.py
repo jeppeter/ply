@@ -721,3 +721,21 @@ class DefaultDriver(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'default-driver %s\n'%(self.value_format())
 		return s
+
+class IgnoreErrors(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(IgnoreErrors,self).__init__(typename,None,startelm,endelm)
+		self.ignoreerrors = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.ignoreerrors is not None:
+			s += self.ignoreerrors
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'ignore-errors %s\n'%(self.value_format())
+		return s
