@@ -69,11 +69,11 @@ class TgtYacc(TgtConfigYacc):
                   | initiator_address_declaration
                   | initiator_name_declaration
                   | incominguser_declaration
+                  | outgoinguser_declaration
         '''
         p[0] = p[1]
         p[1] = None
         return
-
 
 
     def format_config(self,tabs=0):

@@ -208,6 +208,15 @@
             }
         ]
     },
+    "outgoinguser_declaration": {
+        "prefix": "outgoinguser_declaration",
+        "yacc": [
+            {
+                "clause": " OUTGOINGUSER user password;",
+                "func": "p[0] = tgtconf.OutGoingUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);p[2] = None;p[3] = None;return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -217,5 +226,6 @@
     "driver" : "DRIVER",
     "initiator-address" : "INITIATOR_ADDRESS",
     "initiator-name" : "INITIATOR_NAME",
-    "incominguser" : "INCOMINGUSER"
+    "incominguser" : "INCOMINGUSER",
+    "outgoinguser" : "OUTGOINGUSER"
 }
