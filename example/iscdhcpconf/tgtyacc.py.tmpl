@@ -77,9 +77,25 @@ class TgtYacc(TgtConfigYacc):
 
     def p_lun_declaration_0(self,p):
         ''' lun_declaration : write_cache_lun_declaration
+                   | scsi_id_lun_declaration
         '''
         p[0] = p[1]
         p[1] = None
+        return
+
+    def p_scsi_id_lun_declaration_0(self,p):
+        ''' scsi_id_lun_declaration : SCSI_ID scsi_id_part
+        '''
+        p[0] = tgtconf.ScsiIdLunDeclaration(None,None,p.slice[1],p[2])
+        p[0].append_child(p[2])
+        p[2] = None
+        return
+
+    def p_scsi_id_part_0(self,p):
+        ''' scsi_id_part : TEXT
+                | NUMBER
+        '''
+        p[0] = tgtconf.ScsiId(p.slice[1].value,p.slice[1],p.slice[1])
         return
 
 

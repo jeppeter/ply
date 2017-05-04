@@ -370,6 +370,24 @@
             }
         ]
     },
+    "scsi_id_lun_declaration": {
+        "prefix": "scsi_id_lun_declaration",
+        "yacc": [
+            {
+                "clause": " SCSI_ID scsi_id_part;",
+                "func": "p[0] = tgtconf.ScsiIdLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "scsi_id_part": {
+        "prefix": "scsi_id_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.ScsiId(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -395,5 +413,6 @@
     "iSNS" : "ISNS",
     "incomingdiscoveryuser" : "INCOMING_DISCOVERY_USER",
     "outgoingdiscoveryuser" : "OUTGOING_DISCOVERY_USER",
-    "write-cache" : "WRITE_CACHE"
+    "write-cache" : "WRITE_CACHE",
+    "scsi_id" : "SCSI_ID"
 }
