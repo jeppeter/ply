@@ -87,11 +87,16 @@ class TgtYacc(TgtConfigYacc):
                    | device_type_lun_declaration
                    | bs_type_lun_declaration
                    | allow_in_use_lun_declaration
+                   | block_size_lun_declaration
+                   | llppbe_lun_declaration
+                   | la_lba_lun_declaration
+                   | optimal_xfer_gran_lun_declaration
+                   | optimal_xfer_len_lun_declaration
+                   | params_lun_declaration
         '''
         p[0] = p[1]
         p[1] = None
         return
-
 
 
     def format_config(self,tabs=0):

@@ -1416,3 +1416,208 @@ class AllowInUseLunDeclaration(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'allow-in-use %s\n'%(self.value_format())
 		return s
+
+class BlockSize(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(BlockSize,self).__init__(typename,None,startelm,endelm)
+		self.blocksize = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.blocksize is not None:
+			s += self.blocksize
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class BlockSizeLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(BlockSizeLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'block-size %s\n'%(self.value_format())
+		return s
+
+class Llppbe(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(Llppbe,self).__init__(typename,None,startelm,endelm)
+		self.llppbe = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.llppbe is not None:
+			s += self.llppbe
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class LlppbeLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(LlppbeLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'llppbe %s\n'%(self.value_format())
+		return s
+
+
+class LaLba(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(LaLba,self).__init__(typename,None,startelm,endelm)
+		self.lalba = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.lalba is not None:
+			s += self.lalba
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class LaLbaLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(LaLbaLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'la_lba %s\n'%(self.value_format())
+		return s
+
+class OptimalXferGran(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(OptimalXferGran,self).__init__(typename,None,startelm,endelm)
+		self.optmialxfergran = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.optmialxfergran is not None:
+			s += self.optmialxfergran
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class OptimalXferGranLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(OptimalXferGranLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'optimal_xfer_gran %s\n'%(self.value_format())
+		return s
+
+class OptimalXferLen(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(OptimalXferLen,self).__init__(typename,None,startelm,endelm)
+		self.optmialxfergran = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.optmialxfergran is not None:
+			s += self.optmialxfergran
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class OptimalXferLenLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(OptimalXferLenLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'optimal_xfer_len %s\n'%(self.value_format())
+		return s
+
+class Params(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(Params,self).__init__(typename,None,startelm,endelm)
+		self.params = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.params is not None:
+			s += self.quote_safe(self.params)
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class ParamsLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(ParamsLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'params %s\n'%(self.value_format())
+		return s

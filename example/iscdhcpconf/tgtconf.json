@@ -603,6 +603,114 @@
             }
         ]
     },
+    "block_size_lun_declaration": {
+        "prefix": "block_size_lun_declaration",
+        "yacc": [
+            {
+                "clause": " BLOCK_SIZE block_size_part;",
+                "func": "p[0] = tgtconf.BlockSizeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "block_size_part": {
+        "prefix": "block_size_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.BlockSize(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "la_lba_lun_declaration": {
+        "prefix": "la_lba_lun_declaration",
+        "yacc": [
+            {
+                "clause": " LA_LBA la_lba_part;",
+                "func": "p[0] = tgtconf.LaLbaLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "la_lba_part": {
+        "prefix": "la_lba_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.LaLba(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "llppbe_lun_declaration": {
+        "prefix": "llppbe_lun_declaration",
+        "yacc": [
+            {
+                "clause": " LLPPBE llppbe_part;",
+                "func": "p[0] = tgtconf.LlppbeLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "llppbe_part": {
+        "prefix": "llppbe_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.Llppbe(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "optimal_xfer_gran_lun_declaration": {
+        "prefix": "optimal_xfer_gran_lun_declaration",
+        "yacc": [
+            {
+                "clause": " OPTIMAL_XFER_GRAN optimal_xfer_gran_part;",
+                "func": "p[0] = tgtconf.OptimalXferGranLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "optimal_xfer_gran_part": {
+        "prefix": "optimal_xfer_gran_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.OptimalXferGran(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "optimal_xfer_len_lun_declaration": {
+        "prefix": "optimal_xfer_len_lun_declaration",
+        "yacc": [
+            {
+                "clause": " OPTIMAL_XFER_LEN optimal_xfer_len_part;",
+                "func": "p[0] = tgtconf.OptimalXferLenLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "optimal_xfer_len_part": {
+        "prefix": "optimal_xfer_len_part",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.OptimalXferLen(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
+    "params_lun_declaration": {
+        "prefix": "params_lun_declaration",
+        "yacc": [
+            {
+                "clause": " PARAMS params_part;",
+                "func": "p[0] = tgtconf.ParamsLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);return;"
+            }
+        ]
+    },
+    "params_part": {
+        "prefix": "params_part",
+        "yacc": [
+            {
+                "clause": " NUMBER; TEXT;",
+                "func": "p[0] = tgtconf.Params(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -641,5 +749,11 @@
     "readonly" : "READONLY" ,
     "device-type" : "DEVICE_TYPE",
     "bs-type" : "BS_TYPE",
-    "allow-in-use" : "ALLOW_IN_USE"
+    "allow-in-use" : "ALLOW_IN_USE",
+    "block-size" : "BLOCK_SIZE",
+    "llppbe" : "LLPPBE",
+    "la_lba" : "LA_LBA",
+    "optimal_xfer_gran" : "OPTIMAL_XFER_GRAN",
+    "optimal_xfer_len" : "OPTIMAL_XFER_LEN",
+    "params" : "PARAMS"
 }
