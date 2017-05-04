@@ -793,3 +793,21 @@ class iSNSAccessControl(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'iSNSAccessControl %s\n'%(self.value_format())
 		return s
+
+class iSNSServerPort(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(iSNSServerPort,self).__init__(typename,None,startelm,endelm)
+		self.serverport = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.serverport is not None:
+			s += self.serverport
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'iSNSServerPort %s\n'%(self.value_format())
+		return s

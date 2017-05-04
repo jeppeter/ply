@@ -289,6 +289,15 @@
             }
         ]
     },
+    "isns_server_port_statement": {
+        "prefix": "isns_server_port_statement",
+        "yacc": [
+            {
+                "clause": " ISNS_SERVER_PORT NUMBER;",
+                "func": "p[0] = tgtconf.iSNSServerPort(p.slice[2].value,p.slice[1],p.slice[2]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -309,5 +318,6 @@
     "iSNSServerIP"  : "ISNS_SERVER_IP",
     "iSNSAccessControl" : "ISNS_ACCESS_CONTROL",
     "on" : "ON",
-    "off" : "OFF"
+    "off" : "OFF",
+    "iSNSServerPort" : "ISNS_SERVER_PORT"
 }
