@@ -406,6 +406,24 @@
             }
         ]
     },
+    "vendor_id_lun_declaration": {
+        "prefix": "vendor_id_lun_declaration",
+        "yacc": [
+            {
+                "clause": " VENDOR_ID vendor_id_part;",
+                "func": "p[0] = tgtconf.VendorIdLunDeclaration(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "vendor_id_part": {
+        "prefix": "vendor_id_part",
+        "yacc": [
+            {
+                "clause": " TEXT; NUMBER;",
+                "func": "p[0] = tgtconf.VendorId(p.slice[1].value,p.slice[1],p.slice[1]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -433,5 +451,6 @@
     "outgoingdiscoveryuser" : "OUTGOING_DISCOVERY_USER",
     "write-cache" : "WRITE_CACHE",
     "scsi_id" : "SCSI_ID",
-    "scsi_sn" : "SCSI_SN"
+    "scsi_sn" : "SCSI_SN" ,
+    "vendor_id" : "VENDOR_ID"
 }

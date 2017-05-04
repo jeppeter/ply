@@ -79,11 +79,11 @@ class TgtYacc(TgtConfigYacc):
         ''' lun_declaration : write_cache_lun_declaration
                    | scsi_id_lun_declaration
                    | scsi_sn_lun_declaration
+                   | vendor_id_lun_declaration
         '''
         p[0] = p[1]
         p[1] = None
         return
-
 
     def format_config(self,tabs=0):
         s = ''

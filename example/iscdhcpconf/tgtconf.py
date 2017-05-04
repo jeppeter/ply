@@ -1026,3 +1026,38 @@ class ScsiSnLunDeclaration(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'scsi_sn %s\n'%(self.value_format())
 		return s
+
+
+class VendorId(YaccDhcpObject):
+	def __init__(self,value,startelm=None,endelm=None):
+		typename = self.__class__.__name__
+		super(VendorId,self).__init__(typename,None,startelm,endelm)
+		self.vendorid = value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.vendorid is not None:
+			s += self.quote_safe(self.vendorid)
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class VendorIdLunDeclaration(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(VendorIdLunDeclaration,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'vendor_id %s\n'%(self.value_format())
+		return s
