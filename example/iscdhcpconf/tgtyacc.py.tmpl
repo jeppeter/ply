@@ -63,10 +63,13 @@ class TgtYacc(TgtConfigYacc):
                 | isns_access_control_statement
                 | isns_server_port_statement
                 | isns_statement
+                | incoming_discovery_user_statement
+                | outgoing_discovery_user_statement
         '''
         p[0] = p[1]
         p[1] = None
         return
+
 
     def format_config(self,tabs=0):
         s = ''

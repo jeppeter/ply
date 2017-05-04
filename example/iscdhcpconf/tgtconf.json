@@ -307,6 +307,24 @@
             }
         ]
     },
+    "incoming_discovery_user_statement": {
+        "prefix": "incoming_discovery_user_statement",
+        "yacc": [
+            {
+                "clause": " INCOMING_DISCOVERY_USER user password;",
+                "func": "p[0] = tgtconf.InComingDiscoveryUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);return;"
+            }
+        ]
+    },
+    "outgoing_discovery_user_statement": {
+        "prefix": "outgoing_discovery_user_statement",
+        "yacc": [
+            {
+                "clause": " OUTGOING_DISCOVERY_USER user password;",
+                "func": "p[0] = tgtconf.OutGoingDiscoveryUser(None,None,p.slice[1],p[3]);p[0].append_child(p[2]);p[0].append_child(p[3]);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -329,5 +347,7 @@
     "on" : "ON",
     "off" : "OFF",
     "iSNSServerPort" : "ISNS_SERVER_PORT",
-    "iSNS" : "ISNS"
+    "iSNS" : "ISNS",
+    "incomingdiscoveryuser" : "INCOMING_DISCOVERY_USER",
+    "outgoingdiscoveryuser" : "OUTGOING_DISCOVERY_USER"
 }
