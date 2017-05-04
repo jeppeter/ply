@@ -83,22 +83,6 @@ class TgtYacc(TgtConfigYacc):
         p[1] = None
         return
 
-    def p_scsi_id_lun_declaration_0(self,p):
-        ''' scsi_id_lun_declaration : SCSI_ID scsi_id_part
-        '''
-        p[0] = tgtconf.ScsiIdLunDeclaration(None,None,p.slice[1],p[2])
-        p[0].append_child(p[2])
-        p[2] = None
-        return
-
-    def p_scsi_id_part_0(self,p):
-        ''' scsi_id_part : TEXT
-                | NUMBER
-        '''
-        p[0] = tgtconf.ScsiId(p.slice[1].value,p.slice[1],p.slice[1])
-        return
-
-
     def format_config(self,tabs=0):
         s = ''
         if self.statements is not None:
