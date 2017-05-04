@@ -115,11 +115,56 @@
             }
         ]
     },
+    "initiator_address_declaration": {
+        "prefix": "initiator_address_declaration",
+        "yacc": [
+            {
+                "clause": " INITIATOR_ADDRESS ipaddr;",
+                "func": "p[0] = tgtconf.InitiatorAddress(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[2] = None;return;"
+            }
+        ]
+    },
+    "ipaddr": {
+        "prefix": "ipaddr",
+        "yacc": [
+            {
+                "clause": " ipv4_addr; ipv6_addr;",
+                "func": "p[0] = p[1];p[1] = None;return;"
+            }
+        ]
+    },
+    "ipv4_addr": {
+        "prefix": "ipv4_addr",
+        "yacc": [
+            {
+                "clause": " NUMBER DOT NUMBER DOT NUMBER DOT NUMBER;",
+                "func": "p[0] = tgtconf.Ipv4Addr(None,None,p.slice[1],p.slice[7]);p[0].start_addr(p.slice[1].value);idx = 3;while idx < 8:;{p[0].add_dot_text(p.slice[idx].value);idx += 2;}return;"
+            }
+        ]
+    },
+    "ipv6_addr": {
+        "prefix": "ipv6_addr",
+        "yacc": [
+            {
+                "clause": " NUMBER; TEXT;",
+                "func": "p[0] = tgtconf.Ipv6Addr(None,None,p.slice[1],p.slice[1]);p[0].start_addr(p.slice[1].value);return;"
+            },
+            {
+                "clause": " ipv6_addr COLON;",
+                "func": "p[0] = p[1];p[0].add_colon();p[0].set_endpos(p.slice[2]);p[1] = None;return;"
+            },
+            {
+                "clause": " ipv6_addr COLON TEXT; ipv6_addr COLON NUMBER;",
+                "func": "p[0] = p[1];p[0].add_colon_text(p.slice[3].value);p[0].set_endpos(p.slice[3]);p[1] = None;return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
     "backing-store" : "BACKING_STORE",
     "iscsi" : "ISCSI",
     "iser" : "ISER" ,
-    "driver" : "DRIVER"
+    "driver" : "DRIVER",
+    "initiator-address" : "INITIATOR_ADDRESS"
 }

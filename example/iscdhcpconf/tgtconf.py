@@ -465,3 +465,80 @@ class DriverDeclaration(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'driver %s\n'%(self.value_format())
 		return s
+
+class Ipv4Addr(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(Ipv4Addr,self).__init__(typename,children,startelm,endelm)
+		self.ipaddr = None
+		return
+
+	def start_addr(self,value):
+		self.ipaddr = value
+		return
+
+	def add_dot_text(self,value):
+		if self.ipaddr is None:
+			raise Exception('not set ipaddr yet')
+		self.ipaddr += '.' + value
+		return
+
+	def value_format(self):
+		s = ''
+		if self.ipaddr is not None:
+			s = self.ipaddr
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class Ipv6Addr(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(Ipv6Addr,self).__init__(typename,children,startelm,endelm)
+		self.ipaddr = None
+		return
+
+	def start_addr(self,value):
+		self.ipaddr = value
+		return
+
+	def add_colon_text(self,value):
+		if self.ipaddr is None:
+			raise Exception('not set ipaddr yet')
+		self.ipaddr += ':' + value
+		return
+
+	def add_colon(self):
+		if self.ipaddr is None:
+			raise Exception('not set ipaddr yet')
+		self.ipaddr += ':'
+
+	def value_format(self):
+		s = ''
+		if self.ipaddr is not None:
+			s = self.ipaddr
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class InitiatorAddress(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(InitiatorAddress,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'initiator-address %s\n'%(self.value_format())
+		return s

@@ -66,11 +66,11 @@ class TgtYacc(TgtConfigYacc):
         ''' target_declaration : backing_store_declaration
                   | direct_store_declaration
                   | driver_declaration
+                  | initiator_address_declaration
         '''
         p[0] = p[1]
         p[1] = None
         return
-
 
 
     def format_config(self,tabs=0):
