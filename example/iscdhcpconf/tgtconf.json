@@ -217,6 +217,24 @@
             }
         ]
     },
+    "controller_tid_declaration": {
+        "prefix": "controller_tid_declaration",
+        "yacc": [
+            {
+                "clause": " CONTROLLER_TID tid;",
+                "func": "p[0] = tgtconf.ControllerTid(None,None,p.slice[1],p[2]);p[0].append_child(p[2]);p[1] = None;return;"
+            }
+        ]
+    },
+    "tid": {
+        "prefix": "tid",
+        "yacc": [
+            {
+                "clause": " NUMBER;",
+                "func": "p[0] = tgtconf.Tid(None,None,p.slice[1],p.slice[1]);p[0].set_value(p.slice[1].value);return;"
+            }
+        ]
+    },
     "include" : "INCLUDE",
     "target" : "TARGET",
     "direct-store" : "DIRECT_STORE",
@@ -227,5 +245,6 @@
     "initiator-address" : "INITIATOR_ADDRESS",
     "initiator-name" : "INITIATOR_NAME",
     "incominguser" : "INCOMINGUSER",
-    "outgoinguser" : "OUTGOINGUSER"
+    "outgoinguser" : "OUTGOINGUSER",
+    "controller_tid" : "CONTROLLER_TID"
 }

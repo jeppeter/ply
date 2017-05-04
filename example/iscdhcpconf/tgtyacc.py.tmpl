@@ -70,11 +70,11 @@ class TgtYacc(TgtConfigYacc):
                   | initiator_name_declaration
                   | incominguser_declaration
                   | outgoinguser_declaration
+                  | controller_tid_declaration
         '''
         p[0] = p[1]
         p[1] = None
         return
-
 
     def format_config(self,tabs=0):
         s = ''

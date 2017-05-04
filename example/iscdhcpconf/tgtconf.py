@@ -662,3 +662,44 @@ class OutGoingUser(YaccDhcpObject):
 		s = ' ' * tabs * 4
 		s += 'outgoinguser %s\n'%(self.value_format())
 		return s
+
+
+class Tid(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(Tid,self).__init__(typename,children,startelm,endelm)
+		self.tid = None
+		return
+
+	def set_value(self,value):
+		self.tid = value
+		logging.info('value %s'%(self.tid))
+		return
+
+	def value_format(self):
+		s = ''
+		if self.tid is not None:
+			s += self.tid
+		return s
+
+	def format_config(self,tabs=0):
+		return self.value_format()
+
+class ControllerTid(YaccDhcpObject):
+	def __init__(self,typename=None,children=None,startelm=None,endelm=None):
+		if typename is None:
+			typename = self.__class__.__name__
+		super(ControllerTid,self).__init__(typename,children,startelm,endelm)
+		return
+
+	def value_format(self):
+		s = ''
+		if len(self.children) > 0:
+			s += self.children[0].value_format()
+		return s
+
+	def format_config(self,tabs=0):
+		s = ' ' * tabs * 4
+		s += 'controller_tid %s\n'%(self.value_format())
+		return s
