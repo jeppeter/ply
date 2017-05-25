@@ -66,8 +66,17 @@ class DhcpConfLex(ConfigDhcpLex):
 
 	@lex.TOKEN(r'\#')
 	def t_COMMENT(self,p):
-		self.commented = 1
-		p.lexer.push_state('comment')
+		curpos = p.lexer.lexpos
+		maxpos = len(p.lexer.lexdata)
+		while curpos < maxpos:
+			curch = p.lexer.lexdata[curpos]
+			if curch == '\n':
+				curpos += 1
+				p.lexer.lineno += 1
+				p.lexer.linepos = curpos
+				break
+			curpos += 1
+		p.lexer.lexpos = curpos
 		return None
 
 	@lex.TOKEN(r'\/')

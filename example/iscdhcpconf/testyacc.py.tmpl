@@ -84,18 +84,57 @@ def config_handler(args,parser):
     sys.exit(0)
     return
 
+def parse_dhcpconf(inputfile):
+    s = read_file(inputfile)
+    dhcplex = dlex.DhcpConfLex()
+    lexer = dhcplex.build()
+    dhcpyacc = DhcpConfYacc(lexer)
+    parser = dhcpyacc.build(tabmodule='testparse')
+    parser.parse(s)
+    return dhcpyacc
+
+def get_host_statements(statements):
+    retdict = dict()
+    if isinstance(statements,object):
+        logging.info('statements [%s]'%(statements.__class__.__name__))
+        if issubclass(statements.__class__,dhcpconf.HostStatement) and \
+            statements.hostname is not None:
+            hostname = statements.hostname.value_format()
+            retdict[hostname] = statements
+            return retdict
+        for c in statements.children:
+            retdict.update(get_host_statements(c))
+    return retdict
+
+def get_hardware_statements(statements):
+    retarr = []
+    if isinstance(statements,object):
+        if issubclass(statements.__class__,dhcpconf.HardwareStatement):
+            retarr.append(statements)
+            return retarr
+        for c in statements.children:
+            retarr.extend(get_hardware_statements(c))
+    return retarr
+
+def get_fixed_address(statements):
+    retarr = []
+    if isinstance(statements,object):
+        if issubclass(statements.__class__,dhcpconf.FixedAddressDeclaration) and \
+            statements.fixedaddress is not None:
+            retarr.append(statements)
+            return retarr
+        for c in statements.children:
+            retarr.extend(get_fixed_address(c))
+    return retarr
+
+
 def addhost_handler(args,parser):
     set_logging(args)
     if args.macaddr is None or \
         args.ipaddr is None or \
         args.hostname is None:
         raise Exception('must specified macaddr[--macaddr|-m] hostname[--hostname|-H] ipaddr[--ipaddr|-I]')
-    s = read_file(args.input)
-    dhcplex = dlex.DhcpConfLex()
-    lexer = dhcplex.build()
-    dhcpyacc = DhcpConfYacc(lexer)
-    parser = dhcpyacc.build(tabmodule='testparse')
-    parser.parse(s)
+    dhcpyacc = parse_dhcpconf(args.input)
     statements = dhcpyacc.statements
     if statements is None:
         raise Exception('no statements adding')
@@ -146,6 +185,27 @@ def addhost_handler(args,parser):
     return
 
 
+
+def listhost_handler(args,parser):
+    set_logging(args)
+    dhcpyacc = parse_dhcpconf(args.input)
+    hostdict = get_host_statements(dhcpyacc.statements)
+    outs = ''
+    for k in hostdict.keys():
+        s = '%s'%(k)
+        retarr = get_hardware_statements(hostdict[k])
+        if len(retarr) > 0:
+            if retarr[0].hard_type is not None:
+                s += ',%s'%(retarr[0].hard_type.value_format())
+            if retarr[0].hard_addr is not None:
+                s += ',%s'%(retarr[0].hard_addr.value_format())
+            outs += s
+            outs += '\n'
+    write_file(outs,args.output)
+    sys.exit(0)
+    return
+
+
 def main():
     command='''
     {
@@ -159,6 +219,9 @@ def main():
         },
         "addhost<addhost_handler>" : {
             "$" : 0
+        },
+        "listhost<listhost_handler>" : {
+            "$" : "*"
         }
     }
     '''
